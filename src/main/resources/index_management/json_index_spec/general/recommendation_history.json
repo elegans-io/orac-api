@@ -1,0 +1,45 @@
+{
+  "mappings": {
+    "recommendation_history": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "user_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "item_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "name": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "generation_timestamp": {
+          "type": "date",
+          "format": "epoch_second",
+          "store": true,
+          "index": true
+        },
+        "score": {
+          "type": "double",
+          "store": true,
+          "index": true
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "epoch_second",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}

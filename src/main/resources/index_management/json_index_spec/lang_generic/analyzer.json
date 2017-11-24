@@ -1,0 +1,26 @@
+{
+	"index.queries.cache.enabled": true,
+	"analysis":
+	{
+		"char_filter":
+		{
+			"&_to_and": {
+				"type":       "mapping",
+				"mappings": [ "&=> and "]
+			}
+		},
+		"analyzer":
+		{
+			"elegans_raw_analyzer":
+			{
+				"tokenizer":    "keyword",
+				"filter":       [ "lowercase"]
+			},
+			"elegans_base_analyzer":
+			{
+				"tokenizer":    "standard",
+				"filter":       [ "lowercase"]
+			}
+		}
+	}
+}

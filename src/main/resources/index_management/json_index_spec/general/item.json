@@ -1,0 +1,104 @@
+{
+  "mappings": {
+    "item": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "name": {
+          "type": "text",
+          "store": true,
+          "index": true,
+          "fields": {
+            "raw": {
+              "type": "text",
+              "fielddata": true,
+              "analyzer": "elegans_raw_analyzer"
+            },
+            "base": {
+              "type": "text",
+              "fielddata": true,
+              "analyzer": "elegans_base_analyzer"
+            }
+          }
+        },
+        "type": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "description": {
+          "type": "text",
+          "store": true,
+          "index": true,
+          "fields": {
+            "raw": {
+              "type": "text",
+              "fielddata": true,
+              "analyzer": "elegans_raw_analyzer"
+            },
+            "base": {
+              "type": "text",
+              "fielddata": true,
+              "analyzer": "elegans_base_analyzer"
+            }
+          }
+        },
+        "numerical_properties": {
+          "type": "nested",
+          "properties": {
+            "key": {
+              "type": "keyword",
+              "store": true,
+              "index": true
+            },
+            "value": {
+              "type": "double",
+              "store": true,
+              "index": true
+            }
+          }
+        },
+        "string_properties": {
+          "type": "nested",
+          "properties": {
+            "key": {
+              "type": "keyword",
+              "store": true,
+              "index": true
+            },
+            "value": {
+              "type": "keyword",
+              "store": true,
+              "index": true
+            }
+          }
+        },
+        "timestamp_properties": {
+          "type": "nested",
+          "properties": {
+            "key": {
+              "type": "keyword",
+              "store": true,
+              "index": true
+            },
+            "value": {
+              "type": "date",
+              "format": "epoch_second",
+              "store": true,
+              "index": true
+            }
+          }
+        },
+        "tag_properties": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,37 @@
+{
+  "mappings": {
+    "user": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true
+        },
+        "birthdate": {
+          "type": "date",
+          "store": true
+        },
+        "name": {
+          "type": "keyword",
+          "store": true
+        },
+        "gender": {
+          "type": "keyword",
+          "store": true
+        },
+        "email": {
+          "type": "keyword",
+          "store": true
+        },
+        "phone": {
+          "type": "keyword",
+          "store": true
+        },
+        "tag_properties": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}
