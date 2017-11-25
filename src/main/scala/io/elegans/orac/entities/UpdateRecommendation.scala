@@ -11,4 +11,4 @@ case class UpdateRecommendation (
                                   generation_batch: Option[String], /** generation batch id */
                                   generation_timestamp: Option[Long],
                                   score: Option[Double]/** the recommendation score */
-                         )
+                                )

@@ -59,15 +59,15 @@ object RecommendationHistoryService {
 
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name +
-        document.recommendation_id + document.access_uid + document.generation_batch +
+        document.recommendation_id + document.access_user_id + document.generation_batch +
         access_timestamp + document.score +
         document.generation_timestamp))
 
-    val access_uid = document.access_uid.getOrElse(creator_user_id)
+    val access_user_id = document.access_user_id.getOrElse(creator_user_id)
 
     builder.field("id", id)
     builder.field("recommendation_id", document.recommendation_id)
-    builder.field("access_uid", access_uid)
+    builder.field("access_user_id", access_user_id)
     builder.field("name", document.name)
     builder.field("generation_batch", document.generation_batch)
     builder.field("user_id", document.user_id)
@@ -79,7 +79,7 @@ object RecommendationHistoryService {
 
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix)
+      .setType(elastic_client.recommendation_history_index_suffix)
       .setId(id)
       .setSource(builder).get()
 
@@ -112,18 +112,18 @@ object RecommendationHistoryService {
       case None => ;
     }
 
-    document.access_uid match {
-      case Some(t) => builder.field("access_uid", t)
-      case None => ;
-    }
-
-    document.access_uid match {
-      case Some(t) => builder.field("access_uid", t)
+    document.access_user_id match {
+      case Some(t) => builder.field("access_user_id", t)
       case None => ;
     }
 
     document.generation_batch match {
       case Some(t) => builder.field("generation_batch", t)
+      case None => ;
+    }
+
+    document.user_id match {
+      case Some(t) => builder.field("user_id", t)
       case None => ;
     }
 
@@ -151,7 +151,7 @@ object RecommendationHistoryService {
 
     val client: TransportClient = elastic_client.get_client()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix).setId(id)
+      .setType(elastic_client.recommendation_history_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
@@ -175,7 +175,7 @@ object RecommendationHistoryService {
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix).setId(id).get()
+      .setType(elastic_client.recommendation_history_index_suffix).setId(id).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
@@ -197,7 +197,7 @@ object RecommendationHistoryService {
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(getIndexName(index_name), elastic_client.recommendation_index_suffix, ids:_*)
+      multiget_builder.add(getIndexName(index_name), elastic_client.recommendation_history_index_suffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + index_name + ")")
     }
@@ -228,7 +228,7 @@ object RecommendationHistoryService {
         case None => ""
       }
 
-      val access_uid : Option[String] = source.get("access_uid") match {
+      val access_user_id : Option[String] = source.get("access_user_id") match {
         case Some(t) => Option { t.asInstanceOf[String] }
         case None => Option {""}
       }
@@ -259,7 +259,7 @@ object RecommendationHistoryService {
       }
 
       val document = RecommendationHistory(id = Option { id }, recommendation_id = recommendation_id,
-        name = name, access_uid = access_uid,
+        name = name, access_user_id = access_user_id,
         user_id = user_id, item_id = item_id,
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp,

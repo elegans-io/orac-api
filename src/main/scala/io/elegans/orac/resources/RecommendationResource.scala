@@ -57,7 +57,7 @@ trait RecommendationResource extends MyResource {
             authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 extractMethod { method =>
                   parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -147,7 +147,7 @@ trait RecommendationResource extends MyResource {
           authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read)) {
               extractMethod { method =>
                 parameters("from".as[Int] ? 0, "to".as[Int] ? 10) { (from, to) =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()

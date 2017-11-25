@@ -100,7 +100,7 @@ trait RecommendationHistoryResource extends MyResource {
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 104, message = e.getMessage)
+                              ReturnMessageData(code = 102, message = e.getMessage)
                             })
                       }
                     }
@@ -129,7 +129,7 @@ trait RecommendationHistoryResource extends MyResource {
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {
-                              ReturnMessageData(code = 105, message = e.getMessage)
+                              ReturnMessageData(code = 103, message = e.getMessage)
                             })
                       }
                     }

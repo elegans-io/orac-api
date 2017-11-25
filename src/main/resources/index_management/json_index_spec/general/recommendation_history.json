@@ -12,7 +12,7 @@
           "store": true,
           "index": true
         },
-        "access_uid": {
+        "access_user_id": {
           "type": "keyword",
           "store": true,
           "index": true

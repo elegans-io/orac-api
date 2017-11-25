@@ -165,7 +165,7 @@ object RecommendationService {
     Option {doc_result}
   }
 
-  def read(index_name: String, access_uid: String, ids: List[String]): Future[Option[Recommendations]] = Future {
+  def read(index_name: String, access_user_id: String, ids: List[String]): Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -220,10 +220,10 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
+      val access_timestamp: Option[Long] = Option{ Time.getTimestampEpoc() }
 
-      val recommendation_history = RecommendationHistory(id = Option { id }, recommendation_id = id,
-        name = name, access_uid = Option { access_uid },
+      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
+        name = name, access_user_id = Option { access_user_id },
         user_id = user_id, item_id = item_id,
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp,
@@ -233,14 +233,14 @@ object RecommendationService {
     })
 
     documents.map(_._2).foreach(recomm => {
-      recommendationHistoryService.create(index_name, access_uid, recomm, 0)
+      recommendationHistoryService.create(index_name, access_user_id, recomm, 0)
     })
 
     val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }
     recommendations
   }
 
-  def getRecommendationsByUser(index_name: String, access_uid: String, id: String, from: Int = 0, to: Int = 10):
+  def getRecommendationsByUser(index_name: String, access_user_id: String, id: String, from: Int = 0, to: Int = 10):
   Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
@@ -297,10 +297,10 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
+      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc()}
 
-      val recommendation_history = RecommendationHistory(id = Option { id }, recommendation_id = id,
-        name = name, access_uid = Option { access_uid },
+      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
+        name = name, access_user_id = Option { access_user_id },
         user_id = user_id, item_id = item_id,
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp,
@@ -310,7 +310,7 @@ object RecommendationService {
     })
 
     documents.map(_._2).foreach(recomm => {
-      recommendationHistoryService.create(index_name, access_uid, recomm, 0)
+      recommendationHistoryService.create(index_name, access_user_id, recomm, 0)
     })
 
     val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy( - _.score)) }

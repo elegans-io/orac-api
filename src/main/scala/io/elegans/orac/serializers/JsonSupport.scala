@@ -35,8 +35,8 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val recommendationsFormat = jsonFormat1(Recommendations)
   implicit val updateRecommendation = jsonFormat6(UpdateRecommendation)
   implicit val recommendationHistory = jsonFormat10(RecommendationHistory)
-  implicit val updateRecommendationHistory = jsonFormat9(UpdateRecommendationHistory)
   implicit val recommendationsHistory = jsonFormat1(RecommendationsHistory)
+  implicit val updateRecommendationHistory = jsonFormat9(UpdateRecommendationHistory)
 
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
