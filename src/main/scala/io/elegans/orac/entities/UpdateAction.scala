@@ -6,8 +6,10 @@ package io.elegans.orac.entities
 
 case class UpdateAction (
   name: Option[String], /** the name of an action */
+  creator_uid: Option[String], /** system user id who has written the action */
   user_id: Option[String],
   item_id: Option[String],
-  timestamp: Option[Long]
+  timestamp: Option[Long],
+  ref_url: Option[String], /** referring url if any */
+  ref_recommendation: Option[String], /** referring recommedation if any */
 )
-

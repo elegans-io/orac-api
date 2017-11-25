@@ -4,27 +4,43 @@
       "properties": {
         "id": {
           "type": "keyword",
-          "store": true
+          "store": true,
+          "index": true
         },
         "birthdate": {
           "type": "date",
-          "store": true
+          "store": true,
+          "index": true
+        },
+        "birthplace": {
+          "type": "geo_point",
+          "store": true,
+          "index": true
+        },
+        "livingplace": {
+          "type": "geo_point",
+          "store": true,
+          "index": true
         },
         "name": {
           "type": "keyword",
-          "store": true
+          "store": true,
+          "index": true
         },
         "gender": {
           "type": "keyword",
-          "store": true
+          "store": true,
+          "index": true
         },
         "email": {
           "type": "keyword",
-          "store": true
+          "store": true,
+          "index": true
         },
         "phone": {
           "type": "keyword",
-          "store": true
+          "store": true,
+          "index": true
         },
         "tag_properties": {
           "type": "keyword",

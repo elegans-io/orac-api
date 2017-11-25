@@ -46,9 +46,6 @@ object OracUserService {
   val elastic_client = OracUserElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
-
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.orac_user_index_suffix)
   }
@@ -83,6 +80,16 @@ object OracUserService {
       case None => ;
     }
 
+    document.birthplace match {
+      case Some(t) => builder.startObject("birthplace").field("lat", t.lat).field("lon", t.lon).endObject()
+      case None => ;
+    }
+
+    document.livingplace match {
+      case Some(t) => builder.startObject("livingplace").field("lat", t.lat).field("lon", t.lon).endObject()
+      case None => ;
+    }
+
     document.tags match {
       case Some(t) =>
         val properties_array = builder.startArray("tag_properties")
@@ -99,6 +106,7 @@ object OracUserService {
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.orac_user_index_suffix)
       .setId(document.id)
+      .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
@@ -141,6 +149,16 @@ object OracUserService {
 
     document.birthdate match {
       case Some(t) => builder.field("birthdate", t)
+      case None => ;
+    }
+
+    document.birthplace match {
+      case Some(t) => builder.startObject("birthplace").field("lat", t.lat).field("lon", t.lon).endObject()
+      case None => ;
+    }
+
+    document.livingplace match {
+      case Some(t) => builder.startObject("livingplace").field("lat", t.lat).field("lon", t.lon).endObject()
       case None => ;
     }
 
@@ -246,6 +264,24 @@ object OracUserService {
         case None => Option.empty[Long]
       }
 
+      val birthplace : Option[OracGeoPoint] = source.get("birthplace") match {
+        case Some(t) =>
+          val geopoint = t.asInstanceOf[java.util.HashMap[String, Double]].asScala
+          Option {
+            OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+          }
+        case None => Option.empty[OracGeoPoint]
+      }
+
+      val livingplace : Option[OracGeoPoint] = source.get("livingplace") match {
+        case Some(t) =>
+          val geopoint = t.asInstanceOf[java.util.HashMap[String, Double]].asScala
+          Option {
+            OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+          }
+        case None => Option.empty[OracGeoPoint]
+      }
+
       val tag_properties : Option[List[String]] = source.get("tag_properties") match {
         case Some(t) =>
           val properties = t.asInstanceOf[java.util.ArrayList[String]]
@@ -255,7 +291,8 @@ object OracUserService {
       }
 
       val document = OracUser(id = id, name = name, phone = phone, gender = gender,
-        email = email, birthdate = birthdate, tags = tag_properties)
+        email = email, birthdate = birthdate, birthplace = birthplace, livingplace = livingplace,
+        tags = tag_properties)
       document
     }) }
 

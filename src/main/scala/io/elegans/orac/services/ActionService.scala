@@ -37,7 +37,7 @@ import org.apache.lucene.search.join._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
-import io.elegans.orac.tools.Checksum
+import io.elegans.orac.tools._
 
 /**
   * Implements functions, eventually used by ActionResource
@@ -46,23 +46,33 @@ object ActionService {
   val elastic_client = ActionElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-    "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
-
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.action_index_suffix)
   }
 
-  def create(index_name: String, document: Action, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, creator_user_id: String, document: Action, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + document))
+
+    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampEpoc)
+
     builder.field("id", id)
     builder.field("name", document.name)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
-    builder.field("timestamp", document.timestamp)
+    builder.field("timestamp", timestamp)
+    builder.field("creator_uid", document.creator_uid)
+
+    if(document.ref_url.isDefined) {
+      builder.field("ref_url", document.ref_url.get)
+    }
+
+    if (document.ref_recommendation.isDefined) {
+      builder.field("ref_recommendation", document.ref_recommendation.get)
+    }
+
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
@@ -106,6 +116,21 @@ object ActionService {
 
     document.timestamp match {
       case Some(t) => builder.field("timestamp", t)
+      case None => ;
+    }
+
+    document.creator_uid match {
+      case Some(t) => builder.field("creator_uid", t)
+      case None => ;
+    }
+
+    document.ref_url match {
+      case Some(t) => builder.field("ref_url", t)
+      case None => ;
+    }
+
+    document.ref_recommendation match {
+      case Some(t) => builder.field("ref_recommendation", t)
       case None => ;
     }
 
@@ -190,13 +215,28 @@ object ActionService {
         case None => ""
       }
 
-      val timestamp : Long = source.get("timestamp") match {
-        case Some(t) => t.asInstanceOf[Integer].longValue()
-        case None => 0
+      val timestamp : Option[Long] = source.get("timestamp") match {
+        case Some(t) => Option{ t.asInstanceOf[Integer].longValue() }
+        case None => Option{0}
+      }
+
+      val creator_uid : String = source.get("creator_uid") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
+      val ref_url : Option[String] = source.get("ref_url") match {
+        case Some(t) => Option{t.asInstanceOf[String]}
+        case None => Option.empty[String]
+      }
+
+      val ref_recommendation : Option[String] = source.get("ref_recommendation") match {
+        case Some(t) => Option{t.asInstanceOf[String]}
+        case None => Option.empty[String]
       }
 
       val document : Action = Action(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        timestamp = timestamp)
+        timestamp = timestamp, creator_uid = creator_uid, ref_url = ref_url, ref_recommendation = ref_recommendation)
       document
     })
 

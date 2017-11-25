@@ -8,7 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
-import io.elegans.orac.services.ItemService
+import io.elegans.orac.services.RecommendationHistoryService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import io.elegans.orac.OracActorSystem
@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
 
 trait RecommendationHistoryResource extends MyResource {
 
-  val recommendationHistoryService = ItemService
+  val recommendationHistoryService = RecommendationHistoryService
 
   def recommendationHistoryRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """recommendation_history""") { index_name =>
@@ -31,9 +31,10 @@ trait RecommendationHistoryResource extends MyResource {
               authenticator.hasPermissions(user, index_name, Permissions.write)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
-                  entity(as[Item]) { document =>
+                  entity(as[RecommendationHistory]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(recommendationHistoryService.create(index_name, document, refresh)) {
+                    onCompleteWithBreaker(breaker)(
+                      recommendationHistoryService.create(index_name, user.id, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
                           t
@@ -58,7 +59,7 @@ trait RecommendationHistoryResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 extractMethod { method =>
-                  parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
+                  parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(recommendationHistoryService.read(index_name, ids.toList)) {
                       case Success(t) =>
@@ -86,7 +87,7 @@ trait RecommendationHistoryResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.write)) {
                 extractMethod { method =>
-                  entity(as[UpdateItem]) { update =>
+                  entity(as[UpdateRecommendationHistory]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                       onCompleteWithBreaker(breaker)(recommendationHistoryService.update(index_name, id, update, refresh)) {

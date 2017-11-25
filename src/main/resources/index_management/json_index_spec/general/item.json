@@ -92,6 +92,21 @@
             }
           }
         },
+        "geopoint_properties": {
+          "type": "nested",
+          "properties": {
+            "key": {
+              "type": "keyword",
+              "store": true,
+              "index": true
+            },
+            "value": {
+              "type": "geo_point",
+              "store": true,
+              "index": true
+            }
+          }
+        },
         "tag_properties": {
           "type": "keyword",
           "store": true,

@@ -18,6 +18,16 @@
           "store": true,
           "index": true
         },
+        "ref_url": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "ref_recommendation": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
         "name": {
           "type": "keyword",
           "store": true,

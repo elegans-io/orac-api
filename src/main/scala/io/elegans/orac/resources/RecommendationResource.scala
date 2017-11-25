@@ -29,7 +29,7 @@ trait RecommendationResource extends MyResource {
           authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Recommendation]) { document =>
@@ -57,11 +57,11 @@ trait RecommendationResource extends MyResource {
             authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 extractMethod { method =>
                   parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(recommendationService.read(index_name, ids.toList)) {
+                    onCompleteWithBreaker(breaker)(recommendationService.read(index_name, user.id, ids.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
@@ -85,7 +85,7 @@ trait RecommendationResource extends MyResource {
             authenticateBasicPFAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.write)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 extractMethod { method =>
                   entity(as[UpdateRecommendation]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
@@ -113,7 +113,7 @@ trait RecommendationResource extends MyResource {
               authenticateBasicPFAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -147,12 +147,12 @@ trait RecommendationResource extends MyResource {
           authenticateBasicPFAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
               extractMethod { method =>
                 parameters("from".as[Int] ? 0, "to".as[Int] ? 10) { (from, to) =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
-                    recommendationService.getUserRecommendations(index_name, id, from, to)) {
+                    recommendationService.getRecommendationsByUser(index_name, user.id, id, from, to)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t

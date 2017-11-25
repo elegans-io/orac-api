@@ -25,6 +25,12 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
         "value": "https://www.amazon.com/Mind-Play-Shannon-Invented-Information/dp/1476766681"
       }
     ],
+    "geopoint": [
+      {"key": "available_at", 
+        "value": {"lat": 42.1, "lon":31.2}},
+      {"key": "available_at", 
+        "value": {"lat": 43.1, "lon":31.2}}
+    ],
     "tags": [
       "mathematics",
       "biography",

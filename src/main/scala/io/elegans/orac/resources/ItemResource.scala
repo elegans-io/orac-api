@@ -58,7 +58,7 @@ trait ItemResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read)) {
                 extractMethod { method =>
-                  parameters("ids".as[String].*, "dump".as[Boolean] ? false) { (ids, dump) =>
+                  parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(itemService.read(index_name, ids.toList)) {
                       case Success(t) =>

@@ -33,7 +33,7 @@ trait ActionResource extends MyResource {
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Action]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(actionService.create(index_name, document, refresh)) {
+                    onCompleteWithBreaker(breaker)(actionService.create(index_name, user.id, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
                           t

@@ -9,18 +9,20 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val updateActionFormat = jsonFormat4(UpdateAction)
-  implicit val actionFormat = jsonFormat5(Action)
+  implicit val updateActionFormat = jsonFormat7(UpdateAction)
+  implicit val actionFormat = jsonFormat8(Action)
   implicit val actionsFormat = jsonFormat1(Actions)
   implicit val numericalPropertiesFormat = jsonFormat2(NumericalProperties)
   implicit val timestampPropertiesFormat = jsonFormat2(TimestampProperties)
   implicit val stringPropertiesFormat = jsonFormat2(StringProperties)
-  implicit val itemPropertiesFormat = jsonFormat4(ItemProperties)
+  implicit val geoPointFormat = jsonFormat2(OracGeoPoint)
+  implicit val geoPointPropertiesFormat = jsonFormat2(GeoPointProperties)
+  implicit val itemPropertiesFormat = jsonFormat5(ItemProperties)
   implicit val updateItemFormat = jsonFormat4(UpdateItem)
   implicit val itemFormat = jsonFormat5(Item)
   implicit val itemListFormat = jsonFormat1(Items)
-  implicit val updateOracUserFormat = jsonFormat6(UpdateOracUser)
-  implicit val oracUserFormat = jsonFormat7(OracUser)
+  implicit val updateOracUserFormat = jsonFormat8(UpdateOracUser)
+  implicit val oracUserFormat = jsonFormat9(OracUser)
   implicit val returnMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)
   implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
@@ -29,9 +31,13 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val failedShardFormat = jsonFormat4(FailedShard)
   implicit val refreshIndexResultFormat = jsonFormat5(RefreshIndexResult)
   implicit val refreshIndexResultsFormat = jsonFormat1(RefreshIndexResults)
-  implicit val recommendationFormat = jsonFormat6(Recommendation)
+  implicit val recommendationFormat = jsonFormat7(Recommendation)
   implicit val recommendationsFormat = jsonFormat1(Recommendations)
-  implicit val updateRecommendation = jsonFormat5(UpdateRecommendation)
+  implicit val updateRecommendation = jsonFormat6(UpdateRecommendation)
+  implicit val recommendationHistory = jsonFormat10(RecommendationHistory)
+  implicit val updateRecommendationHistory = jsonFormat9(UpdateRecommendationHistory)
+  implicit val recommendationsHistory = jsonFormat1(RecommendationsHistory)
+
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)

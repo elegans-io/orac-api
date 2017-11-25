@@ -9,6 +9,7 @@ case class Recommendation(
                            user_id: String,
                            item_id: String,
                            name: String, /** name of the action */
+                           generation_batch: String, /** generation batch id */
                            generation_timestamp: Long,
                            score: Double /** the recommendation score */
 )

@@ -37,7 +37,7 @@ import org.apache.lucene.search.join._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
-
+import org.elasticsearch.common.geo.GeoPoint
 
 /**
   * Implements functions, eventually used by ItemResource
@@ -45,9 +45,6 @@ import scala.collection.mutable
 object ItemService {
   val elastic_client = ItemElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-
-  val queries_score_mode = Map[String, ScoreMode]("min" -> ScoreMode.Min, "max" -> ScoreMode.Max,
-            "avg" -> ScoreMode.Avg, "total" -> ScoreMode.Total)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.item_index_suffix)
@@ -81,6 +78,18 @@ object ItemService {
         val properties_array = builder.startArray("string_properties")
         properties.foreach(e => {
           properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
+
+      if (document.properties.get.geopoint.isDefined) {
+        val properties = document.properties.get.geopoint.get
+        val properties_array = builder.startArray("geopoint_properties")
+        properties.foreach(e => {
+          val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
+          val geopoint =
+            properties_array.startObject.field("key", e.key)
+              .field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }
@@ -168,6 +177,18 @@ object ItemService {
         val properties_array = builder.startArray("timestamp_properties")
         properties.foreach(e => {
           properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
+
+      if (document.properties.get.geopoint.isDefined) {
+        val properties = document.properties.get.geopoint.get
+        val properties_array = builder.startArray("geopoint_properties")
+        properties.foreach(e => {
+          val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
+          val geopoint =
+            properties_array.startObject.field("key", e.key)
+              .field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }
@@ -303,6 +324,20 @@ object ItemService {
         case None => Option.empty[List[TimestampProperties]]
       }
 
+      val geopoint_properties : Option[List[GeoPointProperties]] =
+        source.get("geopoint_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+              val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+              GeoPointProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[GeoPointProperties]]
+        }
+
       val tag_properties : Option[List[String]] = source.get("tag_properties") match {
         case Some(t) =>
           val properties = t.asInstanceOf[java.util.ArrayList[String]]
@@ -312,7 +347,8 @@ object ItemService {
       }
 
       val properties: Option[ItemProperties] = Option { ItemProperties(numerical = numerical_properties,
-        string = string_properties, timestamp = timestamp_properties, tags = tag_properties)
+        string = string_properties, timestamp = timestamp_properties, geopoint = geopoint_properties,
+        tags = tag_properties)
       }
 
       val document : Item = Item(id = id, name = name, `type` = `type`, description = description,

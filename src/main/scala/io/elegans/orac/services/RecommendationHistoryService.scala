@@ -1,7 +1,7 @@
 package io.elegans.orac.services
 
 /**
-  * Created by Angelo Leto <angelo.leto@elegans.io> on 10/11/17.
+  * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
 import java.util
@@ -40,29 +40,40 @@ import scala.collection.mutable
 import io.elegans.orac.tools.{Checksum, Time}
 
 /**
-  * Implements functions, eventually used by RecommendationResource
+  * Implements functions, eventually used by RecommendationHistoryResource
   */
-object RecommendationService {
+object RecommendationHistoryService {
   val elastic_client = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-  val recommendationHistoryService = RecommendationHistoryService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)
+    index_name + "." + suffix.getOrElse(elastic_client.recommendation_history_index_suffix)
   }
 
-  def create(index_name: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, creator_user_id: String,
+             document: RecommendationHistory, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
 
+    val access_timestamp: Long = document.access_timestamp.getOrElse(Time.getTimestampEpoc)
+
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + document.generation_timestamp))
+      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name +
+        document.recommendation_id + document.access_uid + document.generation_batch +
+        access_timestamp + document.score +
+        document.generation_timestamp))
+
+    val access_uid = document.access_uid.getOrElse(creator_user_id)
+
     builder.field("id", id)
+    builder.field("recommendation_id", document.recommendation_id)
+    builder.field("access_uid", access_uid)
     builder.field("name", document.name)
+    builder.field("generation_batch", document.generation_batch)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
-    builder.field("generation_batch", document.generation_batch)
     builder.field("generation_timestamp", document.generation_timestamp)
+    builder.field("access_timestamp", access_timestamp)
     builder.field("score", document.score)
     builder.endObject()
 
@@ -87,7 +98,8 @@ object RecommendationService {
     Option {doc_result}
   }
 
-  def update(index_name: String, id: String, document: UpdateRecommendation, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: UpdateRecommendationHistory, refresh: Int):
+      Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.name match {
@@ -95,13 +107,18 @@ object RecommendationService {
       case None => ;
     }
 
-    document.user_id match {
-      case Some(t) => builder.field("user_id", t)
+    document.recommendation_id match {
+      case Some(t) => builder.field("recommendation_id", t)
       case None => ;
     }
 
-    document.item_id match {
-      case Some(t) => builder.field("item_id", t)
+    document.access_uid match {
+      case Some(t) => builder.field("access_uid", t)
+      case None => ;
+    }
+
+    document.access_uid match {
+      case Some(t) => builder.field("access_uid", t)
       case None => ;
     }
 
@@ -110,8 +127,18 @@ object RecommendationService {
       case None => ;
     }
 
+    document.item_id match {
+      case Some(t) => builder.field("item_id", t)
+      case None => ;
+    }
+
     document.generation_timestamp match {
       case Some(t) => builder.field("generation_timestamp", t)
+      case None => ;
+    }
+
+    document.access_timestamp match {
+      case Some(t) => builder.field("access_timestamp", t)
       case None => ;
     }
 
@@ -165,7 +192,7 @@ object RecommendationService {
     Option {doc_result}
   }
 
-  def read(index_name: String, access_uid: String, ids: List[String]): Future[Option[Recommendations]] = Future {
+  def read(index_name: String, ids: List[String]): Future[Option[RecommendationsHistory]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -177,7 +204,7 @@ object RecommendationService {
 
     val response: MultiGetResponse = multiget_builder.get()
 
-    val documents : List[(Recommendation, RecommendationHistory)] = response.getResponses
+    val documents : List[RecommendationHistory] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
@@ -191,17 +218,27 @@ object RecommendationService {
         case None => ""
       }
 
+      val recommendation_id: String = source.get("recommendation_id") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
       val user_id : String = source.get("user_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val item_id : String = source.get("item_id") match {
+      val access_uid : Option[String] = source.get("access_uid") match {
+        case Some(t) => Option { t.asInstanceOf[String] }
+        case None => Option {""}
+      }
+
+      val generation_batch : String = source.get("generation_batch") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val generation_batch : String = source.get("generation_batch") match {
+      val item_id : String = source.get("item_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -211,81 +248,9 @@ object RecommendationService {
         case None => 0
       }
 
-      val score : Double = source.get("score") match {
-        case Some(t) => t.asInstanceOf[Double]
-        case None => 0.0
-      }
-
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp, score = score)
-
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
-
-      val recommendation_history = RecommendationHistory(id = Option { id }, recommendation_id = id,
-        name = name, access_uid = Option { access_uid },
-        user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp,
-        access_timestamp = access_timestamp, score = score)
-
-      (recommendation, recommendation_history)
-    })
-
-    documents.map(_._2).foreach(recomm => {
-      recommendationHistoryService.create(index_name, access_uid, recomm, 0)
-    })
-
-    val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }
-    recommendations
-  }
-
-  def getRecommendationsByUser(index_name: String, access_uid: String, id: String, from: Int = 0, to: Int = 10):
-  Future[Option[Recommendations]] = Future {
-    val client: TransportClient = elastic_client.get_client()
-    val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
-      .setTypes(elastic_client.recommendation_index_suffix)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-
-    val bool_query_builder : BoolQueryBuilder = QueryBuilders.boolQuery()
-    bool_query_builder.filter(QueryBuilders.termQuery("user_id", id))
-
-    search_builder.setQuery(bool_query_builder)
-
-    val search_response : SearchResponse = search_builder
-      .setFrom(from).setSize(to)
-      .execute()
-      .actionGet()
-
-    val documents : List[(Recommendation, RecommendationHistory)] = search_response.getHits.getHits.toList.map({ case (e) =>
-      val item: SearchHit = e
-      val id: String = item.getId
-
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
-
-      val user_id : String = source.get("user_id") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val item_id : String = source.get("item_id") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val name : String = source.get("name") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val generation_batch : String = source.get("generation_batch") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
-
-      val generation_timestamp : Long = source.get("generation_timestamp") match {
-        case Some(t) => t.asInstanceOf[Integer].longValue
-        case None => 0
+      val access_timestamp : Option[Long] = source.get("access_timestamp") match {
+        case Some(t) => Option{ t.asInstanceOf[Integer].longValue() }
+        case None => Option { 0 }
       }
 
       val score : Double = source.get("score") match {
@@ -293,28 +258,16 @@ object RecommendationService {
         case None => 0.0
       }
 
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp, score = score)
-
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
-
-      val recommendation_history = RecommendationHistory(id = Option { id }, recommendation_id = id,
-        name = name, access_uid = Option { access_uid },
+      val document = RecommendationHistory(id = Option { id }, recommendation_id = recommendation_id,
+        name = name, access_uid = access_uid,
         user_id = user_id, item_id = item_id,
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp,
         access_timestamp = access_timestamp, score = score)
-
-      (recommendation, recommendation_history)
+      document
     })
 
-    documents.map(_._2).foreach(recomm => {
-      recommendationHistoryService.create(index_name, access_uid, recomm, 0)
-    })
-
-    val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy( - _.score)) }
-    recommendations
+    Option{ RecommendationsHistory(items = documents) }
   }
 
 }

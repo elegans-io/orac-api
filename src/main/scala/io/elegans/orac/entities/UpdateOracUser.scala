@@ -5,10 +5,12 @@ package io.elegans.orac.entities
   */
 
 case class UpdateOracUser(
-  birthdate: Option[Long],
-  name: Option[String],
-  gender: Option[String],
-  email: Option[String],
-  phone: Option[String],
-  tags: Option[List[String]]
+                           birthdate: Option[Long],
+                           birthplace: Option[OracGeoPoint],
+                           livingplace: Option[OracGeoPoint],
+                           name: Option[String],
+                           gender: Option[String],
+                           email: Option[String],
+                           phone: Option[String],
+                           tags: Option[List[String]]
 )
