@@ -80,6 +80,7 @@ object RecommendationHistoryService {
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.recommendation_history_index_suffix)
+      .setCreate(true)
       .setId(id)
       .setSource(builder).get()
 

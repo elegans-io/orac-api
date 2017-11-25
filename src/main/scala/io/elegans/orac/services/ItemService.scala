@@ -118,6 +118,7 @@ object ItemService {
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.item_index_suffix)
+      .setCreate(true)
       .setId(document.id)
       .setSource(builder).get()
 

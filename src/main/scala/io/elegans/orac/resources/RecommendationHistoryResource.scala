@@ -25,10 +25,10 @@ trait RecommendationHistoryResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """recommendation_history""") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[RecommendationHistory]) { document =>
@@ -54,10 +54,10 @@ trait RecommendationHistoryResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 extractMethod { method =>
                   parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -82,10 +82,10 @@ trait RecommendationHistoryResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.write)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 extractMethod { method =>
                   entity(as[UpdateRecommendationHistory]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
@@ -110,10 +110,10 @@ trait RecommendationHistoryResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()

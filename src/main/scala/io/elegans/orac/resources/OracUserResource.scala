@@ -25,10 +25,10 @@ trait OracUserResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "orac_user") { index_name =>
       pathEnd {
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create_orac_user)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[OracUser]) { document =>
@@ -53,10 +53,10 @@ trait OracUserResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read_orac_user)) {
                 extractMethod { method =>
                   parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -81,10 +81,10 @@ trait OracUserResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.write)) {
+                authenticator.hasPermissions(user, index_name, Permissions.update_orac_user)) {
                 extractMethod { method =>
                   entity(as[UpdateOracUser]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
@@ -109,10 +109,10 @@ trait OracUserResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.delete_orac_user)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()

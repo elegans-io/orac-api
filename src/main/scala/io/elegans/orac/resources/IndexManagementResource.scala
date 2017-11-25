@@ -25,7 +25,7 @@ trait IndexManagementResource extends MyResource {
       """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management" ~ Slash ~ """create""") {
       (index_name, language) =>
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.admin)) {
@@ -49,10 +49,10 @@ trait IndexManagementResource extends MyResource {
       Slash ~ "index_management" ~ Slash ~ """refresh""") {
       (index_name) =>
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.write)) {
+              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(indexManagementService.refresh_indexes(index_name)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -74,7 +74,7 @@ trait IndexManagementResource extends MyResource {
       (index_name, language) =>
         pathEnd {
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.admin)) {
@@ -100,10 +100,10 @@ trait IndexManagementResource extends MyResource {
       (index_name) =>
         pathEnd {
           get {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(indexManagementService.check_index(index_name)) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
@@ -118,7 +118,7 @@ trait IndexManagementResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, index_name, Permissions.admin)) {

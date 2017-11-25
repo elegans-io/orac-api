@@ -6,7 +6,12 @@ package io.elegans.orac.entities
 
 object Permissions extends Enumeration {
   type Permission = Value
-  val read, write, admin, unknown = Value
+  val admin,
+      create_action, update_action, read_action, delete_action,
+      create_item, update_item, read_item, delete_item,
+      create_orac_user, update_orac_user, read_orac_user, delete_orac_user,
+      create_recomm, update_recomm, read_recomm, delete_recomm,
+      unknown = Value
   def getValue(permission: String) = values.find(_.toString == permission).getOrElse(unknown)
 }
 

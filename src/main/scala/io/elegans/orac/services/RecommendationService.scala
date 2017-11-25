@@ -70,6 +70,7 @@ object RecommendationService {
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.recommendation_index_suffix)
       .setId(id)
+      .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {

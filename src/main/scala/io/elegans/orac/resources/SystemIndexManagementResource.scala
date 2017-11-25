@@ -26,10 +26,10 @@ trait SystemIndexManagementResource extends MyResource {
 
       pathEnd {
         get {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.read)) {
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
               onCompleteWithBreaker(breaker)(systemIndexManagementService.get_indices) {
                 case Success(t) =>
@@ -48,7 +48,7 @@ trait SystemIndexManagementResource extends MyResource {
   def systemIndexManagementRoutes: Route = pathPrefix("system_index_management") {
     path(Segment) { operation: String =>
       post {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -86,7 +86,7 @@ trait SystemIndexManagementResource extends MyResource {
     } ~
       pathEnd {
         get {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -104,7 +104,7 @@ trait SystemIndexManagementResource extends MyResource {
           }
         } ~
           delete {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -122,7 +122,7 @@ trait SystemIndexManagementResource extends MyResource {
             }
           } ~
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {

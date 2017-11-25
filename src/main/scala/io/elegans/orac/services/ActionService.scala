@@ -78,6 +78,7 @@ object ActionService {
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.action_index_suffix)
+      .setCreate(true)
       .setId(id)
       .setSource(builder).get()
 

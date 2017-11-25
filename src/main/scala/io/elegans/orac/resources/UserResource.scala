@@ -21,7 +21,7 @@ trait UserResource extends MyResource {
 
   def postUserRoutes: Route = pathPrefix("user") {
     post {
-      authenticateBasicPFAsync(realm = auth_realm,
+      authenticateBasicAsync(realm = auth_realm,
         authenticator = authenticator.authenticator) { user =>
         authorizeAsync(_ =>
           authenticator.hasPermissions(user, "admin", Permissions.admin))
@@ -46,7 +46,7 @@ trait UserResource extends MyResource {
   def putUserRoutes: Route = pathPrefix("user") {
     path(Segment) { id =>
       put {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -72,7 +72,7 @@ trait UserResource extends MyResource {
   def deleteUserRoutes: Route = pathPrefix("user") {
     path(Segment) { id =>
       delete {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -95,7 +95,7 @@ trait UserResource extends MyResource {
   def getUserRoutes: Route = pathPrefix("user") {
     path(Segment) { id =>
       get {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -118,7 +118,7 @@ trait UserResource extends MyResource {
   def genUserRoutes: Route = pathPrefix("user_gen") {
     path(Segment) { id =>
       post {
-        authenticateBasicPFAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = auth_realm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {

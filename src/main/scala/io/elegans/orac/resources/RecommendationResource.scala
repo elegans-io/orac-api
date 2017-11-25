@@ -26,10 +26,10 @@ trait RecommendationResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "recommendation") { index_name =>
     pathEnd {
         post {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create_recomm)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Recommendation]) { document =>
@@ -54,10 +54,10 @@ trait RecommendationResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read_recomm)) {
                 extractMethod { method =>
                   parameters("ids".as[String].*) { ids =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -82,10 +82,10 @@ trait RecommendationResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicPFAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.update_recomm)) {
                 extractMethod { method =>
                   entity(as[UpdateRecommendation]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
@@ -110,10 +110,10 @@ trait RecommendationResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicPFAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.delete_recomm)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -144,10 +144,10 @@ trait RecommendationResource extends MyResource {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """user_recommendation""") { index_name =>
       path(Segment) { id =>
         get {
-          authenticateBasicPFAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.read)) {
+              authenticator.hasPermissions(user, index_name, Permissions.read_recomm)) {
               extractMethod { method =>
                 parameters("from".as[Int] ? 0, "to".as[Int] ? 10) { (from, to) =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
