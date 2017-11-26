@@ -26,7 +26,7 @@ services:
       options:
         max-size: "100m"
         max-file: "10"
-    command: ["/orac/scripts/utils/wait-for-it.sh", "orac-elasticsearch", "9200", "10", "/orac/bin/orac-apis"]
+    command: ["/orac/scripts/utils/wait-for-it.sh", "orac-elasticsearch", "9200", "10", "/orac/bin/orac-api"]
     volumes:
       - ./orac:/orac
     ports:

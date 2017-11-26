@@ -1,7 +1,7 @@
 import NativePackagerHelper._
 import com.typesafe.sbt.packager.docker._
 
-name := "Orac APIs"
+name := "Orac API"
 
 organization := "io.elegans"
 
