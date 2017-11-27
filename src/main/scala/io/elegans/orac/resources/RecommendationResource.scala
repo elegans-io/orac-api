@@ -149,10 +149,10 @@ trait RecommendationResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.read_recomm)) {
               extractMethod { method =>
-                parameters("from".as[Int] ? 0, "to".as[Int] ? 10) { (from, to) =>
+                parameters("from".as[Int] ? 0, "size".as[Int] ? 10) { (from, size) =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(
-                    recommendationService.getRecommendationsByUser(index_name, user.id, id, from, to)) {
+                    recommendationService.getRecommendationsByUser(index_name, user.id, id, from, size)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t

@@ -229,7 +229,7 @@ object RecommendationService {
     recommendations
   }
 
-  def getRecommendationsByUser(index_name: String, access_user_id: String, id: String, from: Int = 0, to: Int = 10):
+  def getRecommendationsByUser(index_name: String, access_user_id: String, id: String, from: Int = 0, size: Int = 10):
   Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
@@ -242,7 +242,7 @@ object RecommendationService {
     search_builder.setQuery(bool_query_builder)
 
     val search_response : SearchResponse = search_builder
-      .setFrom(from).setSize(to)
+      .setFrom(from).setSize(size)
       .execute()
       .actionGet()
 

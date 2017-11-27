@@ -124,8 +124,6 @@ object SystemIndexManagementService {
   }
 
   def refresh_indexes() : Future[Option[RefreshIndexResults]] = Future {
-    val client: TransportClient = elastic_client.get_client()
-
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
       val full_index_name = elastic_client.index_name + "." + item.index_suffix
       val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
@@ -141,7 +139,7 @@ object SystemIndexManagementService {
   }
 
   def get_indices: Future[List[String]] = Future {
-    val indices_res = elastic_client.get_client
+    val indices_res = elastic_client.get_client()
       .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
     indices_res.map(x => x.key).toList
   }
