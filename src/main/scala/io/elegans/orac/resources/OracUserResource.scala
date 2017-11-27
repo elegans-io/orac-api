@@ -10,6 +10,8 @@ import io.elegans.orac.routing._
 import io.elegans.orac.services.OracUserService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
+import org.elasticsearch.index.engine.VersionConflictEngineException
+
 import scala.util.{Failure, Success}
 
 
@@ -34,13 +36,16 @@ trait OracUserResource extends MyResource {
                         completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
                           t
                         })
-                      case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                          "method=" + method.toString + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 100, message = e.getMessage)
-                          })
+                      case Failure(e) => e match {
+                        case vcee: VersionConflictEngineException =>
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                            "method=" + method.toString + " : " + e.getMessage)
+                          completeResponse(StatusCodes.Conflict, Option.empty[String])
+                        case e: Exception =>
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                            "method=" + method.toString + " : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                      }
                     }
                   }
                 }

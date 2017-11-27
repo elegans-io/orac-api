@@ -4,7 +4,7 @@ import java.time.Instant
 
 object Time {
 
-  def getTimestampEpoc(): Long = {
+  def getTimestampEpoc: Long = {
     Instant.now.getEpochSecond
   }
 }

@@ -9,8 +9,10 @@ import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import akka.http.scaladsl.model.StatusCodes
 import io.elegans.orac.services.SystemIndexManagementService
+
 import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
+import org.elasticsearch.index.engine.VersionConflictEngineException
 
 trait SystemIndexManagementResource extends MyResource {
 
@@ -47,33 +49,43 @@ trait SystemIndexManagementResource extends MyResource {
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            operation match {
-              case "refresh" =>
-                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(systemIndexManagementService.refresh_indexes()) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                    t
-                  })
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      IndexManagementResponse(message = e.getMessage)
+            extractMethod { method =>
+              operation match {
+                case "refresh" =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(systemIndexManagementService.refresh_indexes()) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
                     })
-                }
-              case "create" =>
-                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(systemIndexManagementService.create_index()) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                    t
-                  })
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      IndexManagementResponse(message = e.getMessage)
+                    case Failure(e) => e match {
+                      case vcee: VersionConflictEngineException =>
+                        log.error(this.getClass.getCanonicalName + " " +
+                          "method=" + method.toString + " : " + e.getMessage)
+                        completeResponse(StatusCodes.Conflict, Option.empty[String])
+                      case e: Exception =>
+                        log.error(this.getClass.getCanonicalName + " " +
+                          "method=" + method.toString + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest, Option {
+                          IndexManagementResponse(message = e.getMessage)
+                        })
+                    }
+                  }
+                case "create" =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(systemIndexManagementService.create_index()) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
                     })
-                }
-              case _ => completeResponse(StatusCodes.BadRequest,
-                Option {
-                  IndexManagementResponse(message = "index(system) Operation not supported: " + operation)
-                })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
+                case _ => completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    IndexManagementResponse(message = "index(system) Operation not supported: " + operation)
+                  })
+              }
             }
           }
         }

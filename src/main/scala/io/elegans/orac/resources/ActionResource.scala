@@ -8,10 +8,11 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
-import io.elegans.orac.services.{ActionService}
+import io.elegans.orac.services.ActionService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import io.elegans.orac.OracActorSystem
+import org.elasticsearch.index.engine.VersionConflictEngineException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -36,10 +37,16 @@ trait ActionResource extends MyResource {
                     onCompleteWithBreaker(breaker)(actionService.create(index_name, user.id, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option.empty[String])
-                      case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                      case Failure(e) => e match {
+                        case vcee: VersionConflictEngineException =>
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
                           "method=" + method.toString + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                          completeResponse(StatusCodes.Conflict, Option.empty[String])
+                        case e: Exception =>
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                            "method=" + method.toString + " : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                      }
                     }
                   }
                 }

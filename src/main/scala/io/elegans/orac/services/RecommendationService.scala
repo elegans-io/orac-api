@@ -205,7 +205,7 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{ Time.getTimestampEpoc() }
+      val access_timestamp: Option[Long] = Option{ Time.getTimestampEpoc }
 
       val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },
@@ -282,7 +282,7 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc()}
+      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
 
       val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },
