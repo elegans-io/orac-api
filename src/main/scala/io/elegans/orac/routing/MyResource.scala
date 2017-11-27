@@ -1,16 +1,14 @@
 package io.elegans.orac.routing
 
-import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
-import akka.http.scaladsl.marshalling.{ToEntityMarshaller, ToResponseMarshallable}
+import akka.http.scaladsl.marshalling.{ToEntityMarshaller}
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.http.scaladsl.server.{Directives, Route}
+import scala.concurrent.{ExecutionContext}
+import akka.http.scaladsl.server.{Directives}
 import io.elegans.orac.serializers.JsonSupport
-import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.{Route, ValidationRejection}
+import akka.http.scaladsl.server.{Route}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.routing.auth.{AuthenticatorFactory, OracAuthenticator, SupportedAuthImpl}
 import com.typesafe.config.Config

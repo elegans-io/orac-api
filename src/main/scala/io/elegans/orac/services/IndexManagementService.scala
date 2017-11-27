@@ -4,9 +4,9 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import io.elegans.orac.entities.{IndexManagementResponse, _}
+import io.elegans.orac.entities._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings._
 
@@ -18,7 +18,6 @@ import io.elegans.orac.OracActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.common.xcontent.XContentType
-import com.roundeights.hasher.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

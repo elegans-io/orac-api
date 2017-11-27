@@ -4,39 +4,23 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 10/11/17.
   */
 
-import java.util
-
-import akka.actor.ActorSystem
 import io.elegans.orac.entities._
-
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Future}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.index.IndexResponse
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.elasticsearch.action.delete.{DeleteResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
-import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.unit._
-
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
-
-import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
 import io.elegans.orac.OracActorSystem
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
-import org.apache.lucene.search.join._
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.mutable
 import io.elegans.orac.tools.{Checksum, Time}
 
 /**

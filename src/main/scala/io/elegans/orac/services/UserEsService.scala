@@ -4,18 +4,12 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.entities._
 import io.elegans.orac.routing.auth.{AuthenticatorException, OracAuthenticator, UserService}
 import io.elegans.orac.OracActorSystem
-import com.roundeights.hasher.Implicits._
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import java.io._
 import javax.naming.AuthenticationException
 
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
@@ -23,21 +17,12 @@ import org.elasticsearch.action.get.GetRequestBuilder
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-import org.elasticsearch.common.unit._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.common.xcontent.XContentType
-import org.elasticsearch.index.query.{BoolQueryBuilder, InnerHitBuilder, QueryBuilder, QueryBuilders}
-import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.rest.RestStatus
-import org.elasticsearch.search.SearchHit
-
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management

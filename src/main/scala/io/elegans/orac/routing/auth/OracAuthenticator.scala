@@ -1,7 +1,6 @@
 package io.elegans.orac.routing.auth
 
 import akka.http.scaladsl.server.directives.Credentials
-import akka.http.scaladsl.server.directives.SecurityDirectives._
 
 import scala.concurrent.Future
 import io.elegans.orac.entities.{Permissions, User}

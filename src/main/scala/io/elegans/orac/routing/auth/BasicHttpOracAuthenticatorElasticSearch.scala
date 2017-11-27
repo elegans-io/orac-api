@@ -1,19 +1,15 @@
 package io.elegans.orac.routing.auth
 
 import akka.http.scaladsl.server.directives.Credentials
-import akka.http.scaladsl.server.directives.SecurityDirectives._
 import com.roundeights.hasher.Implicits._
 import com.typesafe.config.{Config, ConfigFactory}
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import io.elegans.orac.entities.{User, Permissions}
-import scala.concurrent.ExecutionContext.Implicits.global
 import akka.event.{Logging, LoggingAdapter}
-import akka.event.Logging._
 import io.elegans.orac.OracActorSystem
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BasicHttpOracAuthenticatorElasticSearch extends OracAuthenticator {
   val config: Config = ConfigFactory.load()

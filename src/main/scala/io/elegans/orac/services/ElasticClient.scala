@@ -13,13 +13,9 @@ import org.elasticsearch.common.settings.Settings
 import java.net.InetAddress
 
 import org.elasticsearch.common.transport.TransportAddress
-import org.elasticsearch.rest.RestStatus
-
 import scala.collection.immutable.{List, Map}
 import scala.collection.JavaConverters._
-
 import io.elegans.orac.entities._
-import org.apache.http.HttpHost
 
 
 trait ElasticClient {

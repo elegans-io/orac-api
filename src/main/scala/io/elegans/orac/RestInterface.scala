@@ -5,7 +5,6 @@ package io.elegans.orac
   */
 
 import scala.concurrent.ExecutionContext
-import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.resources._
 import io.elegans.orac.services._

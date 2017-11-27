@@ -5,20 +5,12 @@ package io.elegans.orac
   */
 
 import scala.concurrent.duration._
-import akka.actor._
-import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import java.io.InputStream
 import java.security.{ SecureRandom, KeyStore }
 import javax.net.ssl.{ SSLContext, TrustManagerFactory, KeyManagerFactory }
-
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{ Route, Directives }
 import akka.http.scaladsl.{ ConnectionContext, HttpsConnectionContext, Http }
 import akka.stream.ActorMaterializer
-import com.typesafe.sslconfig.akka.AkkaSSLConfig
-import com.typesafe.config.ConfigFactory
 
 case class Parameters(
                        http_enable: Boolean,

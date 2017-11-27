@@ -4,14 +4,12 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 20/12/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Future}
 import akka.http.scaladsl.model.StatusCodes
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
 
 

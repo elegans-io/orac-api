@@ -1,13 +1,8 @@
 package io.elegans.orac.routing
 
-import akka.event.LoggingAdapter
-import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import io.elegans.orac.OracActorSystem
-
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object OracCircuitBreaker {

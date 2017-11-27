@@ -6,10 +6,8 @@ package io.elegans.orac.services
 
 import io.elegans.orac.entities.{IndexManagementResponse, _}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future}
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings._
-
 import scala.io.Source
 import java.io._
 import scala.collection.JavaConverters._
@@ -19,7 +17,6 @@ import io.elegans.orac.OracActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import org.elasticsearch.common.xcontent.XContentType
-import com.roundeights.hasher.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
