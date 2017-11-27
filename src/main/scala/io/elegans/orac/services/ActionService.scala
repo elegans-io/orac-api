@@ -38,10 +38,10 @@ object ActionService {
   def create(index_name: String, creator_user_id: String, document: Action, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
+    val timestamp: Long = Time.getTimestampMillis
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + document))
-
-    val timestamp: Long = Time.getTimestampEpoc
+      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + timestamp +
+        RandomNumbers.getLong))
 
     builder.field("id", id)
     builder.field("name", document.name)
@@ -53,11 +53,9 @@ object ActionService {
     if(document.ref_url.isDefined) {
       builder.field("ref_url", document.ref_url.get)
     }
-
     if (document.ref_recommendation.isDefined) {
       builder.field("ref_recommendation", document.ref_recommendation.get)
     }
-
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
@@ -202,7 +200,7 @@ object ActionService {
       }
 
       val timestamp : Option[Long] = source.get("timestamp") match {
-        case Some(t) => Option{ t.asInstanceOf[Integer].longValue() }
+        case Some(t) => Option{ t.asInstanceOf[Long] }
         case None => Option{0}
       }
 

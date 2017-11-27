@@ -10,8 +10,8 @@ curl -v -H "Authorization: Basic `echo -n 'admin:adminp4ssw0rd' | base64`" \
           "generation_batch" : "test",
           "user_id" : "d290f1ee-6c54-4b01-90e6-d701748f0851",
           "item_id" : "d290f1ee-6c54-4b01-90e6-d701748f0851",
-          "generation_timestamp" : 1509460536,
-          "access_timestamp" : 1511619954,
+          "generation_timestamp" : 1509460536000,
+          "access_timestamp" : 1511619954000,
           "score" : 2.3232
 }'
 

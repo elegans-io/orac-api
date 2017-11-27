@@ -9,6 +9,7 @@
         },
         "birthdate": {
           "type": "date",
+          "format": "epoch_millis",
           "store": true,
           "index": true
         },

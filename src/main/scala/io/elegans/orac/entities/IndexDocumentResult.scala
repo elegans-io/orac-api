@@ -8,5 +8,3 @@ case class IndexDocumentResult(id: String,
                     version: Long,
                     created: Boolean
                    )
-
-case class IndexDocumentListResult(data: List[IndexDocumentResult])

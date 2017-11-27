@@ -38,9 +38,13 @@ object RecommendationService {
   def create(index_name: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + document.generation_timestamp))
+      .getOrElse(Checksum.sha512(document.item_id +
+        document.user_id + document.name +
+        document.generation_batch +
+        document.score +
+        document.generation_timestamp + RandomNumbers.getLong))
+
     builder.field("id", id)
     builder.field("name", document.name)
     builder.field("user_id", document.user_id)
@@ -192,7 +196,7 @@ object RecommendationService {
       }
 
       val generation_timestamp : Long = source.get("generation_timestamp") match {
-        case Some(t) => t.asInstanceOf[Integer].longValue()
+        case Some(t) => t.asInstanceOf[Long]
         case None => 0
       }
 
@@ -205,7 +209,7 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{ Time.getTimestampEpoc }
+      val access_timestamp: Option[Long] = Option{ Time.getTimestampMillis }
 
       val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },
@@ -269,7 +273,7 @@ object RecommendationService {
       }
 
       val generation_timestamp : Long = source.get("generation_timestamp") match {
-        case Some(t) => t.asInstanceOf[Integer].longValue
+        case Some(t) => t.asInstanceOf[Long]
         case None => 0
       }
 
@@ -282,7 +286,7 @@ object RecommendationService {
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{Time.getTimestampEpoc}
+      val access_timestamp: Option[Long] = Option{Time.getTimestampMillis}
 
       val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },

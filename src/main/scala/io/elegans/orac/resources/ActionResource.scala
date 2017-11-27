@@ -12,7 +12,7 @@ import io.elegans.orac.services.ActionService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import io.elegans.orac.OracActorSystem
-import org.elasticsearch.index.engine.VersionConflictEngineException
+import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -36,11 +36,11 @@ trait ActionResource extends MyResource {
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(actionService.create(index_name, user.id, document, refresh)) {
                       case Success(t) =>
-                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option.empty[String])
+                        completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                          "method=" + method.toString + " : " + e.getMessage)
+                          "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
@@ -96,13 +96,16 @@ trait ActionResource extends MyResource {
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                             t
                           })
-                        case Failure(e) =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                            "method=" + method.toString + " : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 104, message = e.getMessage)
-                            })
+                        case Failure(e) => e match {
+                          case dme: DocumentMissingException =>
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                              "method=" + method.toString + " : " + dme.getMessage)
+                            completeResponse(StatusCodes.NotFound, Option.empty[String])
+                          case e: Exception =>
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                              "method=" + method.toString + " : " + e.getMessage)
+                            completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                        }
                       }
                     }
                   }

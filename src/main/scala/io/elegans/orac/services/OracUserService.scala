@@ -240,7 +240,7 @@ object OracUserService {
       }
 
       val birthdate : Option[Long] = source.get("birthdate") match {
-        case Some(t) => Option{ t.asInstanceOf[Integer].longValue() }
+        case Some(t) => Option{ t.asInstanceOf[Long] }
         case None => Option.empty[Long]
       }
 

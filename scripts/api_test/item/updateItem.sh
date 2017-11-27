@@ -39,7 +39,7 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
     "timestamp": [
       {
         "key": "release_date",
-        "value": 1509461177
+        "value": 1509461177000
       }
     ]
   }

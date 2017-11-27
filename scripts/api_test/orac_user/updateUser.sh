@@ -5,7 +5,7 @@ INDEX_NAME=${2:-index_0}
 curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
   -H "Content-Type: application/json" -X PUT http://localhost:${PORT}/${INDEX_NAME}/orac_user/d290f1ee-6c54-4b01-90e6-d701748f0851 -d'
 {
-  "birthdate": 1509460536,
+  "birthdate": 1509460536000,
   "birthplace": {"lat": 30.0, "lon": 40.0},
   "livingplace": {"lat": 41.589, "lon": 18.59},
   "name": "Mario Rossi",

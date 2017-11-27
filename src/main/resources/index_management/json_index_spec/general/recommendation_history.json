@@ -39,7 +39,7 @@
         },
         "generation_timestamp": {
           "type": "date",
-          "format": "epoch_second",
+          "format": "epoch_millis",
           "store": true,
           "index": true
         },
@@ -50,7 +50,7 @@
         },
         "access_timestamp": {
           "type": "date",
-          "format": "epoch_second",
+          "format": "epoch_millis",
           "store": true,
           "index": true
         }

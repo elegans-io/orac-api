@@ -301,7 +301,7 @@ object ItemService {
           val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
             .asScala.map( x => {
             val key = x.getOrDefault("key", null).asInstanceOf[String]
-            val value = x.getOrDefault("value", null).asInstanceOf[Integer].longValue()
+            val value = x.getOrDefault("value", null).asInstanceOf[Long]
             TimestampProperties(key = key, value = value)
           }).filter(_.key != null).toList
           Option { properties }

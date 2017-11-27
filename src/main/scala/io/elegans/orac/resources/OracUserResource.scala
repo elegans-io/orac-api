@@ -10,7 +10,7 @@ import io.elegans.orac.routing._
 import io.elegans.orac.services.OracUserService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
-import org.elasticsearch.index.engine.VersionConflictEngineException
+import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 import scala.util.{Failure, Success}
 
@@ -39,7 +39,7 @@ trait OracUserResource extends MyResource {
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                            "method=" + method.toString + " : " + e.getMessage)
+                            "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
@@ -78,38 +78,39 @@ trait OracUserResource extends MyResource {
                 }
               }
             }
-          }
-      } ~
-        path(Segment) { id =>
-          put {
-            authenticateBasicAsync(realm = auth_realm,
-              authenticator = authenticator.authenticator) { user =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.update_orac_user)) {
-                extractMethod { method =>
-                  entity(as[UpdateOracUser]) { update =>
-                    parameters("refresh".as[Int] ? 0) { refresh =>
-                      val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(oracUserService.update(index_name, id, update, refresh)) {
-                        case Success(t) =>
-                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                            t
-                          })
-                        case Failure(e) =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                            "method=" + method.toString + " : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 104, message = e.getMessage)
+          } ~
+          path(Segment) { id =>
+            put {
+              authenticateBasicAsync(realm = auth_realm,
+                authenticator = authenticator.authenticator) { user =>
+                authorizeAsync(_ =>
+                  authenticator.hasPermissions(user, index_name, Permissions.update_orac_user)) {
+                  extractMethod { method =>
+                    entity(as[UpdateOracUser]) { update =>
+                      parameters("refresh".as[Int] ? 0) { refresh =>
+                        val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                        onCompleteWithBreaker(breaker)(oracUserService.update(index_name, id, update, refresh)) {
+                          case Success(t) =>
+                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                              t
                             })
+                          case Failure(e) => e match {
+                            case dme: DocumentMissingException =>
+                              log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                                "method=" + method.toString + " : " + dme.getMessage)
+                              completeResponse(StatusCodes.NotFound, Option.empty[String])
+                            case e: Exception =>
+                              log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                                "method=" + method.toString + " : " + e.getMessage)
+                              completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                          }
+                        }
                       }
                     }
                   }
                 }
               }
-            }
-          } ~
-            delete {
+            } ~ delete {
               authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
@@ -137,7 +138,7 @@ trait OracUserResource extends MyResource {
                 }
               }
             }
-        }
+          }
+      }
     }
 }
-

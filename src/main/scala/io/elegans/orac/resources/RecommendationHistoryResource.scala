@@ -40,7 +40,7 @@ trait RecommendationHistoryResource extends MyResource {
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                            "method=" + method.toString + " : " + e.getMessage)
+                            "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +

@@ -9,7 +9,7 @@ curl -v -H "Authorization: Basic `echo -n 'admin:adminp4ssw0rd' | base64`" \
   "item_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
   "generation_batch": "test",
   "name": "like",
-  "generation_timestamp": 1509460536,
+  "generation_timestamp": 1509460536000,
   "score": 1.3232
 }' 
 
@@ -20,7 +20,7 @@ curl -v -H "Authorization: Basic `echo -n 'admin:adminp4ssw0rd' | base64`" \
 #  "user_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
 #  "item_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
 #  "name": "like",
-#  "generation_timestamp": 1509460536,
+#  "generation_timestamp": 1509460536000,
 #  "score": 1.3232
 #}' 
 

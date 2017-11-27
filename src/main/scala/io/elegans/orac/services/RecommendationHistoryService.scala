@@ -36,7 +36,7 @@ object RecommendationHistoryService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
 
-    val access_timestamp: Long = document.access_timestamp.getOrElse(Time.getTimestampEpoc)
+    val access_timestamp: Long = document.access_timestamp.getOrElse(Time.getTimestampMillis)
 
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name +
@@ -226,12 +226,12 @@ object RecommendationHistoryService {
       }
 
       val generation_timestamp : Long = source.get("generation_timestamp") match {
-        case Some(t) => t.asInstanceOf[Integer].longValue()
+        case Some(t) => t.asInstanceOf[Long].longValue()
         case None => 0
       }
 
       val access_timestamp : Option[Long] = source.get("access_timestamp") match {
-        case Some(t) => Option{ t.asInstanceOf[Integer].longValue() }
+        case Some(t) => Option{ t.asInstanceOf[Long].longValue() }
         case None => Option { 0 }
       }
 
