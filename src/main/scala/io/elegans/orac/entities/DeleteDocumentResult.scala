@@ -9,4 +9,3 @@ case class DeleteDocumentResult(id: String,
                                 found: Boolean
                                )
 
-  

@@ -85,21 +85,70 @@ trait UserResource extends MyResource {
     }
   }
 
-    def deleteUserRoutes: Route = pathPrefix("user") {
-      path(Segment) { id =>
-        delete {
-          authenticateBasicAsync(realm = auth_realm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+  def deleteUserRoutes: Route = pathPrefix("user") {
+    path(Segment) { id =>
+      delete {
+        authenticateBasicAsync(realm = auth_realm,
+          authenticator = authenticator.authenticator) { user =>
+          authorizeAsync(_ =>
+            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+            val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(userService.delete(id)) {
+              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                t
+              })
+              case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                Option {
+                  ReturnMessageData(code = 102, message = e.getMessage)
+                })
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def getUserRoutes: Route = pathPrefix("user") {
+    path(Segment) { id =>
+      get {
+        authenticateBasicAsync(realm = auth_realm,
+          authenticator = authenticator.authenticator) { user =>
+          authorizeAsync(_ =>
+            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+            val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+            onCompleteWithBreaker(breaker)(userService.read(id)) {
+              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                t
+              })
+              case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                Option {
+                  ReturnMessageData(code = 103, message = e.getMessage)
+                })
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def genUserRoutes: Route = pathPrefix("user_gen") {
+    path(Segment) { id =>
+      post {
+        authenticateBasicAsync(realm = auth_realm,
+          authenticator = authenticator.authenticator) { user =>
+          authorizeAsync(_ =>
+            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+            entity(as[UserUpdate]) { user_entity =>
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.delete(id)) {
+              onCompleteWithBreaker(breaker)(Future {
+                userService.genUser(id, user_entity, authenticator)
+              }) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option {
-                    ReturnMessageData(code = 102, message = e.getMessage)
+                    ReturnMessageData(code = 104, message = e.getMessage)
                   })
               }
             }
@@ -107,54 +156,5 @@ trait UserResource extends MyResource {
         }
       }
     }
-
-    def getUserRoutes: Route = pathPrefix("user") {
-      path(Segment) { id =>
-        get {
-          authenticateBasicAsync(realm = auth_realm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-              val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.read(id)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                  Option {
-                    ReturnMessageData(code = 103, message = e.getMessage)
-                  })
-              }
-            }
-          }
-        }
-      }
-    }
-
-    def genUserRoutes: Route = pathPrefix("user_gen") {
-      path(Segment) { id =>
-        post {
-          authenticateBasicAsync(realm = auth_realm,
-            authenticator = authenticator.authenticator) { user =>
-            authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-              entity(as[UserUpdate]) { user_entity =>
-                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(Future {
-                  userService.genUser(id, user_entity, authenticator)
-                }) {
-                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                    t
-                  })
-                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                    Option {
-                      ReturnMessageData(code = 104, message = e.getMessage)
-                    })
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  }
 }

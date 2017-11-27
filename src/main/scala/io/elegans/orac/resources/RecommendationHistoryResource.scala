@@ -60,9 +60,9 @@ trait RecommendationHistoryResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.admin)) {
                 extractMethod { method =>
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(recommendationHistoryService.read(index_name, ids.toList)) {
+                    onCompleteWithBreaker(breaker)(recommendationHistoryService.read(index_name, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t

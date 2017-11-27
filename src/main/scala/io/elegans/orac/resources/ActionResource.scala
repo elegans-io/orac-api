@@ -60,9 +60,9 @@ trait ActionResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read_action)) {
                 extractMethod { method =>
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(actionService.read(index_name, ids.toList)) {
+                    onCompleteWithBreaker(breaker)(actionService.read(index_name, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t

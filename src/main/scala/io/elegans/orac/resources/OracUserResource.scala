@@ -59,9 +59,9 @@ trait OracUserResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.read_orac_user)) {
                 extractMethod { method =>
-                  parameters("ids".as[String].*) { ids =>
+                  parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(oracUserService.read(index_name, ids.toList)) {
+                    onCompleteWithBreaker(breaker)(oracUserService.read(index_name, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
