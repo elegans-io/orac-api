@@ -2,7 +2,17 @@
   "mappings": {
     "action": {
       "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
         "user_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "creator_uid": {
           "type": "keyword",
           "store": true,
           "index": true

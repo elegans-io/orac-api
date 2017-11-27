@@ -4,13 +4,18 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.{ActionService}
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
-import scala.util.{Failure, Success}
+import io.elegans.orac.OracActorSystem
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 
 trait ActionResource extends MyResource {
 
@@ -30,16 +35,11 @@ trait ActionResource extends MyResource {
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(actionService.create(index_name, user.id, document, refresh)) {
                       case Success(t) =>
-                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
-                          t
-                        })
+                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option.empty[String])
                       case Failure(e) =>
                         log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
                           "method=" + method.toString + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 100, message = e.getMessage)
-                          })
+                        completeResponse(StatusCodes.BadRequest, Option.empty[String])
                     }
                   }
                 }

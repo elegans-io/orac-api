@@ -40,14 +40,14 @@ object ActionService {
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + document))
 
-    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampEpoc)
+    val timestamp: Long = Time.getTimestampEpoc
 
     builder.field("id", id)
     builder.field("name", document.name)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
     builder.field("timestamp", timestamp)
-    builder.field("creator_uid", document.creator_uid)
+    builder.field("creator_uid", creator_user_id)
 
     if(document.ref_url.isDefined) {
       builder.field("ref_url", document.ref_url.get)
@@ -205,9 +205,9 @@ object ActionService {
         case None => Option{0}
       }
 
-      val creator_uid : String = source.get("creator_uid") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val creator_uid : Option[String] = source.get("creator_uid") match {
+        case Some(t) => Option{t.asInstanceOf[String]}
+        case None => Option{""}
       }
 
       val ref_url : Option[String] = source.get("ref_url") match {
