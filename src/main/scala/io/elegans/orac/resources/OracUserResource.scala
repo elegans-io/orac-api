@@ -52,93 +52,92 @@ trait OracUserResource extends MyResource {
               }
             }
           }
-        } ~
-          get {
-            authenticateBasicAsync(realm = auth_realm,
-              authenticator = authenticator.authenticator) { user =>
-              authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read_orac_user)) {
-                extractMethod { method =>
-                  parameters("id".as[String].*) { id =>
-                    val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(oracUserService.read(index_name, id.toList)) {
-                      case Success(t) =>
-                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                          t
+        } ~ get {
+          authenticateBasicAsync(realm = auth_realm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, index_name, Permissions.read_orac_user)) {
+              extractMethod { method =>
+                parameters("id".as[String].*) { id =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(oracUserService.read(index_name, id.toList)) {
+                    case Success(t) =>
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                        t
+                      })
+                    case Failure(e) =>
+                      log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                        "method=" + method.toString + " : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 101, message = e.getMessage)
                         })
-                      case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                          "method=" + method.toString + " : " + e.getMessage)
-                        completeResponse(StatusCodes.BadRequest,
-                          Option {
-                            ReturnMessageData(code = 101, message = e.getMessage)
-                          })
-                    }
                   }
                 }
               }
             }
-          } ~
-          path(Segment) { id =>
-            put {
-              authenticateBasicAsync(realm = auth_realm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.update_orac_user)) {
-                  extractMethod { method =>
-                    entity(as[UpdateOracUser]) { update =>
-                      parameters("refresh".as[Int] ? 0) { refresh =>
-                        val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                        onCompleteWithBreaker(breaker)(oracUserService.update(index_name, id, update, refresh)) {
-                          case Success(t) =>
-                            completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                              t
-                            })
-                          case Failure(e) => e match {
-                            case dme: DocumentMissingException =>
-                              log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                                "method=" + method.toString + " : " + dme.getMessage)
-                              completeResponse(StatusCodes.NotFound, Option.empty[String])
-                            case e: Exception =>
-                              log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                                "method=" + method.toString + " : " + e.getMessage)
-                              completeResponse(StatusCodes.BadRequest, Option.empty[String])
-                          }
+          }
+        }
+      } ~
+        path(Segment) { id =>
+          put {
+            authenticateBasicAsync(realm = auth_realm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, index_name, Permissions.update_orac_user)) {
+                extractMethod { method =>
+                  entity(as[UpdateOracUser]) { update =>
+                    parameters("refresh".as[Int] ? 0) { refresh =>
+                      val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                      onCompleteWithBreaker(breaker)(oracUserService.update(index_name, id, update, refresh)) {
+                        case Success(t) =>
+                          completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                            t
+                          })
+                        case Failure(e) => e match {
+                          case dme: DocumentMissingException =>
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                              "method=" + method.toString + " : " + dme.getMessage)
+                            completeResponse(StatusCodes.NotFound, Option.empty[String])
+                          case e: Exception =>
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                              "method=" + method.toString + " : " + e.getMessage)
+                            completeResponse(StatusCodes.BadRequest, Option.empty[String])
                         }
                       }
                     }
                   }
                 }
               }
-            } ~ delete {
-              authenticateBasicAsync(realm = auth_realm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.delete_orac_user)) {
-                  extractMethod { method =>
-                    parameters("refresh".as[Int] ? 0) { refresh =>
-                      val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(oracUserService.delete(index_name, id, refresh)) {
-                        case Success(t) =>
-                          if (t.isDefined) {
-                            completeResponse(StatusCodes.OK, t)
-                          } else {
-                            completeResponse(StatusCodes.BadRequest, t)
-                          }
-                        case Failure(e) =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
-                            "method=" + method.toString + " : " + e.getMessage)
-                          completeResponse(StatusCodes.BadRequest,
-                            Option {
-                              ReturnMessageData(code = 105, message = e.getMessage)
-                            })
-                      }
+            }
+          } ~ delete {
+            authenticateBasicAsync(realm = auth_realm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, index_name, Permissions.delete_orac_user)) {
+                extractMethod { method =>
+                  parameters("refresh".as[Int] ? 0) { refresh =>
+                    val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(oracUserService.delete(index_name, id, refresh)) {
+                      case Success(t) =>
+                        if (t.isDefined) {
+                          completeResponse(StatusCodes.OK, t)
+                        } else {
+                          completeResponse(StatusCodes.BadRequest, t)
+                        }
+                      case Failure(e) =>
+                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                          "method=" + method.toString + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 105, message = e.getMessage)
+                          })
                     }
                   }
                 }
               }
             }
           }
-      }
+        }
     }
 }

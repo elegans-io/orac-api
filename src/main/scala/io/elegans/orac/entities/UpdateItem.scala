@@ -8,5 +8,5 @@ case class UpdateItem (
   name: Option[String],
   `type`: Option[String],
   description: Option[String],
-  properties: Option[ItemProperties]
+  properties: Option[OracProperties]
 )

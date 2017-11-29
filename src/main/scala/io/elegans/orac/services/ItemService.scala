@@ -330,7 +330,7 @@ object ItemService {
         case None => Option.empty[List[String]]
       }
 
-      val properties: Option[ItemProperties] = Option { ItemProperties(numerical = numerical_properties,
+      val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
         string = string_properties, timestamp = timestamp_properties, geopoint = geopoint_properties,
         tags = tag_properties)
       }

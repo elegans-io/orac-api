@@ -5,18 +5,22 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
-import scala.concurrent.{Future}
+
+import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteResponse}
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+
 import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import org.elasticsearch.common.geo.GeoPoint
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -40,11 +44,6 @@ object OracUserService {
       case None => ;
     }
 
-    document.gender match {
-      case Some(t) => builder.field("gender", t)
-      case None => ;
-    }
-
     document.phone match {
       case Some(t) => builder.field("phone", t)
       case None => ;
@@ -55,29 +54,54 @@ object OracUserService {
       case None => ;
     }
 
-    document.birthdate match {
-      case Some(t) => builder.field("birthdate", t)
-      case None => ;
-    }
+    if (document.properties.isDefined) {
+      if (document.properties.get.numerical.isDefined) {
+        val properties = document.properties.get.numerical.get
+        val properties_array = builder.startArray("numerical_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.birthplace match {
-      case Some(t) => builder.startObject("birthplace").field("lat", t.lat).field("lon", t.lon).endObject()
-      case None => ;
-    }
+      if (document.properties.get.string.isDefined) {
+        val properties = document.properties.get.string.get
+        val properties_array = builder.startArray("string_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.livingplace match {
-      case Some(t) => builder.startObject("livingplace").field("lat", t.lat).field("lon", t.lon).endObject()
-      case None => ;
-    }
+      if (document.properties.get.timestamp.isDefined) {
+        val properties = document.properties.get.timestamp.get
+        val properties_array = builder.startArray("timestamp_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.tags match {
-      case Some(t) =>
+      if (document.properties.get.geopoint.isDefined) {
+        val properties = document.properties.get.geopoint.get
+        val properties_array = builder.startArray("geopoint_properties")
+        properties.foreach(e => {
+          val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
+          val geopoint =
+            properties_array.startObject.field("key", e.key)
+              .field("value", geopoint_value).endObject()
+        })
+        properties_array.endArray()
+      }
+
+      if (document.properties.get.tags.isDefined) {
+        val properties = document.properties.get.tags.get
         val properties_array = builder.startArray("tag_properties")
-        document.tags.get.foreach(e => {
+        properties.foreach(e => {
           properties_array.value(e)
         })
         properties_array.endArray()
-      case None => ;
+      }
     }
 
     builder.endObject()
@@ -112,11 +136,6 @@ object OracUserService {
       case None => ;
     }
 
-    document.gender match {
-      case Some(t) => builder.field("gender", t)
-      case None => ;
-    }
-
     document.email match {
       case Some(t) => builder.field("email", t)
       case None => ;
@@ -127,29 +146,54 @@ object OracUserService {
       case None => ;
     }
 
-    document.birthdate match {
-      case Some(t) => builder.field("birthdate", t)
-      case None => ;
-    }
+    if (document.properties.isDefined) {
+      if (document.properties.get.numerical.isDefined) {
+        val properties = document.properties.get.numerical.get
+        val properties_array = builder.startArray("numerical_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.birthplace match {
-      case Some(t) => builder.startObject("birthplace").field("lat", t.lat).field("lon", t.lon).endObject()
-      case None => ;
-    }
+      if (document.properties.get.string.isDefined) {
+        val properties = document.properties.get.string.get
+        val properties_array = builder.startArray("string_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.livingplace match {
-      case Some(t) => builder.startObject("livingplace").field("lat", t.lat).field("lon", t.lon).endObject()
-      case None => ;
-    }
+      if (document.properties.get.geopoint.isDefined) {
+        val properties = document.properties.get.geopoint.get
+        val properties_array = builder.startArray("geopoint_properties")
+        properties.foreach(e => {
+          val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
+          val geopoint =
+            properties_array.startObject.field("key", e.key)
+              .field("value", geopoint_value).endObject()
+        })
+        properties_array.endArray()
+      }
 
-    document.tags match {
-      case Some(t) =>
+      if (document.properties.get.timestamp.isDefined) {
+        val properties = document.properties.get.timestamp.get
+        val properties_array = builder.startArray("timestamp_properties")
+        properties.foreach(e => {
+          properties_array.startObject.field("key", e.key).field("value", e.value).endObject()
+        })
+        properties_array.endArray()
+      }
+
+      if (document.properties.get.tags.isDefined) {
+        val properties = document.properties.get.tags.get
         val properties_array = builder.startArray("tag_properties")
-        document.tags.get.foreach(e => {
+        properties.foreach(e => {
           properties_array.value(e)
         })
         properties_array.endArray()
-      case None => ;
+      }
     }
 
     builder.endObject()
@@ -224,11 +268,6 @@ object OracUserService {
         case None => Option.empty[String]
       }
 
-      val gender : Option[String] = source.get("gender") match {
-        case Some(t) => Option{ t.asInstanceOf[String] }
-        case None => Option.empty[String]
-      }
-
       val email : Option[String] = source.get("email") match {
         case Some(t) => Option { t.asInstanceOf[String] }
         case None => Option.empty[String]
@@ -239,28 +278,59 @@ object OracUserService {
         case None => Option.empty[String]
       }
 
-      val birthdate : Option[Long] = source.get("birthdate") match {
-        case Some(t) => Option{ t.asInstanceOf[Long] }
-        case None => Option.empty[Long]
-      }
+      val numerical_properties : Option[List[NumericalProperties]] =
+        source.get("numerical_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val value = x.getOrDefault("value", null).asInstanceOf[Double]
+              println(NumericalProperties(key = key, value = value))
+              NumericalProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[NumericalProperties]]
+        }
 
-      val birthplace : Option[OracGeoPoint] = source.get("birthplace") match {
-        case Some(t) =>
-          val geopoint = t.asInstanceOf[java.util.HashMap[String, Double]].asScala
-          Option {
-            OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
-          }
-        case None => Option.empty[OracGeoPoint]
-      }
+      val string_properties : Option[List[StringProperties]] =
+        source.get("string_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null)
+              val value = x.getOrDefault("value", null)
+              StringProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[StringProperties]]
+        }
 
-      val livingplace : Option[OracGeoPoint] = source.get("livingplace") match {
-        case Some(t) =>
-          val geopoint = t.asInstanceOf[java.util.HashMap[String, Double]].asScala
-          Option {
-            OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
-          }
-        case None => Option.empty[OracGeoPoint]
-      }
+      val timestamp_properties : Option[List[TimestampProperties]] =
+        source.get("timestamp_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val value = x.getOrDefault("value", null).asInstanceOf[Long]
+              TimestampProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[TimestampProperties]]
+        }
+
+      val geopoint_properties : Option[List[GeoPointProperties]] =
+        source.get("geopoint_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+              val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+              GeoPointProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[GeoPointProperties]]
+        }
 
       val tag_properties : Option[List[String]] = source.get("tag_properties") match {
         case Some(t) =>
@@ -270,9 +340,12 @@ object OracUserService {
         case None => Option.empty[List[String]]
       }
 
-      val document = OracUser(id = id, name = name, phone = phone, gender = gender,
-        email = email, birthdate = birthdate, birthplace = birthplace, livingplace = livingplace,
+      val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
+        string = string_properties, timestamp = timestamp_properties, geopoint = geopoint_properties,
         tags = tag_properties)
+      }
+
+      val document = OracUser(id = id, name = name, email = email, phone = phone, properties = properties)
       document
     }) }
 

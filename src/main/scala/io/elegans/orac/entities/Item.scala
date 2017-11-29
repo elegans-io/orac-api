@@ -9,7 +9,7 @@ case class Item (
   name: String,
   `type`: String,
   description: Option[String],
-  properties: Option[ItemProperties]
+  properties: Option[OracProperties]
 )
 
 case class Items (
