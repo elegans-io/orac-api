@@ -24,10 +24,14 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   val testAdminCredentials = BasicHttpCredentials("admin", "adminp4ssw0rd")
   val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
 
-  "StarChat" should {
+  "Orac" should {
     "return an HTTP code 200 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "(?:[A-Za-z0-9_]+)"
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "IndexCreation: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -51,6 +55,14 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
     "return an HTTP code 200 when creating a new index" in {
       Post(s"/index_0/lang_generic/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "IndexCreation: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -77,6 +89,14 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
     "return an HTTP code 200 when getting informations from the index" in {
       Get(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val response = responseAs[IndexManagementResponse]
+        response.message should fullyMatch regex "IndexCheck: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
