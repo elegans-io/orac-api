@@ -163,7 +163,8 @@ object IndexManagementService {
       val full_index_name = index_name + "." + item.index_suffix
       val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)
       if (refresh_index_res.failed_shards_n > 0) {
-        val index_refresh_message = item.index_suffix + "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
+        val index_refresh_message = item.index_suffix +
+          "(" + full_index_name + ", " + refresh_index_res.failed_shards_n + ")"
         throw new Exception(index_refresh_message)
       }
 

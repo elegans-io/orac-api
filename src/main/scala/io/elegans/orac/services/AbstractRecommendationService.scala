@@ -5,66 +5,60 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
-
-import scala.concurrent.Future
+import scala.concurrent.{Future}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.delete.{DeleteResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import scala.collection.JavaConverters._
+import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.services.RecommendationService.{elastic_client, forwardService}
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import io.elegans.orac.tools._
-import org.elasticsearch.index.engine.VersionConflictEngineException
+import io.elegans.orac.tools.{Checksum, Time}
 
 /**
-  * Implements functions, eventually used by ActionResource
+  * Implements functions, eventually used by RecommendationResource
   */
-object ActionService {
-  val elastic_client = ActionElasticClient
+abstract class AbstractUserRecommendationService {
+  val elastic_client = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
+  val recommendationHistoryService = RecommendationHistoryService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.action_index_suffix)
+    index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)
   }
 
-  def create(index_name: String, creator_user_id: String, document: Action,
-             refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = Time.getTimestampMillis
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + timestamp +
-        RandomNumbers.getLong))
+      .getOrElse(Checksum.sha512(document.item_id +
+        document.user_id + document.name +
+        document.generation_batch +
+        document.score +
+        document.generation_timestamp + RandomNumbers.getLong))
 
     builder.field("id", id)
     builder.field("name", document.name)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
-    builder.field("timestamp", timestamp)
-    builder.field("creator_uid", creator_user_id)
-
-    if(document.ref_url.isDefined) {
-      builder.field("ref_url", document.ref_url.get)
-    }
-    if (document.ref_recommendation.isDefined) {
-      builder.field("ref_recommendation", document.ref_recommendation.get)
-    }
+    builder.field("generation_batch", document.generation_batch)
+    builder.field("generation_timestamp", document.generation_timestamp)
+    builder.field("score", document.score)
     builder.endObject()
 
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
-      .setType(elastic_client.action_index_suffix)
-      .setCreate(true)
+      .setType(elastic_client.recommendation_index_suffix)
       .setId(id)
+      .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
@@ -79,18 +73,10 @@ object ActionService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
-        index_suffix = elastic_client.action_index_suffix,
-        operation = "create")
-      forwardService.create(document = forward, refresh = refresh)
-    }
-
     Option {doc_result}
   }
 
-  def update(index_name: String, id: String, document: UpdateAction,
-             refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: UpdateRecommendation, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.name match {
@@ -108,23 +94,18 @@ object ActionService {
       case None => ;
     }
 
-    document.timestamp match {
-      case Some(t) => builder.field("timestamp", t)
+    document.generation_batch match {
+      case Some(t) => builder.field("generation_batch", t)
       case None => ;
     }
 
-    document.creator_uid match {
-      case Some(t) => builder.field("creator_uid", t)
+    document.generation_timestamp match {
+      case Some(t) => builder.field("generation_timestamp", t)
       case None => ;
     }
 
-    document.ref_url match {
-      case Some(t) => builder.field("ref_url", t)
-      case None => ;
-    }
-
-    document.ref_recommendation match {
-      case Some(t) => builder.field("ref_recommendation", t)
+    document.score match {
+      case Some(t) => builder.field("score", t)
       case None => ;
     }
 
@@ -132,7 +113,7 @@ object ActionService {
 
     val client: TransportClient = elastic_client.get_client()
     val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
-      .setType(elastic_client.action_index_suffix).setId(id)
+      .setType(elastic_client.recommendation_index_suffix).setId(id)
       .setDoc(builder)
       .get()
 
@@ -150,20 +131,13 @@ object ActionService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
-        index_suffix = elastic_client.action_index_suffix,
-        operation = "update")
-      forwardService.create(document = forward, refresh = refresh)
-    }
-
     Option {doc_result}
   }
 
   def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
-      .setType(elastic_client.action_index_suffix).setId(id).get()
+      .setType(elastic_client.recommendation_index_suffix).setId(id).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
@@ -177,29 +151,22 @@ object ActionService {
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
-        index_suffix = elastic_client.action_index_suffix,
-        operation = "delete")
-      forwardService.create(document = forward, refresh = refresh)
-    }
-
     Option {doc_result}
   }
 
-  def read(index_name: String, ids: List[String]): Future[Option[Actions]] = Future {
+  def read(index_name: String, access_user_id: String, ids: List[String]): Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(getIndexName(index_name), elastic_client.action_index_suffix, ids:_*)
+      multiget_builder.add(getIndexName(index_name), elastic_client.recommendation_index_suffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + index_name + ")")
     }
 
     val response: MultiGetResponse = multiget_builder.get()
 
-    val documents : List[Action] = response.getResponses
+    val documents : List[(Recommendation, RecommendationHistory)] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
@@ -223,31 +190,43 @@ object ActionService {
         case None => ""
       }
 
-      val timestamp : Option[Long] = source.get("timestamp") match {
-        case Some(t) => Option{ t.asInstanceOf[Long] }
-        case None => Option{0}
+      val generation_batch : String = source.get("generation_batch") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
       }
 
-      val creator_uid : Option[String] = source.get("creator_uid") match {
-        case Some(t) => Option{t.asInstanceOf[String]}
-        case None => Option{""}
+      val generation_timestamp : Long = source.get("generation_timestamp") match {
+        case Some(t) => t.asInstanceOf[Long]
+        case None => 0
       }
 
-      val ref_url : Option[String] = source.get("ref_url") match {
-        case Some(t) => Option{t.asInstanceOf[String]}
-        case None => Option.empty[String]
+      val score : Double = source.get("score") match {
+        case Some(t) => t.asInstanceOf[Double]
+        case None => 0.0
       }
 
-      val ref_recommendation : Option[String] = source.get("ref_recommendation") match {
-        case Some(t) => Option{t.asInstanceOf[String]}
-        case None => Option.empty[String]
-      }
+      val recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
+        generation_batch = generation_batch,
+        generation_timestamp = generation_timestamp, score = score)
 
-      val document : Action = Action(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        timestamp = timestamp, creator_uid = creator_uid, ref_url = ref_url, ref_recommendation = ref_recommendation)
-      document
+      val access_timestamp: Option[Long] = Option{ Time.getTimestampMillis }
+
+      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
+        name = name, access_user_id = Option { access_user_id },
+        user_id = user_id, item_id = item_id,
+        generation_batch = generation_batch,
+        generation_timestamp = generation_timestamp,
+        access_timestamp = access_timestamp, score = score)
+
+      (recommendation, recommendation_history)
     })
 
-    Option{ Actions(items = documents) }
+    documents.map(_._2).foreach(recomm => {
+      recommendationHistoryService.create(index_name, access_user_id, recomm, 0)
+    })
+
+    val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }
+    recommendations
   }
+
 }

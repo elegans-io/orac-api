@@ -30,12 +30,14 @@ object RecommendationService {
   val elastic_client = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val recommendationHistoryService = RecommendationHistoryService
+  val forwardService = ForwardService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)
   }
 
-  def create(index_name: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, document: Recommendation,
+             refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
@@ -73,10 +75,18 @@ object RecommendationService {
       created = response.status == RestStatus.CREATED
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.recommendation_index_suffix,
+        operation = "create")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
-  def update(index_name: String, id: String, document: UpdateRecommendation, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: UpdateRecommendation,
+             refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.name match {
@@ -131,6 +141,13 @@ object RecommendationService {
       created = response.status == RestStatus.CREATED
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.recommendation_index_suffix,
+        operation = "update")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
@@ -151,10 +168,18 @@ object RecommendationService {
       found = response.status != RestStatus.NOT_FOUND
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.recommendation_index_suffix,
+        operation = "delete")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
-  def read(index_name: String, access_user_id: String, ids: List[String]): Future[Option[Recommendations]] = Future {
+  def read(index_name: String, access_user_id: String,
+           ids: List[String]): Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -246,7 +271,8 @@ object RecommendationService {
       .execute()
       .actionGet()
 
-    val documents : List[(Recommendation, RecommendationHistory)] = search_response.getHits.getHits.toList.map({ case (e) =>
+    val documents : List[(Recommendation, RecommendationHistory)] =
+      search_response.getHits.getHits.toList.map({ case (e) =>
       val item: SearchHit = e
       val id: String = item.getId
 

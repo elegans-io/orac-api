@@ -1,0 +1,34 @@
+{
+  "mappings": {
+    "forward": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "index": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "index_suffix": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "operation": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "epoch_millis",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}

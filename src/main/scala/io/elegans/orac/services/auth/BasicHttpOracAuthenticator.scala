@@ -1,24 +1,25 @@
-package io.elegans.orac.routing.auth
+package io.elegans.orac.services.auth
 
 import akka.http.scaladsl.server.directives.Credentials
 import com.roundeights.hasher.Implicits._
 import com.typesafe.config.{Config, ConfigFactory}
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
-import io.elegans.orac.entities.{User, Permissions}
+import io.elegans.orac.entities.{Permissions, User}
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import io.elegans.orac.services.{UserFactory, AbstractUserService}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class BasicHttpOracAuthenticatorElasticSearch extends OracAuthenticator {
+class BasicHttpOracAuthenticator(userService: AbstractUserService) extends AbstractOracAuthenticator {
   val config: Config = ConfigFactory.load()
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val admin: String = config.getString("orac.basic_http_es.admin")
   val password: String = config.getString("orac.basic_http_es.password")
   val salt: String = config.getString("orac.basic_http_es.salt")
-
-  val userService: UserService = UserFactory.apply(SupportedAuthImpl.basic_http_es)
 
   def secret(password: String, salt: String): String = {
     password + "#" + salt

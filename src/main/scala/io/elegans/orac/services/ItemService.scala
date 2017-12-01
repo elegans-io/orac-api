@@ -120,7 +120,8 @@ object ItemService {
     Option {doc_result}
   }
 
-  def update(index_name: String, id: String, document: UpdateItem, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: UpdateItem,
+             refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.`type` match {

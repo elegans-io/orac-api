@@ -4,14 +4,15 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import io.elegans.orac.entities.{IndexManagementResponse, _}
+import io.elegans.orac.entities._
 
-import scala.concurrent.{Future}
+import scala.concurrent.Future
 import org.elasticsearch.client.transport.TransportClient
+
 import scala.io.Source
 import java.io._
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse
@@ -30,7 +31,10 @@ object SystemIndexManagementService {
   val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
     JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
       update_path = "/index_management/json_index_spec/system/update/user.json",
-      index_suffix = elastic_client.user_index_suffix)
+      index_suffix = elastic_client.user_index_suffix),
+      JsonIndexFiles(path = "/index_management/json_index_spec/system/forward.json",
+      update_path = "/index_management/json_index_spec/system/update/forward.json",
+      index_suffix = elastic_client.forward_index_suffix)
   )
 
   def create_index() : Future[Option[IndexManagementResponse]] = Future {

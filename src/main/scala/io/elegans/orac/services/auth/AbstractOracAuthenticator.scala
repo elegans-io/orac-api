@@ -1,4 +1,4 @@
-package io.elegans.orac.routing.auth
+package io.elegans.orac.services.auth
 
 import akka.http.scaladsl.server.directives.Credentials
 
@@ -8,7 +8,7 @@ import io.elegans.orac.entities.{Permissions, User}
 case class AuthenticatorException(message: String = "", cause: Throwable = null)
   extends Exception(message, cause)
 
-trait OracAuthenticator {
+abstract class AbstractOracAuthenticator {
 
   def fetchUser(id: String): Future[User]
 

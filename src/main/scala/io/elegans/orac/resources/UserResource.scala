@@ -13,12 +13,13 @@ import akka.http.scaladsl.model.StatusCodes
 
 import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
+import io.elegans.orac.services.{AbstractUserService, UserFactory, UserService}
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 
 trait UserResource extends MyResource {
 
-  private val userService: auth.UserService = auth.UserFactory.apply(auth_method)
+  private val userService: AbstractUserService = UserService.service
 
   def postUserRoutes: Route = pathPrefix("user") {
     post {

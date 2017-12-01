@@ -6,7 +6,7 @@ package io.elegans.orac.services
 
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.entities._
-import io.elegans.orac.routing.auth.{AuthenticatorException, OracAuthenticator, UserService}
+import io.elegans.orac.services.auth.{AuthenticatorException, AbstractOracAuthenticator}
 import io.elegans.orac.OracActorSystem
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
-class UserEsService extends UserService {
+class UserEsService extends AbstractUserService {
   val config: Config = ConfigFactory.load()
   val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
@@ -196,7 +196,7 @@ class UserEsService extends UserService {
   }
 
   /** given id and optionally password and permissions, generate a new user */
-  def genUser(id: String, user: UserUpdate, authenticator: OracAuthenticator): Future[User] = Future {
+  def genUser(id: String, user: UserUpdate, authenticator: AbstractOracAuthenticator): Future[User] = Future {
 
     val password_plain = user.password match {
       case Some(t) => t

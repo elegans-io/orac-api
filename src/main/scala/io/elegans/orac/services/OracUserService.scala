@@ -19,6 +19,8 @@ import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import io.elegans.orac.services.ActionService.elastic_client
+import io.elegans.orac.services.RecommendationService.forwardService
 import org.elasticsearch.common.geo.GeoPoint
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +39,8 @@ object OracUserService {
   def create(index_name: String, document: OracUser, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    builder.field("id", document.id)
+    val id = document.id
+    builder.field("id", id)
 
     document.name match {
       case Some(t) => builder.field("name", t)
@@ -125,10 +128,18 @@ object OracUserService {
       created = response.status == RestStatus.CREATED
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.orac_user_index_suffix,
+        operation = "create")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
-  def update(index_name: String, id: String, document: UpdateOracUser, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(index_name: String, id: String, document: UpdateOracUser,
+             refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.name match {
@@ -218,6 +229,13 @@ object OracUserService {
       created = response.status == RestStatus.CREATED
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.orac_user_index_suffix,
+        operation = "update")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
@@ -239,6 +257,13 @@ object OracUserService {
       found = response.status != RestStatus.NOT_FOUND
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(id = id, index = index_name,
+        index_suffix = elastic_client.orac_user_index_suffix,
+        operation = "delete")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+    
     Option {doc_result}
   }
 
