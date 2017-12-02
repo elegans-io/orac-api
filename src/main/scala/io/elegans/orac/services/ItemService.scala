@@ -5,22 +5,29 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
-import scala.concurrent.{Future}
+
+import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteResponse}
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 
 import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
-
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import io.elegans.orac.services.ActionService.elastic_client
+import io.elegans.orac.services.RecommendationService.forwardService
+import org.elasticsearch.action.search.SearchResponse
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.elasticsearch.common.geo.GeoPoint
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.SearchHit
 
 /**
   * Implements functions, eventually used by ItemResource
@@ -97,7 +104,7 @@ object ItemService {
     }
 
     builder.endObject()
-    
+
     val client: TransportClient = elastic_client.get_client()
     val response = client.prepareIndex().setIndex(getIndexName(index_name))
       .setType(elastic_client.item_index_suffix)
@@ -116,6 +123,13 @@ object ItemService {
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
+
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(doc_id = document.id, index = index_name,
+        index_suffix = elastic_client.item_index_suffix,
+        operation = "create")
+      forwardService.create(document = forward, refresh = refresh)
+    }
 
     Option {doc_result}
   }
@@ -210,6 +224,13 @@ object ItemService {
       created = response.status == RestStatus.CREATED
     )
 
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(doc_id = id, index = index_name,
+        index_suffix = elastic_client.item_index_suffix,
+        operation = "update")
+      forwardService.create(document = forward, refresh = refresh)
+    }
+
     Option {doc_result}
   }
 
@@ -229,6 +250,13 @@ object ItemService {
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
     )
+
+    if(forwardService.forwardEnabled) {
+      val forward = Forward(doc_id = id, index = index_name,
+        index_suffix = elastic_client.item_index_suffix,
+        operation = "delete")
+      forwardService.create(document = forward, refresh = refresh)
+    }
 
     Option {doc_result}
   }
@@ -271,43 +299,43 @@ object ItemService {
 
       val numerical_properties : Option[List[NumericalProperties]] =
         source.get("numerical_properties") match {
-        case Some(t) =>
-          val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-            .asScala.map( x => {
-            val key = x.getOrDefault("key", null).asInstanceOf[String]
-            val value = x.getOrDefault("value", null).asInstanceOf[Double]
-            println(NumericalProperties(key = key, value = value))
-            NumericalProperties(key = key, value = value)
-          }).filter(_.key != null).toList
-          Option { properties }
-        case None => Option.empty[List[NumericalProperties]]
-      }
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val value = x.getOrDefault("value", null).asInstanceOf[Double]
+              println(NumericalProperties(key = key, value = value))
+              NumericalProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[NumericalProperties]]
+        }
 
       val string_properties : Option[List[StringProperties]] =
         source.get("string_properties") match {
-        case Some(t) =>
-          val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
-            .asScala.map( x => {
-            val key = x.getOrDefault("key", null)
-            val value = x.getOrDefault("value", null)
-            StringProperties(key = key, value = value)
-          }).filter(_.key != null).toList
-          Option { properties }
-        case None => Option.empty[List[StringProperties]]
-      }
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null)
+              val value = x.getOrDefault("value", null)
+              StringProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[StringProperties]]
+        }
 
       val timestamp_properties : Option[List[TimestampProperties]] =
         source.get("timestamp_properties") match {
-        case Some(t) =>
-          val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-            .asScala.map( x => {
-            val key = x.getOrDefault("key", null).asInstanceOf[String]
-            val value = x.getOrDefault("value", null).asInstanceOf[Long]
-            TimestampProperties(key = key, value = value)
-          }).filter(_.key != null).toList
-          Option { properties }
-        case None => Option.empty[List[TimestampProperties]]
-      }
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+              .asScala.map( x => {
+              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val value = x.getOrDefault("value", null).asInstanceOf[Long]
+              TimestampProperties(key = key, value = value)
+            }).filter(_.key != null).toList
+            Option { properties }
+          case None => Option.empty[List[TimestampProperties]]
+        }
 
       val geopoint_properties : Option[List[GeoPointProperties]] =
         source.get("geopoint_properties") match {
@@ -343,4 +371,116 @@ object ItemService {
 
     Option{ Items(items = documents) }
   }
+
+  def getAllDocuments(index_name: String): Iterator[Item] = {
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    var scrollResp: SearchResponse = elastic_client.get_client()
+      .prepareSearch(getIndexName(index_name))
+      .setScroll(new TimeValue(60000))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+        val item: SearchHit = e
+
+        val id : String = item.getId
+
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+
+        val name: String = source.get("name") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val `type` : String = source.get("type") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val description : Option[String] = source.get("description") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => Option.empty[String]
+        }
+
+        val numerical_properties : Option[List[NumericalProperties]] =
+          source.get("numerical_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val value = x.getOrDefault("value", null).asInstanceOf[Double]
+                println(NumericalProperties(key = key, value = value))
+                NumericalProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[NumericalProperties]]
+          }
+
+        val string_properties : Option[List[StringProperties]] =
+          source.get("string_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null)
+                val value = x.getOrDefault("value", null)
+                StringProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[StringProperties]]
+          }
+
+        val timestamp_properties : Option[List[TimestampProperties]] =
+          source.get("timestamp_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val value = x.getOrDefault("value", null).asInstanceOf[Long]
+                TimestampProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[TimestampProperties]]
+          }
+
+        val geopoint_properties : Option[List[GeoPointProperties]] =
+          source.get("geopoint_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+                val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+                GeoPointProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[GeoPointProperties]]
+          }
+
+        val tag_properties : Option[List[String]] = source.get("tag_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[String]]
+              .asScala.toList
+            Option { properties }
+          case None => Option.empty[List[String]]
+        }
+
+        val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
+          string = string_properties, timestamp = timestamp_properties, geopoint = geopoint_properties,
+          tags = tag_properties)
+        }
+
+        val document : Item = Item(id = id, name = name, `type` = `type`, description = description,
+          properties = properties)
+        document
+      })
+
+      scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(60000)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile(_._2).map(_._1).flatten
+
+    iterator
+  }
+
 }

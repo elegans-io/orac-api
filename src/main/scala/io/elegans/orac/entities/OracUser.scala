@@ -11,3 +11,7 @@ case class OracUser(
                      phone: Option[String],
                      properties: Option[OracProperties]
 )
+
+case class OracUsers (
+                   items: List[OracUser]
+                 )

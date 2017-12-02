@@ -20,10 +20,16 @@ import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.services.RecommendationService.{elastic_client, forwardService}
+import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.search.SearchHit
+import org.elasticsearch.action.search.SearchResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.elegans.orac.tools._
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.search.sort.SortOrder
 
 /**
   * Implements functions, eventually used by ActionResource
@@ -80,7 +86,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.action_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
@@ -151,7 +157,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.action_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
@@ -178,7 +184,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.action_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
@@ -250,4 +256,71 @@ object ActionService {
 
     Option{ Actions(items = documents) }
   }
+
+  def getAllDocuments(index_name: String): Iterator[Action] = {
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    var scrollResp: SearchResponse = elastic_client.get_client()
+      .prepareSearch(getIndexName(index_name))
+      .addSort("timestamp", SortOrder.DESC)
+      .setScroll(new TimeValue(60000))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+        val item: SearchHit = e
+
+        val id : String = item.getId
+
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+
+        val name: String = source.get("name") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val user_id : String = source.get("user_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val item_id : String = source.get("item_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val timestamp : Option[Long] = source.get("timestamp") match {
+          case Some(t) => Option{ t.asInstanceOf[Long] }
+          case None => Option{0}
+        }
+
+        val creator_uid : Option[String] = source.get("creator_uid") match {
+          case Some(t) => Option{t.asInstanceOf[String]}
+          case None => Option{""}
+        }
+
+        val ref_url : Option[String] = source.get("ref_url") match {
+          case Some(t) => Option{t.asInstanceOf[String]}
+          case None => Option.empty[String]
+        }
+
+        val ref_recommendation : Option[String] = source.get("ref_recommendation") match {
+          case Some(t) => Option{t.asInstanceOf[String]}
+          case None => Option.empty[String]
+        }
+
+        val document : Action = Action(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
+          timestamp = timestamp, creator_uid = creator_uid, ref_url = ref_url, ref_recommendation = ref_recommendation)
+
+        document
+      })
+
+      scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(60000)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile(_._2).map(_._1).flatten
+
+    iterator
+  }
+
 }

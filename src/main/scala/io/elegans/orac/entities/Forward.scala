@@ -5,7 +5,8 @@ package io.elegans.orac.entities
   */
 
 case class Forward(
-                    id: String,
+                    id: Option[String] = Option.empty[String],
+                    doc_id: String,
                     index: String,
                     index_suffix: String,
                     operation: String,

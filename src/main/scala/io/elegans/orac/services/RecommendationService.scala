@@ -76,7 +76,7 @@ object RecommendationService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.recommendation_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
@@ -142,7 +142,7 @@ object RecommendationService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.recommendation_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
@@ -169,7 +169,7 @@ object RecommendationService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.recommendation_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)

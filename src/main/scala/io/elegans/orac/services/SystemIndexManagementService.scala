@@ -100,6 +100,25 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
+  def check_index_status() : Boolean = {
+    val client: TransportClient = elastic_client.get_client()
+
+    val operations_message: List[Boolean] = schemaFiles.map(item => {
+      val full_index_name = elastic_client.index_name + "." + item.index_suffix
+      val check = try {
+        val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
+        get_mappings_req.mappings.containsKey(full_index_name)
+      } catch {
+        case e: Exception =>
+          false
+      }
+      check
+    })
+
+    val status = operations_message.reduce((x, y) => x && y)
+    status
+  }
+
   def update_index() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 

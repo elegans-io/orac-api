@@ -23,6 +23,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val itemListFormat = jsonFormat1(Items)
   implicit val updateOracUserFormat = jsonFormat4(UpdateOracUser)
   implicit val oracUserFormat = jsonFormat5(OracUser)
+  implicit val oracUsers = jsonFormat1(OracUsers)
   implicit val returnMessageDataFormat = jsonFormat2(ReturnMessageData)
   implicit val updateDocumentResultFormat = jsonFormat5(UpdateDocumentResult)
   implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
@@ -38,7 +39,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val recommendationsHistory = jsonFormat1(RecommendationsHistory)
   implicit val updateRecommendationHistory = jsonFormat9(UpdateRecommendationHistory)
 
-
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
     def read(json: JsValue): Permissions.Value = json match {
@@ -48,5 +48,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
-  implicit val forwardFormat = jsonFormat5(Forward)
+  implicit val forwardFormat = jsonFormat6(Forward)
 }

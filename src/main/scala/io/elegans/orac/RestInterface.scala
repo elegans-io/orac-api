@@ -23,7 +23,9 @@ trait RestInterface extends Resources {
   lazy val initSystemIndexManagementService = SystemIndexManagementService
   lazy val initItemService = ItemService
   lazy val initRecommendationService = RecommendationService
+  lazy val initUserService = UserService
   lazy val initForwardService = ForwardService
+  lazy val initCronForwardEventsService = new CronForwardEventsService
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~
     LoggingEntities.logRequestAndResultB64(systemIndexManagementRoutes) ~

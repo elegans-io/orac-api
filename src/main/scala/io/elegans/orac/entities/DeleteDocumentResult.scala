@@ -9,3 +9,4 @@ case class DeleteDocumentResult(id: String,
                                 found: Boolean
                                )
 
+case class DeleteDocumentsResult(message: String, deleted: Long)

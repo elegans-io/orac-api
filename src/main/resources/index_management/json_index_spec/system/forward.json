@@ -7,6 +7,11 @@
           "store": true,
           "index": true
         },
+        "doc_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
         "index": {
           "type": "keyword",
           "store": true,

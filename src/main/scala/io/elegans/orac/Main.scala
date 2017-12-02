@@ -97,6 +97,9 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
         ex.getMessage)
     }
   }
+
+  /* activate cron jobs for events forwarding */
+  initCronForwardEventsService.reloadAnalyzers()
 }
 
 object Main extends App {

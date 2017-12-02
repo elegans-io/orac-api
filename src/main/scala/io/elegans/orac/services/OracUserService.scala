@@ -20,8 +20,13 @@ import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.services.ActionService.elastic_client
+import io.elegans.orac.services.ItemService.{elastic_client, getIndexName}
 import io.elegans.orac.services.RecommendationService.forwardService
+import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.common.geo.GeoPoint
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.SearchHit
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -129,7 +134,7 @@ object OracUserService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
@@ -230,7 +235,7 @@ object OracUserService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
@@ -258,16 +263,16 @@ object OracUserService {
     )
 
     if(forwardService.forwardEnabled) {
-      val forward = Forward(id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
     }
-    
+
     Option {doc_result}
   }
 
-  def read(index_name: String, ids: List[String]): Future[Option[List[OracUser]]] = {
+  def read(index_name: String, ids: List[String]): Future[Option[OracUsers]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -279,7 +284,7 @@ object OracUserService {
 
     val response: MultiGetResponse = multiget_builder.get()
 
-    val documents : Option[List[OracUser]] = Option { response.getResponses
+    val documents : List[OracUser] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
@@ -372,8 +377,119 @@ object OracUserService {
 
       val document = OracUser(id = id, name = name, email = email, phone = phone, properties = properties)
       document
-    }) }
+    })
 
-    Future { documents }
+    Future { Option{OracUsers(items = documents)} }
   }
+
+  def getAllDocuments(index_name: String): Iterator[OracUser] = {
+    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    var scrollResp: SearchResponse = elastic_client.get_client()
+      .prepareSearch(getIndexName(index_name))
+      .setScroll(new TimeValue(60000))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+        val item: SearchHit = e
+
+        val id : String = item.getId
+
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+
+        val name: Option[String] = source.get("name") match {
+          case Some(t) => Option{ t.asInstanceOf[String] }
+          case None => Option.empty[String]
+        }
+
+        val email : Option[String] = source.get("email") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => Option.empty[String]
+        }
+
+        val phone : Option[String] = source.get("phone") match {
+          case Some(t) => Option { t.asInstanceOf[String] }
+          case None => Option.empty[String]
+        }
+
+        val numerical_properties : Option[List[NumericalProperties]] =
+          source.get("numerical_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val value = x.getOrDefault("value", null).asInstanceOf[Double]
+                println(NumericalProperties(key = key, value = value))
+                NumericalProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[NumericalProperties]]
+          }
+
+        val string_properties : Option[List[StringProperties]] =
+          source.get("string_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null)
+                val value = x.getOrDefault("value", null)
+                StringProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[StringProperties]]
+          }
+
+        val timestamp_properties : Option[List[TimestampProperties]] =
+          source.get("timestamp_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val value = x.getOrDefault("value", null).asInstanceOf[Long]
+                TimestampProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[TimestampProperties]]
+          }
+
+        val geopoint_properties : Option[List[GeoPointProperties]] =
+          source.get("geopoint_properties") match {
+            case Some(t) =>
+              val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
+                .asScala.map( x => {
+                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+                val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
+                GeoPointProperties(key = key, value = value)
+              }).filter(_.key != null).toList
+              Option { properties }
+            case None => Option.empty[List[GeoPointProperties]]
+          }
+
+        val tag_properties : Option[List[String]] = source.get("tag_properties") match {
+          case Some(t) =>
+            val properties = t.asInstanceOf[java.util.ArrayList[String]]
+              .asScala.toList
+            Option { properties }
+          case None => Option.empty[List[String]]
+        }
+
+        val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
+          string = string_properties, timestamp = timestamp_properties, geopoint = geopoint_properties,
+          tags = tag_properties)
+        }
+
+        val document = OracUser(id = id, name = name, email = email, phone = phone, properties = properties)
+        document
+      })
+
+      scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(60000)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile(_._2).map(_._1).flatten
+
+    iterator
+  }
+
 }
