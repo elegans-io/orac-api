@@ -89,7 +89,6 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
               fwd_item.operation match {
                 case "create" | "update" =>
                   val ids = List(fwd_item.doc_id)
-                  println("AAAA: ", ids, index)
                   val result = Await.result(oracUserService.read(index, ids), 5.seconds)
                   result match {
                     case Some(document) =>
