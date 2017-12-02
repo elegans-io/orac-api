@@ -129,14 +129,14 @@ object  ForwardService {
     Option {doc_result}
   }
 
-  def read(index_name: String, ids: List[String]): Future[Option[List[Forward]]] = {
+  def read(ids: List[String]): Future[Option[List[Forward]]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multiget_builder.add(getIndexName, elastic_client.forward_index_suffix, ids:_*)
     } else {
-      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + index_name + ")")
+      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + getIndexName + ")")
     }
 
     val response: MultiGetResponse = multiget_builder.get()

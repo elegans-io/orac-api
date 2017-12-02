@@ -50,7 +50,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
         log.error("Failed to forward event: " + e.getMessage)
     }
   }
-  
+
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     forward.operation match {
       case "create" | "update" =>

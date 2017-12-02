@@ -13,6 +13,7 @@ trait Resources extends RootAPIResource with SystemIndexManagementResource with 
   with UserResource with ActionResource with ItemResource with RecommendationResource
   with RecommendationHistoryResource
   with OracUserResource
+  with ForwardResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
@@ -44,6 +45,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(recommendationRoutes) ~
     LoggingEntities.logRequestAndResult(recommendationHistoryRoutes) ~
     LoggingEntities.logRequestAndResult(userRecommendationRoutes) ~
+    LoggingEntities.logRequestAndResult(forwardRoutes) ~
     LoggingEntities.logRequestAndResult(rootAPIsRoutes)
 
 }
