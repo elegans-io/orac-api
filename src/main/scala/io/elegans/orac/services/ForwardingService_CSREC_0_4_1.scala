@@ -27,6 +27,30 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
 
+  def handleRequestResult(response: Future[HttpResponse], forward: Forward): Unit = {
+    val try_response = Try(Await.ready(response, 5.seconds))
+    try_response match {
+      case Success(t) =>
+        t.onComplete( _ match {
+          case Success(k) =>
+            k.status match {
+              case StatusCodes.Created | StatusCodes.OK =>
+                log.debug("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+                  " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+                  " destination(" + forwardingDestination.url + ")")
+              case _ =>
+                log.error("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+                  " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+                  " destination(" + forwardingDestination.url + ")")
+            }
+          case Failure(e) =>
+            log.error("Failed to forward event: " + e.getMessage)
+        })
+      case Failure(e) =>
+        log.error("Failed to forward event: " + e.getMessage)
+    }
+  }
+  
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     forward.operation match {
       case "create" | "update" =>
@@ -44,27 +68,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
             uri = forwardingDestination.url,
             headers = httpHeader,
             entity = entity))
-        val response = Try(Await.ready(responseFuture, 5.seconds))
-        response match {
-          case Success(t) =>
-            t.onComplete( _ match {
-              case Success(k) =>
-                k.status match {
-                  case StatusCodes.Created | StatusCodes.OK =>
-                    log.debug("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                  case _ =>
-                    log.error("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                }
-              case Failure(e) =>
-                log.error("Failed to forward event: " + e.getMessage)
-            })
-          case Failure(e) =>
-            log.error("Failed to forward event: " + e.getMessage)
-        }
+        handleRequestResult(responseFuture, forward)
       case "delete" =>
         log.error("Deleting -> index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -84,27 +88,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
             uri = forwardingDestination.url,
             headers = httpHeader,
             entity = entity))
-        val response = Try(Await.ready(responseFuture, 5.seconds))
-        response match {
-          case Success(t) =>
-            t.onComplete( _ match {
-              case Success(k) =>
-                k.status match {
-                  case StatusCodes.Created | StatusCodes.OK =>
-                    log.debug("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                  case _ =>
-                    log.error("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                }
-              case Failure(e) =>
-                log.error("Failed to forward event: " + e.getMessage)
-            })
-          case Failure(e) =>
-            log.error("Failed to forward event: " + e.getMessage)
-        }
+        handleRequestResult(responseFuture, forward)
       case "delete" =>
         log.error("Deleting -> index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -124,27 +108,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
             uri = forwardingDestination.url,
             headers = httpHeader,
             entity = entity))
-        val response = Try(Await.ready(responseFuture, 5.seconds))
-        response match {
-          case Success(t) =>
-            t.onComplete( _ match {
-              case Success(k) =>
-                k.status match {
-                  case StatusCodes.Created | StatusCodes.OK =>
-                    log.debug("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                  case _ =>
-                    log.error("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                      " operation(" + forward.operation + ") docid(" + doc.id + ")" +
-                      " destination(" + forwardingDestination.url + ")")
-                }
-              case Failure(e) =>
-                log.error("Failed to forward event: " + e.getMessage)
-            })
-          case Failure(e) =>
-            log.error("Failed to forward event: " + e.getMessage)
-        }
+        handleRequestResult(responseFuture, forward)
       case "delete" =>
         log.error("Deleting -> index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
