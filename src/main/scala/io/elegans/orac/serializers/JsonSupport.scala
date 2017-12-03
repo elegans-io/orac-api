@@ -29,6 +29,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val indexManagementResponseFormat = jsonFormat1(IndexManagementResponse)
   implicit val indexDocumentResultFormat = jsonFormat3(IndexDocumentResult)
   implicit val deleteDocumentResultFormat = jsonFormat3(DeleteDocumentResult)
+  implicit val deleteDocumentsResultFormat = jsonFormat2(DeleteDocumentsResult)
   implicit val failedShardFormat = jsonFormat4(FailedShard)
   implicit val refreshIndexResultFormat = jsonFormat5(RefreshIndexResult)
   implicit val refreshIndexResultsFormat = jsonFormat1(RefreshIndexResults)
@@ -49,4 +50,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val forwardFormat = jsonFormat6(Forward)
+  implicit val forwardAllFormat = jsonFormat2(ForwardAll)
 }

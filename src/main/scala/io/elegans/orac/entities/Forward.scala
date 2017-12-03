@@ -12,3 +12,8 @@ case class Forward(
                     operation: String,
                     timestamp: Option[Long] = Option.empty[Long]
                   )
+
+case class ForwardAll(
+                    total_objects: Long,
+                    queued_objects: Long,
+                  )

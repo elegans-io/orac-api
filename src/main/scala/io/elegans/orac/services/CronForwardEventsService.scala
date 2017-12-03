@@ -39,25 +39,27 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
     if (index_check) {
       val iterator = forwardService.getAllDocuments()
       iterator.foreach(fwd_item  => {
-        forwardService.forwardingDestinations.foreach(item => {
+        forwardService.forwardingDestinations.getOrElse(fwd_item.index, List.empty).foreach(item => {
           val forwarder = item._2
           val index = fwd_item.index
           fwd_item.index_suffix match {
             case itemService.elastic_client.item_index_suffix =>
               fwd_item.operation match {
                 case "create" | "update" =>
-                  val ids = List (fwd_item.doc_id)
-                  val result = Await.result (itemService.read (index, ids), 5.seconds)
+                  val ids = List(fwd_item.doc_id)
+                  val result = Await.result(itemService.read(index, ids), 5.seconds)
                   result match {
-                    case Some (document) =>
+                    case Some(document) =>
                       if (document.items.nonEmpty) {
-                        forwarder.forward_item (fwd_item, Option{document.items.head})
+                        forwarder.forward_item(fwd_item, Option {
+                          document.items.head
+                        })
                       } else {
-                        log.error ("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
+                        log.error("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
                           fwd_item.index_suffix)
                       }
                     case _ =>
-                      log.error ("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
+                      log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
                         fwd_item.index_suffix)
                   }
                 case "delete" =>
@@ -93,10 +95,13 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
                   result match {
                     case Some(document) =>
                       if (document.items.nonEmpty) {
-                        forwarder.forward_orac_user(fwd_item, Option{document.items.head})
+                        forwarder.forward_orac_user(fwd_item, Option {
+                          document.items.head
+                        })
                       } else {
                         log.error("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                          fwd_item.index_suffix)                  }
+                          fwd_item.index_suffix)
+                      }
                     case _ =>
                       log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
                         fwd_item.index_suffix)
@@ -116,7 +121,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
     }
   }
 
-  def reloadAnalyzers(): Unit = {
+  def reloadEvents(): Unit = {
     val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(classOf[ForwardEventsTickActor], this))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,

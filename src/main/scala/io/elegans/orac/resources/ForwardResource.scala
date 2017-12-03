@@ -22,6 +22,61 @@ trait ForwardResource extends MyResource {
 
   val forwardService = ForwardService
 
+  def forwardAllRoutes: Route = {
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward""") { index_name =>
+      pathEnd {
+        post {
+          authenticateBasicAsync(realm = auth_realm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              extractMethod { method =>
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(forwardService.reloadAll(index_name = index_name)) {
+                  case Success(t) =>
+                      completeResponse(StatusCodes.OK)
+                  case Failure(e) =>
+                    log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ")" +
+                      "method=" + method.toString + " : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 100, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        } ~
+          delete {
+            authenticateBasicAsync(realm = auth_realm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                extractMethod { method =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(forwardService.deleteAll(index_name = index_name)) {
+                    case Success(t) =>
+                      if (t.isDefined) {
+                        completeResponse(StatusCodes.OK, t)
+                      } else {
+                        completeResponse(StatusCodes.BadRequest, t)
+                      }
+                    case Failure(e) =>
+                      log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ")" +
+                        "method=" + method.toString + " : " + e.getMessage)
+                      completeResponse(StatusCodes.BadRequest,
+                        Option {
+                          ReturnMessageData(code = 100, message = e.getMessage)
+                        })
+                  }
+                }
+              }
+            }
+          }
+      }
+    }
+  }
+
   def forwardRoutes: Route =
     pathPrefix("""forward""") {
       pathEnd {

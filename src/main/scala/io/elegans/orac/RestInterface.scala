@@ -46,6 +46,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(recommendationHistoryRoutes) ~
     LoggingEntities.logRequestAndResult(userRecommendationRoutes) ~
     LoggingEntities.logRequestAndResult(forwardRoutes) ~
+    LoggingEntities.logRequestAndResult(forwardAllRoutes) ~
     LoggingEntities.logRequestAndResult(rootAPIsRoutes)
 
 }

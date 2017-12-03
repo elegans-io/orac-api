@@ -5,6 +5,7 @@ package io.elegans.orac.services
   */
 
 case class ForwardingDestination(
+                                  index: String,
                                   url: String,
                                   service_type: SupportedForwardingServicesImpl.Value
                                 )

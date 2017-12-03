@@ -124,7 +124,7 @@ object ItemService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = document.id, index = index_name,
         index_suffix = elastic_client.item_index_suffix,
         operation = "create")
@@ -224,7 +224,7 @@ object ItemService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.item_index_suffix,
         operation = "update")
@@ -251,7 +251,7 @@ object ItemService {
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.item_index_suffix,
         operation = "delete")

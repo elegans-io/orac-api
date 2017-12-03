@@ -7,6 +7,7 @@ package io.elegans.orac.services
 import io.elegans.orac.entities._
 
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
@@ -38,16 +39,24 @@ object  ForwardService {
   val elastic_client = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  val forwardingDestinations: List[(ForwardingDestination, AbstractForwardingImplService)] =
-    elastic_client.forwarding.map(x => {
-      val forwarding_destination =
-        ForwardingDestination(url = x._1, service_type = SupportedForwardingServicesImpl.getValue(x._2))
-      val forwarder = ForwardingServiceImplFactory.apply(forwarding_destination)
-      (forwarding_destination, forwarder)
+  val itemService = ItemService
+  val oracUserService = OracUserService
+  val actionService = ActionService
+
+  val forwardingDestinations: Map[String, List[(ForwardingDestination, AbstractForwardingImplService)]] =
+    elastic_client.forwarding.map(forwarding_index => {
+      val forwarders = forwarding_index._2.map(item => {
+        val forwarding_destination =
+          ForwardingDestination(index = forwarding_index._1, url = item._1,
+            service_type = SupportedForwardingServicesImpl.getValue(item._2))
+        val forwarder = ForwardingServiceImplFactory.apply(forwarding_destination)
+        (forwarding_destination, forwarder)
+      })
+      (forwarding_index._1, forwarders)
     })
 
-  def forwardEnabled: Boolean = {
-    forwardingDestinations.nonEmpty
+  def forwardEnabled(index_name: String): Boolean = {
+    forwardingDestinations.contains(index_name)
   }
 
   def getIndexName: String = {
@@ -92,9 +101,10 @@ object  ForwardService {
     Option {doc_result}
   }
 
-  def deleteAll(): Future[Option[DeleteDocumentsResult]] = Future {
+  def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+    val qb = QueryBuilders.termQuery("index", index_name)
+    //val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
         .source(getIndexName)
@@ -106,6 +116,40 @@ object  ForwardService {
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
+  }
+
+  def reloadAll(index_name: String): Future[Unit] = Future {
+    val item_iterator = itemService.getAllDocuments(index_name)
+    item_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id, index = index_name,
+        index_suffix = itemService.elastic_client.item_index_suffix,
+        operation = "create")
+      forward
+    }).map(forward => {
+      create(forward, 0)
+    })
+
+    val orac_user_iterator = oracUserService.getAllDocuments(index_name)
+    orac_user_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id, index = index_name,
+        index_suffix = oracUserService.elastic_client.orac_user_index_suffix,
+        operation = "create")
+      forward
+    }).map(forward => {
+      create(forward, 0)
+    })
+
+    val action_iterator = actionService.getAllDocuments(index_name)
+    action_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id.get, index = index_name,
+        index_suffix = actionService.elastic_client.action_index_suffix,
+        operation = "create")
+      forward
+    }).map(forward => {
+      create(forward, 0)
+    })
+
+    Option{true}
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {

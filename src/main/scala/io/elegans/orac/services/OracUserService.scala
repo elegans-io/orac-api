@@ -133,7 +133,7 @@ object OracUserService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "create")
@@ -234,7 +234,7 @@ object OracUserService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "update")
@@ -262,7 +262,7 @@ object OracUserService {
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    if(forwardService.forwardEnabled) {
+    if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "delete")
