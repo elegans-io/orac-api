@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Implements functions, eventually used by UserResource
   */
 object OracUserService {
-  val elastic_client = OracUserElasticClient
+  val elastic_client: OracUserElasticClient.type = OracUserElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {

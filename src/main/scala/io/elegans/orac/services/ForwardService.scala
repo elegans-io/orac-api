@@ -6,8 +6,7 @@ package io.elegans.orac.services
 
 import io.elegans.orac.entities._
 
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
@@ -26,8 +25,6 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortOrder
-
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -36,12 +33,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 
 object  ForwardService {
-  val elastic_client = SystemIndexManagementElasticClient
+  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  val itemService = ItemService
-  val oracUserService = OracUserService
-  val actionService = ActionService
+  val itemService: ItemService.type = ItemService
+  val oracUserService: OracUserService.type = OracUserService
+  val actionService: ActionService.type = ActionService
 
   val forwardingDestinations: Map[String, List[(ForwardingDestination, AbstractForwardingImplService)]] =
     elastic_client.forwarding.map(forwarding_index => {

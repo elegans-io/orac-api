@@ -18,14 +18,14 @@ trait Resources extends RootAPIResource with SystemIndexManagementResource with 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
 
-  lazy val initActionService = ActionService
-  lazy val initOracUserService = OracUserService
-  lazy val initIndexManagementService = IndexManagementService
-  lazy val initSystemIndexManagementService = SystemIndexManagementService
-  lazy val initItemService = ItemService
-  lazy val initRecommendationService = RecommendationService
-  lazy val initUserService = UserService
-  lazy val initForwardService = ForwardService
+  lazy val initActionService: ActionService.type = ActionService
+  lazy val initOracUserService: OracUserService.type = OracUserService
+  lazy val initIndexManagementService: IndexManagementService.type = IndexManagementService
+  lazy val initSystemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
+  lazy val initItemService: ItemService.type = ItemService
+  lazy val initRecommendationService: RecommendationService.type = RecommendationService
+  lazy val initUserService: UserService.type = UserService
+  lazy val initForwardService: ForwardService.type = ForwardService
   lazy val initCronForwardEventsService = new CronForwardEventsService
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~

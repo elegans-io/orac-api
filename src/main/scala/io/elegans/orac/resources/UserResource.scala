@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.StatusCodes
 
 import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
-import io.elegans.orac.services.{AbstractUserService, UserFactory, UserService}
+import io.elegans.orac.services.{AbstractUserService, UserService}
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 

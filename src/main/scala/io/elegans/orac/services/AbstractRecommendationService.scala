@@ -5,18 +5,15 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
-import scala.concurrent.{Future}
+import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteResponse}
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import scala.collection.JavaConverters._
-import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
@@ -27,9 +24,9 @@ import io.elegans.orac.tools.{Checksum, Time}
   * Implements functions, eventually used by RecommendationResource
   */
 abstract class AbstractUserRecommendationService {
-  val elastic_client = RecommendationElasticClient
+  val elastic_client: RecommendationElasticClient.type = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-  val recommendationHistoryService = RecommendationHistoryService
+  val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)

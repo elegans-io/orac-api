@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
 import io.elegans.orac.entities.{Permissions, User}
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.services.{UserFactory, AbstractUserService}
+import io.elegans.orac.services.AbstractUserService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

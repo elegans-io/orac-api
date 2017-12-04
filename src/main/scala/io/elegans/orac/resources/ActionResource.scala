@@ -4,23 +4,19 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ActionService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
-import io.elegans.orac.OracActorSystem
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 trait ActionResource extends MyResource {
 
-  val actionService = ActionService
+  val actionService: ActionService.type = ActionService
 
   def actionRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """action""") { index_name =>

@@ -3,31 +3,31 @@ package io.elegans.orac.services
 object RandomNumbers {
   val random = scala.util.Random
 
-  def getIntPos(): Int = {
+  def getIntPos: Int = {
     math.abs(random.nextInt)
   }
 
-  def getFloatPos(): Float = {
+  def getFloatPos: Float = {
     math.abs(random.nextFloat)
   }
 
-  def getDoublePos(): Double = {
+  def getDoublePos: Double = {
     math.abs(random.nextDouble)
   }
 
-  def getInt(): Int = {
+  def getInt: Int = {
     random.nextInt
   }
 
-  def getFloat(): Float = {
+  def getFloat: Float = {
     random.nextFloat
   }
 
-  def getDouble(): Double = {
+  def getDouble: Double = {
     random.nextDouble
   }
 
-  def getLong(): Long = {
+  def getLong: Long = {
     random.nextLong()
   }
 

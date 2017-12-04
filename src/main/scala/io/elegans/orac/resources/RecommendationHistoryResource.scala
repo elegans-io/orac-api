@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 
 trait RecommendationHistoryResource extends MyResource {
 
-  val recommendationHistoryService = RecommendationHistoryService
+  val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
   def recommendationHistoryRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """recommendation_history""") { index_name =>

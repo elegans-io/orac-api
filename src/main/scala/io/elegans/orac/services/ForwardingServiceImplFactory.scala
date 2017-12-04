@@ -10,7 +10,7 @@ case class ForwardingImplementationNotFoundException(message: String = "", cause
 object SupportedForwardingServicesImpl extends Enumeration {
   type Permission = Value
   val csrec_0_4_1, unknown = Value
-  def getValue(auth_method: String) =
+  def getValue(auth_method: String): SupportedForwardingServicesImpl.Value =
     values.find(_.toString == auth_method).getOrElse(SupportedForwardingServicesImpl.unknown)
 }
 

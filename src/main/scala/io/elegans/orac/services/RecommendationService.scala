@@ -27,10 +27,10 @@ import io.elegans.orac.tools.{Checksum, Time}
   * Implements functions, eventually used by RecommendationResource
   */
 object RecommendationService {
-  val elastic_client = RecommendationElasticClient
+  val elastic_client: RecommendationElasticClient.type = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-  val recommendationHistoryService = RecommendationHistoryService
-  val forwardService = ForwardService
+  val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
+  val forwardService: ForwardService.type = ForwardService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)

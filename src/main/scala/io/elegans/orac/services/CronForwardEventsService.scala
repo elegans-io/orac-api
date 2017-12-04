@@ -6,22 +6,20 @@ package io.elegans.orac.services
 
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import akka.actor.Actor
 import akka.actor.Props
-import io.elegans.orac.services.ForwardService.{getAllDocuments, log}
 
 import scala.language.postfixOps
 
 class CronForwardEventsService (implicit val executionContext: ExecutionContext) {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-  val itemService = ItemService
-  val oracUserService = OracUserService
-  val actionService = ActionService
-  val systemIndexManagementService = SystemIndexManagementService
-  val forwardService = ForwardService
+  val itemService: ItemService.type = ItemService
+  val oracUserService: OracUserService.type = OracUserService
+  val actionService: ActionService.type = ActionService
+  val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
+  val forwardService: ForwardService.type = ForwardService
 
   val Tick = "tick"
 

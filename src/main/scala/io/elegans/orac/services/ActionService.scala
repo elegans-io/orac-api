@@ -19,14 +19,12 @@ import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.services.RecommendationService.{elastic_client, forwardService}
-import org.elasticsearch.index.query.QueryBuilders._
+import io.elegans.orac.services.RecommendationService._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.action.search.SearchResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.elegans.orac.tools._
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.search.sort.SortOrder
@@ -35,7 +33,7 @@ import org.elasticsearch.search.sort.SortOrder
   * Implements functions, eventually used by ActionResource
   */
 object ActionService {
-  val elastic_client = ActionElasticClient
+  val elastic_client: ActionElasticClient.type = ActionElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {

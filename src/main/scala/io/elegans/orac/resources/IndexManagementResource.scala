@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 import akka.pattern.CircuitBreaker
 
 trait IndexManagementResource extends MyResource {
-  val indexManagementService = IndexManagementService
+  val indexManagementService: IndexManagementService.type = IndexManagementService
 
   def postIndexManagementCreateRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~

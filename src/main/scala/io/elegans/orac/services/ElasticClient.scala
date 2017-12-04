@@ -14,7 +14,6 @@ import java.net.InetAddress
 
 import org.elasticsearch.common.transport.TransportAddress
 import scala.collection.immutable.{List, Map}
-import scala.collection.JavaConverters._
 import io.elegans.orac.entities._
 
 

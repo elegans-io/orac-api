@@ -11,7 +11,6 @@ import io.elegans.orac.services.ItemService
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
-
 import scala.util.{Failure, Success, Try}
 
 

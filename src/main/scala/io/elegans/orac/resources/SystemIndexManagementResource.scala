@@ -16,7 +16,7 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 
 trait SystemIndexManagementResource extends MyResource {
 
-  val systemIndexManagementService = SystemIndexManagementService
+  val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
 
   def systemGetIndexesRoutes: Route =
     pathPrefix("system_indices") {

@@ -7,10 +7,15 @@ package io.elegans.orac
 import scala.concurrent.duration._
 import akka.util.Timeout
 import java.io.InputStream
-import java.security.{ SecureRandom, KeyStore }
-import javax.net.ssl.{ SSLContext, TrustManagerFactory, KeyManagerFactory }
-import akka.http.scaladsl.{ ConnectionContext, HttpsConnectionContext, Http }
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext, server}
 import akka.stream.ActorMaterializer
+import akka.actor.ActorSystem
+import akka.http.scaladsl.server
+
+import scala.concurrent.ExecutionContextExecutor
 
 case class Parameters(
                        http_enable: Boolean,
@@ -47,15 +52,15 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
   assert(params.nonEmpty)
 
   /* creation of the akka actor system which handle concurrent requests */
-  implicit val system = OracActorSystem.system
+  implicit val system: ActorSystem = OracActorSystem.system
 
   /* "The Materializer is a factory for stream execution engines, it is the thing that makes streams run" */
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  implicit val executionContext = system.dispatcher
-  implicit val timeout = Timeout(10.seconds)
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
+  implicit val timeout: Timeout = Timeout(10.seconds)
 
-  val api = routes
+  val api: server.Route = routes
 
   if (params.get.https_enable) {
     val password: Array[Char] = params.get.https_cert_pass.toCharArray

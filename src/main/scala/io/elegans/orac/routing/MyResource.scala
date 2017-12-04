@@ -20,7 +20,7 @@ trait MyResource extends Directives with JsonSupport {
 
   val config: Config = ConfigFactory.load()
   val auth_realm: String = config.getString("orac.auth_realm")
-  val authenticator = OracAuthenticator.authenticator
+  val authenticator: AbstractOracAuthenticator = OracAuthenticator.authenticator
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   def completeResponse(status_code: StatusCode): Route = {

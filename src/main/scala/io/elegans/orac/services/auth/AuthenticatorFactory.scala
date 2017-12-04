@@ -1,6 +1,6 @@
 package io.elegans.orac.services.auth
 
-import io.elegans.orac.services.{AbstractUserService}
+import io.elegans.orac.services.AbstractUserService
 
 case class AuthenticatorClassNotFoundException(message: String = "", cause: Throwable = null)
   extends Exception(message, cause)
@@ -8,7 +8,9 @@ case class AuthenticatorClassNotFoundException(message: String = "", cause: Thro
 object SupportedAuthImpl extends Enumeration {
   type Permission = Value
   val basic_http, unknown = Value
-  def getValue(auth_method: String) = values.find(_.toString == auth_method).getOrElse(SupportedAuthImpl.unknown)
+  def getValue(auth_method: String): SupportedAuthImpl.Value = {
+    values.find(_.toString == auth_method).getOrElse(SupportedAuthImpl.unknown)
+  }
 }
 
 object AuthenticatorFactory {

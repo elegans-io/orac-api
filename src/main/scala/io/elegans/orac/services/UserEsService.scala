@@ -6,22 +6,22 @@ package io.elegans.orac.services
 
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.entities._
-import io.elegans.orac.services.auth.{AuthenticatorException, AbstractOracAuthenticator}
+import io.elegans.orac.services.auth.AbstractOracAuthenticator
 import io.elegans.orac.OracActorSystem
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import javax.naming.AuthenticationException
 
-import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.GetRequestBuilder
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.rest.RestStatus
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**

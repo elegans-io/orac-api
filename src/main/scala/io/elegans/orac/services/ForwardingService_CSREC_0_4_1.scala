@@ -13,19 +13,21 @@ import akka.stream.ActorMaterializer
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities.{Action, Forward, Item, OracUser}
 import io.elegans.orac.serializers._
+
 import scala.util.{Failure, Success, Try}
 import scala.collection.immutable
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
+import akka.actor.ActorSystem
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
   extends AbstractForwardingImplService with JsonSupport {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
 
-  implicit val system = OracActorSystem.system
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
+  implicit val system: ActorSystem = OracActorSystem.system
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   def handleRequestResult(response: Future[HttpResponse], forward: Forward): Unit = {
     val try_response = Try(Await.ready(response, 5.seconds))

@@ -24,7 +24,7 @@ import io.elegans.orac.tools.{Checksum, Time}
   * Implements functions, eventually used by RecommendationHistoryResource
   */
 object RecommendationHistoryService {
-  val elastic_client = RecommendationElasticClient
+  val elastic_client: RecommendationElasticClient.type = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
