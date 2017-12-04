@@ -31,7 +31,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val try_response = Try(Await.ready(response, 5.seconds))
     try_response match {
       case Success(t) =>
-        t.onComplete( _ match {
+        t.onComplete({
           case Success(k) =>
             k.status match {
               case StatusCodes.Created | StatusCodes.OK =>
