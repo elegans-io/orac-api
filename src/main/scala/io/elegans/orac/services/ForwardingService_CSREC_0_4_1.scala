@@ -144,43 +144,11 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case "create" | "update" =>
         val doc = document.get
         val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
-          "&code=" + doc.+ "&only_info=false"
-
-
-        /*
-        val tags: CsrecItemType = if(doc.properties.isDefined){
-          val tagvalues = doc.properties.get.tags.getOrElse(Array.empty[String])
-          Map("tags" -> tagvalues)
-        } else {
-          Map.empty[String, Any]
-        }
-        */
-
-        /*
-        val string_properties: CsrecItemType = if (doc.properties.isDefined) {
-          doc.properties.get.string.getOrElse(Array.empty[StringProperties]).map(x => {
-            (x.key, x.value: Any)
-          }).toMap
-        } else {
-          Map.empty[String, Any]
-        }
-        */
-
-        /*
-        val numerical_properties: CsrecItemType = if (doc.properties.isDefined) {
-          doc.properties.get.numerical.getOrElse(Array.empty[NumericalProperties]).map(x => {
-            (x.key, x.value: Any)
-          }).toMap
-        } else {
-          Map.empty[String, Any]
-        }
-        */
+          "&code=" + doc.score + "&only_info=false"
 
         val csrec_item: CsrecItemsArray = Array(Map[String, Any](
           "_id" -> doc.id
-          /*,
-          "type" -> doc.`type`,*/
-        ))// ++ string_properties /*++ tags ++ numerical_properties */)
+        ))
 
         val entity_future = Marshal(csrec_item).to[MessageEntity]
         val entity = Await.result(entity_future, 1.second)
@@ -192,9 +160,15 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
             entity = entity))
         handleRequestResult(responseFuture, forward)
       case "delete" =>
-        log.error("Deleting -> index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + uri + ")" )
+        val doc = document.get
+        val uri = forwardingDestination.url + "/itemaction?item_id=" +  doc.item_id + "&user_id=" + doc.user_id
+        val responseFuture: Future[HttpResponse] =
+          Http(). singleRequest(HttpRequest(
+            method = HttpMethods.DELETE,
+            uri = uri,
+            headers = httpHeader))
+        handleRequestResult(responseFuture, forward)
+
     }
   }
 
