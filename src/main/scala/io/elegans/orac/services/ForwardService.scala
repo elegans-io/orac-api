@@ -224,7 +224,7 @@ object  ForwardService {
     Future { Option { documents } }
   }
 
-  def getAllDocuments(): Iterator[Forward] = {
+  def getAllDocuments: Iterator[Forward] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName)

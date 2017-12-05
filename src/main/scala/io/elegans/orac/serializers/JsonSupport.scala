@@ -6,11 +6,13 @@ package io.elegans.orac.serializers
 
 import io.elegans.orac.entities._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val updateActionFormat = jsonFormat7(UpdateAction)
-  implicit val actionFormat = jsonFormat8(Action)
+  implicit val updateActionFormat = jsonFormat8(UpdateAction)
+  implicit val actionFormat = jsonFormat9(Action)
   implicit val actionsFormat = jsonFormat1(Actions)
   implicit val numericalPropertiesFormat = jsonFormat2(NumericalProperties)
   implicit val timestampPropertiesFormat = jsonFormat2(TimestampProperties)
@@ -47,6 +49,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
       case _ => throw DeserializationException("Permission string expected")
     }
   }
+
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val forwardFormat = jsonFormat6(Forward)

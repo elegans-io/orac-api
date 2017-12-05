@@ -28,6 +28,11 @@
           "store": true,
           "index": true
         },
+        "score": {
+          "type": "double",
+          "store": true,
+          "index": true
+        },
         "ref_url": {
           "type": "keyword",
           "store": true,

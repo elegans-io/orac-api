@@ -37,7 +37,7 @@ object SystemIndexManagementService {
       index_suffix = elastic_client.forward_index_suffix)
   )
 
-  def create_index() : Future[Option[IndexManagementResponse]] = Future {
+  def create_index : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val operations_message: List[String] = schemaFiles.map(item => {
@@ -62,7 +62,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def remove_index() : Future[Option[IndexManagementResponse]] = Future {
+  def remove_index : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     if (! elastic_client.enable_delete_index) {
@@ -85,7 +85,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def check_index() : Future[Option[IndexManagementResponse]] = Future {
+  def check_index : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val operations_message: List[String] = schemaFiles.map(item => {
@@ -100,7 +100,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def check_index_status() : Boolean = {
+  def check_index_status : Boolean = {
     val client: TransportClient = elastic_client.get_client()
 
     val operations_message: List[Boolean] = schemaFiles.map(item => {
@@ -119,7 +119,7 @@ object SystemIndexManagementService {
     status
   }
 
-  def update_index() : Future[Option[IndexManagementResponse]] = Future {
+  def update_index : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elastic_client.get_client()
 
     val operations_message: List[String] = schemaFiles.map(item => {
@@ -146,7 +146,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def refresh_indexes() : Future[Option[RefreshIndexResults]] = Future {
+  def refresh_indexes : Future[Option[RefreshIndexResults]] = Future {
     val operations_results: List[RefreshIndexResult] = schemaFiles.map(item => {
       val full_index_name = elastic_client.index_name + "." + item.index_suffix
       val refresh_index_res: RefreshIndexResult = elastic_client.refresh_index(full_index_name)

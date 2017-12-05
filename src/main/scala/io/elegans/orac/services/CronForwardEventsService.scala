@@ -24,7 +24,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
   val Tick = "tick"
 
   class ForwardEventsTickActor extends Actor {
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case Tick =>
         forwardingProcess()
       case _ =>
@@ -35,7 +35,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
   def forwardingProcess(): Unit = {
     val index_check = systemIndexManagementService.check_index_status
     if (index_check) {
-      val iterator = forwardService.getAllDocuments()
+      val iterator = forwardService.getAllDocuments
       iterator.foreach(fwd_item  => {
         forwardService.forwardingDestinations.getOrElse(fwd_item.index, List.empty).foreach(item => {
           val forwarder = item._2
@@ -120,7 +120,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
   }
 
   def reloadEvents(): Unit = {
-    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(classOf[ForwardEventsTickActor], this))
+    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
       1 seconds,

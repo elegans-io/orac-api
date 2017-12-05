@@ -11,6 +11,7 @@ case class Action (
   user_id: String, /** user id of the action */
   item_id: String, /** user id of the action */
   timestamp: Option[Long], /** action timestamp, generated on insert */
+  score: Option[Double], /** score for the action */
   ref_url: Option[String], /** referring url if any */
   ref_recommendation: Option[String], /** referring recommedation if any */
 )

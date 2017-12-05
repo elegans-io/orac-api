@@ -10,6 +10,7 @@ case class UpdateAction (
   user_id: Option[String],
   item_id: Option[String],
   timestamp: Option[Long],
+  score: Option[Double], /** score for the action */
   ref_url: Option[String], /** referring url if any */
   ref_recommendation: Option[String], /** referring recommedation if any */
 )

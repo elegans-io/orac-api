@@ -56,9 +56,14 @@ object ActionService {
     builder.field("timestamp", timestamp)
     builder.field("creator_uid", creator_user_id)
 
+    if(document.score.isDefined) {
+      builder.field("score", document.score.get)
+    }
+
     if(document.ref_url.isDefined) {
       builder.field("ref_url", document.ref_url.get)
     }
+
     if (document.ref_recommendation.isDefined) {
       builder.field("ref_recommendation", document.ref_recommendation.get)
     }
@@ -114,6 +119,11 @@ object ActionService {
 
     document.timestamp match {
       case Some(t) => builder.field("timestamp", t)
+      case None => ;
+    }
+
+    document.score match {
+      case Some(t) => builder.field("score", t)
       case None => ;
     }
 
@@ -232,6 +242,11 @@ object ActionService {
         case None => Option{0}
       }
 
+      val score : Option[Double] = source.get("score") match {
+        case Some(t) => Option{ t.asInstanceOf[Double] }
+        case None => Option{0.0}
+      }
+
       val creator_uid : Option[String] = source.get("creator_uid") match {
         case Some(t) => Option{t.asInstanceOf[String]}
         case None => Option{""}
@@ -248,7 +263,8 @@ object ActionService {
       }
 
       val document : Action = Action(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        timestamp = timestamp, creator_uid = creator_uid, ref_url = ref_url, ref_recommendation = ref_recommendation)
+        timestamp = timestamp, score = score, creator_uid = creator_uid, ref_url = ref_url,
+        ref_recommendation = ref_recommendation)
       document
     })
 
@@ -292,6 +308,11 @@ object ActionService {
           case None => Option{0}
         }
 
+        val score : Option[Double] = source.get("score") match {
+          case Some(t) => Option{ t.asInstanceOf[Double] }
+          case None => Option{0.0}
+        }
+
         val creator_uid : Option[String] = source.get("creator_uid") match {
           case Some(t) => Option{t.asInstanceOf[String]}
           case None => Option{""}
@@ -308,7 +329,8 @@ object ActionService {
         }
 
         val document : Action = Action(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-          timestamp = timestamp, creator_uid = creator_uid, ref_url = ref_url, ref_recommendation = ref_recommendation)
+          timestamp = timestamp, score = score, creator_uid = creator_uid, ref_url = ref_url,
+          ref_recommendation = ref_recommendation)
 
         document
       })

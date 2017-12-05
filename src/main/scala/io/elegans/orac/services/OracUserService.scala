@@ -308,7 +308,7 @@ object OracUserService {
         case None => Option.empty[String]
       }
 
-      val numerical_properties : Option[List[NumericalProperties]] =
+      val numerical_properties : Option[Array[NumericalProperties]] =
         source.get("numerical_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -317,12 +317,12 @@ object OracUserService {
               val value = x.getOrDefault("value", null).asInstanceOf[Double]
               println(NumericalProperties(key = key, value = value))
               NumericalProperties(key = key, value = value)
-            }).filter(_.key != null).toList
+            }).filter(_.key != null).toArray
             Option { properties }
-          case None => Option.empty[List[NumericalProperties]]
+          case None => Option.empty[Array[NumericalProperties]]
         }
 
-      val string_properties : Option[List[StringProperties]] =
+      val string_properties : Option[Array[StringProperties]] =
         source.get("string_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
@@ -330,12 +330,12 @@ object OracUserService {
               val key = x.getOrDefault("key", null)
               val value = x.getOrDefault("value", null)
               StringProperties(key = key, value = value)
-            }).filter(_.key != null).toList
+            }).filter(_.key != null).toArray
             Option { properties }
-          case None => Option.empty[List[StringProperties]]
+          case None => Option.empty[Array[StringProperties]]
         }
 
-      val timestamp_properties : Option[List[TimestampProperties]] =
+      val timestamp_properties : Option[Array[TimestampProperties]] =
         source.get("timestamp_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -343,12 +343,12 @@ object OracUserService {
               val key = x.getOrDefault("key", null).asInstanceOf[String]
               val value = x.getOrDefault("value", null).asInstanceOf[Long]
               TimestampProperties(key = key, value = value)
-            }).filter(_.key != null).toList
+            }).filter(_.key != null).toArray
             Option { properties }
-          case None => Option.empty[List[TimestampProperties]]
+          case None => Option.empty[Array[TimestampProperties]]
         }
 
-      val geopoint_properties : Option[List[GeoPointProperties]] =
+      val geopoint_properties : Option[Array[GeoPointProperties]] =
         source.get("geopoint_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -357,17 +357,17 @@ object OracUserService {
               val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
               val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
               GeoPointProperties(key = key, value = value)
-            }).filter(_.key != null).toList
+            }).filter(_.key != null).toArray
             Option { properties }
-          case None => Option.empty[List[GeoPointProperties]]
+          case None => Option.empty[Array[GeoPointProperties]]
         }
 
-      val tag_properties : Option[List[String]] = source.get("tag_properties") match {
+      val tag_properties : Option[Array[String]] = source.get("tag_properties") match {
         case Some(t) =>
           val properties = t.asInstanceOf[java.util.ArrayList[String]]
-            .asScala.toList
+            .asScala.toArray
           Option { properties }
-        case None => Option.empty[List[String]]
+        case None => Option.empty[Array[String]]
       }
 
       val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
@@ -413,7 +413,7 @@ object OracUserService {
           case None => Option.empty[String]
         }
 
-        val numerical_properties : Option[List[NumericalProperties]] =
+        val numerical_properties : Option[Array[NumericalProperties]] =
           source.get("numerical_properties") match {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -422,12 +422,12 @@ object OracUserService {
                 val value = x.getOrDefault("value", null).asInstanceOf[Double]
                 println(NumericalProperties(key = key, value = value))
                 NumericalProperties(key = key, value = value)
-              }).filter(_.key != null).toList
+              }).filter(_.key != null).toArray
               Option { properties }
-            case None => Option.empty[List[NumericalProperties]]
+            case None => Option.empty[Array[NumericalProperties]]
           }
 
-        val string_properties : Option[List[StringProperties]] =
+        val string_properties : Option[Array[StringProperties]] =
           source.get("string_properties") match {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
@@ -435,12 +435,12 @@ object OracUserService {
                 val key = x.getOrDefault("key", null)
                 val value = x.getOrDefault("value", null)
                 StringProperties(key = key, value = value)
-              }).filter(_.key != null).toList
+              }).filter(_.key != null).toArray
               Option { properties }
-            case None => Option.empty[List[StringProperties]]
+            case None => Option.empty[Array[StringProperties]]
           }
 
-        val timestamp_properties : Option[List[TimestampProperties]] =
+        val timestamp_properties : Option[Array[TimestampProperties]] =
           source.get("timestamp_properties") match {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -448,12 +448,12 @@ object OracUserService {
                 val key = x.getOrDefault("key", null).asInstanceOf[String]
                 val value = x.getOrDefault("value", null).asInstanceOf[Long]
                 TimestampProperties(key = key, value = value)
-              }).filter(_.key != null).toList
+              }).filter(_.key != null).toArray
               Option { properties }
-            case None => Option.empty[List[TimestampProperties]]
+            case None => Option.empty[Array[TimestampProperties]]
           }
 
-        val geopoint_properties : Option[List[GeoPointProperties]] =
+        val geopoint_properties : Option[Array[GeoPointProperties]] =
           source.get("geopoint_properties") match {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
@@ -462,17 +462,17 @@ object OracUserService {
                 val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
                 val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
                 GeoPointProperties(key = key, value = value)
-              }).filter(_.key != null).toList
+              }).filter(_.key != null).toArray
               Option { properties }
-            case None => Option.empty[List[GeoPointProperties]]
+            case None => Option.empty[Array[GeoPointProperties]]
           }
 
-        val tag_properties : Option[List[String]] = source.get("tag_properties") match {
+        val tag_properties : Option[Array[String]] = source.get("tag_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[String]]
-              .asScala.toList
+              .asScala.toArray
             Option { properties }
-          case None => Option.empty[List[String]]
+          case None => Option.empty[Array[String]]
         }
 
         val properties: Option[OracProperties] = Option { OracProperties(numerical = numerical_properties,
