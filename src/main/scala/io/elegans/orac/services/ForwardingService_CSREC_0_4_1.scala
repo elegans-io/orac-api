@@ -6,7 +6,6 @@ package io.elegans.orac.services
 
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.{Marshal, ToEntityMarshaller}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import io.elegans.orac.OracActorSystem
@@ -19,11 +18,9 @@ import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import io.elegans.orac.serializers.JsonSupport
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.marshalling.Marshaller
 import spray.json.SerializationException
 import spray.json._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
@@ -34,30 +31,6 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   implicit val system: ActorSystem = OracActorSystem.system
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
-
-  def handleRequestResult(response: Future[HttpResponse], forward: Forward): Unit = {
-    val try_response = Try(Await.ready(response, 5.seconds))
-    try_response match {
-      case Success(t) =>
-        t.onComplete({
-          case Success(k) =>
-            k.status match {
-              case StatusCodes.Created | StatusCodes.OK =>
-                log.debug("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                  " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-                  " destination(" + forwardingDestination.url + ")")
-              case _ =>
-                log.error("index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-                  " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-                  " destination(" + forwardingDestination.url + ")")
-            }
-          case Failure(e) =>
-            log.error("Failed to forward event: " + e.getMessage)
-        })
-      case Failure(e) =>
-        log.error("Failed to forward event: " + e.getMessage)
-    }
-  }
 
   type CsrecItemType = Map[String, Any]
   type CsrecItemsArray = Array[CsrecItemType]
@@ -78,6 +51,25 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       }).toJson
     }).toJson
     HttpEntity(ContentType(MediaTypes.`application/json`), items.toString())
+  }
+
+  def executeHttpRequest(uri: String,
+                         method: HttpMethod,
+                         request_entity: Option[RequestEntity] = Option.empty[RequestEntity]):
+  Future[HttpResponse] = {
+    val response: Future[HttpResponse] = if(request_entity.isDefined) {
+      Http().singleRequest(HttpRequest(
+        method = method,
+        uri = uri,
+        headers = httpHeader,
+        entity = request_entity.get))
+    } else {
+      Http().singleRequest(HttpRequest(
+        method = method,
+        uri = uri,
+        headers = httpHeader))
+    }
+    response
   }
 
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
@@ -116,21 +108,37 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
         val entity_future = Marshal(csrec_item).to[MessageEntity]
         val entity = Await.result(entity_future, 1.second)
-        val responseFuture: Future[HttpResponse] =
-          Http(). singleRequest(HttpRequest(
-            method = HttpMethods.POST,
-            uri = uri,
-            headers = httpHeader,
-            entity = entity))
-        handleRequestResult(responseFuture, forward)
+        val http_request = Await.result(
+          executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+
+        http_request.status match {
+          case StatusCodes.Created | StatusCodes.OK =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            log.debug(message)
+          case _ =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            throw ForwardingException(message)
+        }
       case "delete" =>
         val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-        val responseFuture: Future[HttpResponse] =
-          Http(). singleRequest(HttpRequest(
-            method = HttpMethods.DELETE,
-            uri = uri,
-            headers = httpHeader))
-        handleRequestResult(responseFuture, forward)
+        val http_request = Await.result(
+          executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+        http_request.status match {
+          case StatusCodes.Created | StatusCodes.OK =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            log.debug(message)
+          case _ =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            throw ForwardingException(message)
+        }
     }
   }
 
@@ -139,7 +147,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   }
 
   def forward_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
-    //curl -X POST  -H "Content-Type: application/json" -d '{ "item_info" : ["type", "category"]}' 'http://elegans.it:8000/itemaction?item=item1&user=User1&code=1&only_info=false'
+    //TODO: add the item_info data type to specify the categories to be used
     forward.operation match {
       case "create" | "update" =>
         val doc = document.get
@@ -149,46 +157,48 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
         val csrec_item: CsrecItemsArray = Array(Map[String, Any](
           "_id" -> doc.id
         ))
-
         val entity_future = Marshal(csrec_item).to[MessageEntity]
         val entity = Await.result(entity_future, 1.second)
-        val responseFuture: Future[HttpResponse] =
-          Http(). singleRequest(HttpRequest(
-            method = HttpMethods.POST,
-            uri = uri,
-            headers = httpHeader,
-            entity = entity))
-        handleRequestResult(responseFuture, forward)
-      case "delete" =>
-        val doc = document.get
-        val uri = forwardingDestination.url + "/itemaction?item_id=" +  doc.item_id + "&user_id=" + doc.user_id
-        val responseFuture: Future[HttpResponse] =
-          Http(). singleRequest(HttpRequest(
-            method = HttpMethods.DELETE,
-            uri = uri,
-            headers = httpHeader))
-        handleRequestResult(responseFuture, forward)
 
+        val http_request = Await.result(
+          executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+
+        http_request.status match {
+          case StatusCodes.Created | StatusCodes.OK =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            log.debug(message)
+          case _ =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            throw ForwardingException(message)
+        }
+      case "delete" =>
+        val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
+        val http_request = Await.result(
+          executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+        http_request.status match {
+          case StatusCodes.Created | StatusCodes.OK =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            log.debug(message)
+          case _ =>
+            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+              " destination(" + forwardingDestination.url + ")"
+            throw ForwardingException(message)
+        }
     }
   }
 
-  def get_recommendations(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
-    forward.operation match {
-      case "create" | "update" =>
-        val doc = document.get
-        val entity_future = Marshal(doc).to[MessageEntity]
-        val entity = Await.result(entity_future, 1.second)
-        val responseFuture: Future[HttpResponse] =
-          Http().singleRequest(HttpRequest(
-            method = HttpMethods.POST,
-            uri = forwardingDestination.url,
-            headers = httpHeader,
-            entity = entity))
-        handleRequestResult(responseFuture, forward)
-      case "delete" =>
-        log.error("Deleting -> index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")")
-    }
+  def get_recommendations(user_id: String, limit: Int = 10): Future[HttpResponse] = {
+    val uri = forwardingDestination.url + "/recommend?user=" + user_id + "&limit=" + limit
+    Http(). singleRequest(HttpRequest(
+      method = HttpMethods.GET,
+      uri = uri,
+      headers = httpHeader))
   }
 }

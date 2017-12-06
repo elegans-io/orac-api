@@ -9,7 +9,9 @@ import scala.concurrent.duration._
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import akka.actor.Actor
+import io.elegans.orac.entities.{Action, Item, OracUser}
 import akka.actor.Props
+import scala.util.{Failure, Success, Try}
 
 import scala.language.postfixOps
 
@@ -35,6 +37,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
   def forwardingProcess(): Unit = {
     val index_check = systemIndexManagementService.check_index_status
     if (index_check) {
+      var delete_item = false
       val iterator = forwardService.getAllDocuments
       iterator.foreach(fwd_item  => {
         forwardService.forwardingDestinations.getOrElse(fwd_item.index, List.empty).foreach(item => {
@@ -42,76 +45,81 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
           val index = fwd_item.index
           fwd_item.index_suffix match {
             case itemService.elastic_client.item_index_suffix =>
-              fwd_item.operation match {
-                case "create" | "update" =>
-                  val ids = List(fwd_item.doc_id)
-                  val result = Await.result(itemService.read(index, ids), 5.seconds)
-                  result match {
-                    case Some(document) =>
-                      if (document.items.nonEmpty) {
-                        forwarder.forward_item(fwd_item, Option {
-                          document.items.head
-                        })
-                      } else {
-                        log.error("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                          fwd_item.index_suffix)
-                      }
-                    case _ =>
-                      log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                        fwd_item.index_suffix)
+              val ids = List(fwd_item.doc_id)
+              val result = Await.result(itemService.read(index, ids), 5.seconds)
+              result match {
+                case Some(document) =>
+                  val forward_doc = if (document.items.nonEmpty) {
+                    Option {document.items.head}
+                  } else {
+                    Option.empty[Item]
                   }
-                case "delete" =>
-                  forwarder.forward_item(fwd_item)
+
+                  val try_response = Try(forwarder.forward_item(fwd_item, forward_doc))
+                  try_response match {
+                    case Success(t) =>
+                      delete_item = true
+                    case Failure(e) =>
+                      log.error(e.getMessage)
+                  }
+                case _ =>
+                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
+                    fwd_item.index_suffix)
               }
             case actionService.elastic_client.action_index_suffix =>
-              fwd_item.operation match {
-                case "create" | "update" =>
-                  val ids = List(fwd_item.doc_id)
-                  val result = Await.result(actionService.read(index, ids), 5.seconds)
-                  result match {
-                    case Some(document) =>
-                      if (document.items.nonEmpty) {
-                        forwarder.forward_action(fwd_item, Option {
-                          document.items.head
-                        })
-                      } else {
-                        log.error("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                          fwd_item.index_suffix)
-                      }
-                    case _ =>
-                      log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                        fwd_item.index_suffix)
+              val ids = List(fwd_item.doc_id)
+              val result = Await.result(actionService.read(index, ids), 5.seconds)
+              result match {
+                case Some(document) =>
+                  val forward_doc = if (document.items.nonEmpty) {
+                    Option {
+                      document.items.head
+                    }
+                  } else {
+                    Option.empty[Action]
                   }
-                case "delete" =>
-                  forwarder.forward_action(fwd_item)
+
+                  val try_response = Try(forwarder.forward_action(fwd_item, forward_doc))
+                  try_response match {
+                    case Success(t) =>
+                      delete_item = true
+                    case Failure(e) =>
+                      log.error(e.getMessage)
+                  }
+                case _ =>
+                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
+                    fwd_item.index_suffix)
               }
             case oracUserService.elastic_client.orac_user_index_suffix =>
-              fwd_item.operation match {
-                case "create" | "update" =>
-                  val ids = List(fwd_item.doc_id)
-                  val result = Await.result(oracUserService.read(index, ids), 5.seconds)
-                  result match {
-                    case Some(document) =>
-                      if (document.items.nonEmpty) {
-                        forwarder.forward_orac_user(fwd_item, Option {
-                          document.items.head
-                        })
-                      } else {
-                        log.error("Cannot find the document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                          fwd_item.index_suffix)
-                      }
-                    case _ =>
-                      log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                        fwd_item.index_suffix)
+              val ids = List(fwd_item.doc_id)
+              val result = Await.result(oracUserService.read(index, ids), 5.seconds)
+              result match {
+                case Some(document) =>
+                  val forward_doc = if (document.items.nonEmpty) {
+                    Option {document.items.head}
+                  } else {
+                    Option.empty[OracUser]
                   }
-                case "delete" =>
-                  forwarder.forward_orac_user(fwd_item)
+
+                  val try_response = Try(forwarder.forward_orac_user(fwd_item, forward_doc))
+                  try_response match {
+                    case Success(t) =>
+                      delete_item = true
+                    case Failure(e) =>
+                      log.error(e.getMessage)
+                  }
+                case _ =>
+                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
+                    fwd_item.index_suffix)
               }
           }
         })
 
         // deleting item from forwarding table
-        forwardService.delete(id = fwd_item.id.get, refresh = 0)
+        if(delete_item) {
+          forwardService.delete(id = fwd_item.id.get, refresh = 0)
+          delete_item = false
+        }
       })
 
     } else {
