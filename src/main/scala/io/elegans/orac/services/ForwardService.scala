@@ -45,7 +45,8 @@ object  ForwardService {
       val forwarders = forwarding_index._2.map(item => {
         val forwarding_destination =
           ForwardingDestination(index = forwarding_index._1, url = item._1,
-            service_type = SupportedForwardingServicesImpl.getValue(item._2))
+            service_type = SupportedForwardingServicesImpl.getValue(item._2),
+            item_info_id = item._3)
         val forwarder = ForwardingServiceImplFactory.apply(forwarding_destination)
         (forwarding_destination, forwarder)
       })

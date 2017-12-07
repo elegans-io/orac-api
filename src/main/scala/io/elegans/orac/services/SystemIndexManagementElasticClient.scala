@@ -11,9 +11,9 @@ object SystemIndexManagementElasticClient extends ElasticClient {
   val user_index_suffix: String = config.getString("es.user_index_suffix")
   val forward_index_suffix: String = config.getString("es.forward_index_suffix")
   val enable_delete_index: Boolean = config.getBoolean("es.enable_delete_system_index")
-  val forwarding: Map[String, List[(String, String)]]= config.getConfigList("orac.forwarding")
+  val forwarding: Map[String, List[(String, String, String)]] = config.getConfigList("orac.forwarding")
     .asScala.map(item => {
-    (item.getString("index"), item.getString("url"), item.getString("service_type"))
-  }).groupBy(_._1).mapValues(x => x.toList.map(i => (i._2, i._3)))
+    (item.getString("index"), item.getString("url"), item.getString("service_type"), item.getString("item_info_id"))
+  }).groupBy(_._1).mapValues(x => x.toList.map(i => (i._2, i._3, i._4)))
   val auth_method: String = config.getString("orac.auth_method")
 }

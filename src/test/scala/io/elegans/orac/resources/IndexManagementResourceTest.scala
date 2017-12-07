@@ -61,6 +61,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
@@ -91,6 +92,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
         val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCheck: " +
+          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +

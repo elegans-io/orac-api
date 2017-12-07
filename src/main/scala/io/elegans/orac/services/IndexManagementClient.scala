@@ -6,6 +6,7 @@ package io.elegans.orac.services
 
 object IndexManagementClient extends ElasticClient {
   val item_index_suffix: String = config.getString("es.item_index_suffix")
+  val item_info_index_suffix: String = config.getString("es.item_info_index_suffix")
   val user_index_suffix: String = config.getString("es.user_index_suffix")
   val action_index_suffix: String = config.getString("es.action_index_suffix")
   val recommendation_index_suffix: String = config.getString("es.recommendation_index_suffix")

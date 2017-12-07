@@ -1,0 +1,38 @@
+{
+  "mappings": {
+    "item_info": {
+      "properties": {
+        "base_fields": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "tag_filters": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "numerical_filters": {
+          "type": "text",
+          "store": true,
+          "index": true
+        },
+        "string_filters": {
+          "type": "text",
+          "store": true,
+          "index": true
+        },
+        "timestamp_filters": {
+          "type": "text",
+          "store": true,
+          "index": true
+        },
+        "geopoint_filters": {
+          "type": "text",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}

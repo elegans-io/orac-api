@@ -95,9 +95,7 @@ object OracUserService {
         val properties_array = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
-          val geopoint =
-            properties_array.startObject.field("key", e.key)
-              .field("value", geopoint_value).endObject()
+          properties_array.startObject.field("key", e.key).field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }
@@ -186,9 +184,7 @@ object OracUserService {
         val properties_array = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
-          val geopoint =
-            properties_array.startObject.field("key", e.key)
-              .field("value", geopoint_value).endObject()
+          properties_array.startObject.field("key", e.key).field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }

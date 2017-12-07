@@ -19,7 +19,6 @@ import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.services.ActionService.elastic_client
 import io.elegans.orac.services.RecommendationService.forwardService
 import org.elasticsearch.action.search.SearchResponse
 
@@ -33,7 +32,7 @@ import org.elasticsearch.search.SearchHit
   * Implements functions, eventually used by ItemResource
   */
 object ItemService {
-  val elastic_client = ItemElasticClient
+  val elastic_client: ItemElasticClient.type = ItemElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
@@ -77,9 +76,7 @@ object ItemService {
         val properties_array = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
-          val geopoint =
-            properties_array.startObject.field("key", e.key)
-              .field("value", geopoint_value).endObject()
+          properties_array.startObject.field("key", e.key).field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }
@@ -185,9 +182,7 @@ object ItemService {
         val properties_array = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
-          val geopoint =
-            properties_array.startObject.field("key", e.key)
-              .field("value", geopoint_value).endObject()
+          properties_array.startObject.field("key", e.key).field("value", geopoint_value).endObject()
         })
         properties_array.endArray()
       }

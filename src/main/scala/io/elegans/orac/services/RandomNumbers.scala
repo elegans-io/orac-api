@@ -1,7 +1,7 @@
 package io.elegans.orac.services
 
 object RandomNumbers {
-  val random = scala.util.Random
+  val random: scala.util.Random.type = scala.util.Random
 
   def getIntPos: Int = {
     math.abs(random.nextInt)

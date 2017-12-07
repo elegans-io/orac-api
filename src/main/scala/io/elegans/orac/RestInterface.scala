@@ -14,6 +14,7 @@ trait Resources extends RootAPIResource with SystemIndexManagementResource with 
   with RecommendationHistoryResource
   with OracUserResource
   with ForwardResource
+  with ItemInfoResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
@@ -23,6 +24,7 @@ trait RestInterface extends Resources {
   lazy val initIndexManagementService: IndexManagementService.type = IndexManagementService
   lazy val initSystemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
   lazy val initItemService: ItemService.type = ItemService
+  lazy val initInfoItemService: ItemInfoService.type = ItemInfoService
   lazy val initRecommendationService: RecommendationService.type = RecommendationService
   lazy val initUserService: UserService.type = UserService
   lazy val initForwardService: ForwardService.type = ForwardService
@@ -41,6 +43,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(genUserRoutes) ~
     LoggingEntities.logRequestAndResultReduced(actionRoutes) ~
     LoggingEntities.logRequestAndResult(itemRoutes) ~
+    LoggingEntities.logRequestAndResult(itemInfoRoutes) ~
     LoggingEntities.logRequestAndResult(oracUserRoutes) ~
     LoggingEntities.logRequestAndResult(recommendationRoutes) ~
     LoggingEntities.logRequestAndResult(recommendationHistoryRoutes) ~

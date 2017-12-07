@@ -5,13 +5,13 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
-import scala.concurrent.{Future}
+import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.{DeleteResponse}
+import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus

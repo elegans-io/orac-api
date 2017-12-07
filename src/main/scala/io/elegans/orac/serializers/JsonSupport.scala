@@ -6,8 +6,6 @@ package io.elegans.orac.serializers
 
 import io.elegans.orac.entities._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -37,10 +35,10 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val refreshIndexResultsFormat = jsonFormat1(RefreshIndexResults)
   implicit val recommendationFormat = jsonFormat7(Recommendation)
   implicit val recommendationsFormat = jsonFormat1(Recommendations)
-  implicit val updateRecommendation = jsonFormat6(UpdateRecommendation)
-  implicit val recommendationHistory = jsonFormat10(RecommendationHistory)
-  implicit val recommendationsHistory = jsonFormat1(RecommendationsHistory)
-  implicit val updateRecommendationHistory = jsonFormat9(UpdateRecommendationHistory)
+  implicit val updateRecommendationFormat = jsonFormat6(UpdateRecommendation)
+  implicit val recommendationHistoryFormat = jsonFormat10(RecommendationHistory)
+  implicit val recommendationsHistoryFormat = jsonFormat1(RecommendationsHistory)
+  implicit val updateRecommendationHistoryFormat = jsonFormat9(UpdateRecommendationHistory)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)
@@ -54,4 +52,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val forwardFormat = jsonFormat6(Forward)
   implicit val forwardAllFormat = jsonFormat2(ForwardAll)
+  implicit val itemInfoFormat = jsonFormat7(ItemInfo)
+  implicit val updateItemInfoFormat = jsonFormat6(UpdateItemInfo)
+  implicit val itemInfoRecordsFormat = jsonFormat1(ItemInfoRecords)
 }

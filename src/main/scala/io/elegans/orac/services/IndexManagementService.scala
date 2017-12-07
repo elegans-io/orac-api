@@ -36,6 +36,9 @@ object IndexManagementService {
     JsonIndexFiles(path = "/index_management/json_index_spec/general/item.json",
       update_path = "/index_management/json_index_spec/general/update/item.json",
       index_suffix = elastic_client.item_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/general/item_info.json",
+      update_path = "/index_management/json_index_spec/general/update/item_info.json",
+      index_suffix = elastic_client.item_info_index_suffix),
     JsonIndexFiles(path = "/index_management/json_index_spec/general/orac_user.json",
       update_path = "/index_management/json_index_spec/general/update/orac_user.json",
       index_suffix = elastic_client.user_index_suffix),
@@ -118,6 +121,24 @@ object IndexManagementService {
     val message = "IndexCheck: " + operations_message.mkString(" ")
 
     Option { IndexManagementResponse(message) }
+  }
+
+  def check_index_status(index_name: String) : Boolean = {
+    val client: TransportClient = elastic_client.get_client()
+
+    val operations_message: List[Boolean] = schemaFiles.map(item => {
+      val full_index_name = index_name + "." + item.index_suffix
+      val check = try {
+        val get_mappings_req = client.admin.indices.prepareGetMappings(full_index_name).get()
+        get_mappings_req.mappings.containsKey(full_index_name)
+      } catch {
+        case e: Exception =>
+          false
+      }
+      check
+    })
+    val status = operations_message.reduce((x, y) => x && y)
+    status
   }
 
   def update_index(index_name: String, language: String) : Future[Option[IndexManagementResponse]] = Future {
