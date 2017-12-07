@@ -75,13 +75,6 @@ object RecommendationService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
-        index_suffix = elastic_client.recommendation_index_suffix,
-        operation = "create")
-      forwardService.create(document = forward, refresh = refresh)
-    }
-
     Option {doc_result}
   }
 
@@ -141,13 +134,6 @@ object RecommendationService {
       created = response.status == RestStatus.CREATED
     )
 
-    if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
-        index_suffix = elastic_client.recommendation_index_suffix,
-        operation = "update")
-      forwardService.create(document = forward, refresh = refresh)
-    }
-
     Option {doc_result}
   }
 
@@ -167,13 +153,6 @@ object RecommendationService {
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
     )
-
-    if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
-        index_suffix = elastic_client.recommendation_index_suffix,
-        operation = "delete")
-      forwardService.create(document = forward, refresh = refresh)
-    }
 
     Option {doc_result}
   }
