@@ -307,7 +307,7 @@ object RecommendationService {
       }
     }
 
-    val recommendations_history = orac_documents.map(rec => {
+    val recommendations_history = documents.map(rec => {
       val access_timestamp: Option[Long] = Option{Time.getTimestampMillis}
       val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = rec.id.get,
         name = rec.name, access_user_id = Option { access_user_id },
