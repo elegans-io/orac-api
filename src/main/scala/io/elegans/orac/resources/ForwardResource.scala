@@ -24,7 +24,7 @@ trait ForwardResource extends MyResource {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                 onCompleteWithBreaker(breaker)(forwardService.reloadAll(index_name = index_name)) {
@@ -46,7 +46,7 @@ trait ForwardResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
                 extractMethod { method =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(forwardService.deleteAll(index_name = index_name)) {
