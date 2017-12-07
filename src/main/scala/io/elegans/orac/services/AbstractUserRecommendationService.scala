@@ -163,8 +163,8 @@ abstract class AbstractUserRecommendationService {
 
     val response: MultiGetResponse = multiget_builder.get()
 
-    val documents : List[(Recommendation, RecommendationHistory)] = response.getResponses
-      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+    val documents : Array[(Recommendation, RecommendationHistory)] = response.getResponses
+      .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 

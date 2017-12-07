@@ -37,11 +37,11 @@ trait OracUserResource extends MyResource {
                         })
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                             "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest, Option.empty[String])
                       }
@@ -65,7 +65,7 @@ trait OracUserResource extends MyResource {
                         t
                       })
                     case Failure(e) =>
-                      log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                      log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                         "method=" + method.toString + " : " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
@@ -95,11 +95,11 @@ trait OracUserResource extends MyResource {
                           })
                         case Failure(e) => e match {
                           case dme: DocumentMissingException =>
-                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                               "method=" + method.toString + " : " + dme.getMessage)
                             completeResponse(StatusCodes.NotFound, Option.empty[String])
                           case e: Exception =>
-                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                               "method=" + method.toString + " : " + e.getMessage)
                             completeResponse(StatusCodes.BadRequest, Option.empty[String])
                         }
@@ -125,7 +125,7 @@ trait OracUserResource extends MyResource {
                           completeResponse(StatusCodes.BadRequest, t)
                         }
                       case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ")" +
+                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {

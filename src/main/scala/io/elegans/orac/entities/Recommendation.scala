@@ -15,5 +15,5 @@ case class Recommendation(
 )
 
 case class Recommendations (
-                   items: List[Recommendation]
+                   items: Array[Recommendation]
                  )

@@ -21,7 +21,8 @@ import spray.json.SerializationException
 import spray.json._
 import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
-
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import io.elegans.orac.tools._
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
   extends AbstractForwardingImplService with JsonSupport {
@@ -298,11 +299,28 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def get_recommendations(user_id: String, limit: Int = 10): Future[HttpResponse] = {
-    val uri = forwardingDestination.url + "/recommend?user=" + user_id + "&limit=" + limit
-    Http(). singleRequest(HttpRequest(
-      method = HttpMethods.GET,
-      uri = uri,
-      headers = httpHeader))
+  def get_recommendations(user_id: String, from: Int = 0,
+                          size: Int = 10): Option[Array[Recommendation]] = {
+    val uri = forwardingDestination.url + "/recommend?user=" + user_id + "&limit=" + size
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.GET), 10.seconds)
+    val recommendations = http_request.status match {
+      case StatusCodes.OK =>
+        val csrec_recomm_future = Unmarshal(http_request.entity).to[Map[String, Array[String]]]
+        val csrec_recomm = Await.result(csrec_recomm_future, 2.second)
+        val generation_timestamp = Time.getTimestampMillis
+        val generation_batch = "csrec_" + RandomNumbers.getInt + "_" + generation_timestamp
+        val recommendation_id = Checksum.sha512(generation_batch + RandomNumbers.getInt + csrec_recomm.toString)
+        val recommendation_array = csrec_recomm.getOrElse("items", Array.empty[String]).map(x => {
+          Recommendation(id = Option{recommendation_id}, user_id = user_id, item_id = x,
+            name = "csrec_recommendation",
+            generation_batch = generation_batch, generation_timestamp = generation_timestamp, score = 0.0)
+        })
+        Option { recommendation_array }
+      case _ =>
+        val message = "No recommendation for the user from csrec: " + user_id
+        log.info(message)
+        Option.empty[Array[Recommendation]]
+    }
+    recommendations
   }
 }

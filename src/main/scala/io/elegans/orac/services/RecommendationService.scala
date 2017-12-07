@@ -191,8 +191,8 @@ object RecommendationService {
 
     val response: MultiGetResponse = multiget_builder.get()
 
-    val documents : List[(Recommendation, RecommendationHistory)] = response.getResponses
-      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+    val documents : Array[(Recommendation, RecommendationHistory)] = response.getResponses
+      .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 
@@ -254,8 +254,8 @@ object RecommendationService {
     recommendations
   }
 
-  def getRecommendationsByUser(index_name: String, access_user_id: String, id: String, from: Int = 0, size: Int = 10):
-  Future[Option[Recommendations]] = Future {
+  def getRecommendationsByUser(index_name: String, access_user_id: String, id: String,
+                               from: Int = 0, size: Int = 10): Future[Option[Recommendations]] = Future {
     val client: TransportClient = elastic_client.get_client()
     val search_builder : SearchRequestBuilder = client.prepareSearch(getIndexName(index_name))
       .setTypes(elastic_client.recommendation_index_suffix)
@@ -271,8 +271,8 @@ object RecommendationService {
       .execute()
       .actionGet()
 
-    val documents : List[(Recommendation, RecommendationHistory)] =
-      search_response.getHits.getHits.toList.map({ case (e) =>
+    val orac_documents : Array[Recommendation] =
+      search_response.getHits.getHits.map({ case (e) =>
       val item: SearchHit = e
       val id: String = item.getId
 
@@ -311,24 +311,39 @@ object RecommendationService {
       val recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
         generation_batch = generation_batch,
         generation_timestamp = generation_timestamp, score = score)
-
-      val access_timestamp: Option[Long] = Option{Time.getTimestampMillis}
-
-      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
-        name = name, access_user_id = Option { access_user_id },
-        user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp,
-        access_timestamp = access_timestamp, score = score)
-
-      (recommendation, recommendation_history)
+      recommendation
     })
 
-    documents.map(_._2).foreach(recomm => {
+    val documents = if (orac_documents.nonEmpty) {
+      orac_documents
+    } else {
+      if(forwardService.forwardEnabled(index_name) &&
+        forwardService.forwardingDestinations.contains(index_name)) {
+        //TODO: we take the first forwarder for the index, should be improved with a preferred source setting.
+        val forwarder = forwardService.forwardingDestinations(index_name)
+        val recommendations = forwarder.head._2.get_recommendations(user_id = id, size = size)
+        recommendations.getOrElse(Array.empty[Recommendation])
+      } else {
+        Array.empty[Recommendation]
+      }
+    }
+
+    val recommendations_history = orac_documents.map(rec => {
+      val access_timestamp: Option[Long] = Option{Time.getTimestampMillis}
+      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = rec.id.get,
+        name = rec.name, access_user_id = Option { access_user_id },
+        user_id = rec.user_id, item_id = rec.item_id,
+        generation_batch = rec.generation_batch,
+        generation_timestamp = rec.generation_timestamp,
+        access_timestamp = access_timestamp, score = rec.score)
+      recommendation_history
+    })
+
+    recommendations_history.foreach(recomm => {
       recommendationHistoryService.create(index_name, access_user_id, recomm, 0)
     })
 
-    val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy( - _.score)) }
+    val recommendations = Option{ Recommendations(items = documents.sortBy( - _.score)) }
     recommendations
   }
 
