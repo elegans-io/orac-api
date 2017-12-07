@@ -123,7 +123,7 @@ object  ForwardService {
         index_suffix = itemService.elastic_client.item_index_suffix,
         operation = "create")
       forward
-    }).map(forward => {
+    }).foreach(forward => {
       create(forward, 0)
     })
 
@@ -133,7 +133,7 @@ object  ForwardService {
         index_suffix = oracUserService.elastic_client.orac_user_index_suffix,
         operation = "create")
       forward
-    }).map(forward => {
+    }).foreach(forward => {
       create(forward, 0)
     })
 
@@ -143,7 +143,7 @@ object  ForwardService {
         index_suffix = actionService.elastic_client.action_index_suffix,
         operation = "create")
       forward
-    }).map(forward => {
+    }).foreach(forward => {
       create(forward, 0)
     })
 
