@@ -6,10 +6,10 @@ package io.elegans.orac.entities
   */
 
 case class OracProperties(
-                            numerical: Option[Array[NumericalProperties]],
-                            string: Option[Array[StringProperties]],
-                            tags: Option[Array[String]],
-                            geopoint: Option[Array[GeoPointProperties]],
-                            timestamp: Option[Array[TimestampProperties]]
+                            numerical: Option[Array[NumericalProperties]] = Option.empty,
+                            string: Option[Array[StringProperties]] = Option.empty,
+                            tags: Option[Array[String]] = Option.empty,
+                            geopoint: Option[Array[GeoPointProperties]] = Option.empty,
+                            timestamp: Option[Array[TimestampProperties]] = Option.empty
                           )
 
