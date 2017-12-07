@@ -298,7 +298,8 @@ object RecommendationService {
     } else {
       if(forwardService.forwardEnabled(index_name) &&
         forwardService.forwardingDestinations.contains(index_name)) {
-        //TODO: we take the first forwarder for the index, should be improved with a preferred source setting.
+        //TODO: we take the first (head) forwarder for the index, should be improved with a preferred source setting.
+        // a better method would be to pick up a random entry among those who provides recommendations i.e.: csrec
         val forwarder = forwardService.forwardingDestinations(index_name)
         val recommendations = forwarder.head._2.get_recommendations(user_id = id, size = size)
         recommendations.getOrElse(Array.empty[Recommendation])
