@@ -271,8 +271,25 @@ object ActionService {
     Option{ Actions(items = documents) }
   }
 
-  def getAllDocuments(index_name: String): Iterator[Action] = {
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+  def getAllDocuments(index_name: String, search: Option[UpdateAction] = Option.empty): Iterator[Action] = {
+    val qb: QueryBuilder = if(search.isEmpty) {
+      QueryBuilders.matchAllQuery()
+    } else {
+      val document = search.get
+      val bool_query_builder = QueryBuilders.boolQuery()
+      if (document.item_id.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id))
+      if (document.user_id.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id))
+      if (document.name.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name))
+      if (document.score.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score))
+      if (document.ref_recommendation.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("ref_recommendation", document.ref_recommendation))
+      bool_query_builder
+    }
+
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName(index_name))
       .addSort("timestamp", SortOrder.DESC)

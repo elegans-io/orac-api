@@ -32,9 +32,15 @@ object SystemIndexManagementService {
     JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
       update_path = "/index_management/json_index_spec/system/update/user.json",
       index_suffix = elastic_client.user_index_suffix),
-      JsonIndexFiles(path = "/index_management/json_index_spec/system/forward.json",
+    JsonIndexFiles(path = "/index_management/json_index_spec/system/forward.json",
       update_path = "/index_management/json_index_spec/system/update/forward.json",
-      index_suffix = elastic_client.forward_index_suffix)
+      index_suffix = elastic_client.forward_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/system/reconcile.json",
+      update_path = "/index_management/json_index_spec/system/update/reconcile.json",
+      index_suffix = elastic_client.reconcile_index_suffix),
+    JsonIndexFiles(path = "/index_management/json_index_spec/system/reconcile_history.json",
+      update_path = "/index_management/json_index_spec/system/update/reconcile_history.json",
+      index_suffix = elastic_client.reconcile_history_index_suffix)
   )
 
   def create_index : Future[Option[IndexManagementResponse]] = Future {

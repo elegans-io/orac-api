@@ -1,0 +1,50 @@
+{
+  "mappings": {
+    "reconcile_history": {
+      "properties": {
+        "id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "old_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "new_id": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "type": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "index": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "index_suffix": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
+        "insert_timestamp": {
+          "type": "date",
+          "format": "epoch_millis",
+          "store": true,
+          "index": true
+        }
+        "end_timestamp": {
+          "type": "date",
+          "format": "epoch_millis",
+          "store": true,
+          "index": true
+        }
+      }
+    }
+  }
+}

@@ -5,12 +5,12 @@ package io.elegans.orac.entities
   */
 
 case class UpdateAction (
-  name: Option[String], /** the name of an action */
-  creator_uid: Option[String], /** system user id who has written the action */
-  user_id: Option[String],
-  item_id: Option[String],
-  timestamp: Option[Long],
-  score: Option[Double], /** score for the action */
-  ref_url: Option[String], /** referring url if any */
-  ref_recommendation: Option[String], /** referring recommedation if any */
+  name: Option[String] = Option.empty, /** the name of an action */
+  creator_uid: Option[String] = Option.empty, /** system user id who has written the action */
+  user_id: Option[String] = Option.empty,
+  item_id: Option[String] = Option.empty,
+  timestamp: Option[Long] = Option.empty,
+  score: Option[Double] = Option.empty, /** score for the action */
+  ref_url: Option[String] = Option.empty, /** referring url if any */
+  ref_recommendation: Option[String] = Option.empty, /** referring recommedation if any */
 )

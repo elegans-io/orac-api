@@ -15,6 +15,8 @@ trait Resources extends RootAPIResource with SystemIndexManagementResource with 
   with OracUserResource
   with ForwardResource
   with ItemInfoResource
+  with ReconcileResource
+  with ReconcileHistoryResource
 
 trait RestInterface extends Resources {
   implicit def executionContext: ExecutionContext
@@ -29,6 +31,9 @@ trait RestInterface extends Resources {
   lazy val initUserService: UserService.type = UserService
   lazy val initForwardService: ForwardService.type = ForwardService
   lazy val initCronForwardEventsService = new CronForwardEventsService
+  lazy val initReconcileService: ReconcileService.type = ReconcileService
+  lazy val initCronReconcileService = new CronReconcileService
+  lazy val initReconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~
     LoggingEntities.logRequestAndResultB64(systemIndexManagementRoutes) ~
@@ -50,6 +55,8 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(userRecommendationRoutes) ~
     LoggingEntities.logRequestAndResult(forwardRoutes) ~
     LoggingEntities.logRequestAndResult(forwardAllRoutes) ~
+    LoggingEntities.logRequestAndResult(reconcileRoutes) ~
+    LoggingEntities.logRequestAndResult(reconcileHistoryRoutes) ~
     LoggingEntities.logRequestAndResult(rootAPIsRoutes)
 
 }

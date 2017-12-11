@@ -5,6 +5,7 @@ package io.elegans.orac.services
   */
 
 import io.elegans.orac.entities._
+
 import scala.concurrent.Future
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -14,14 +15,18 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
+
 import scala.collection.JavaConverters._
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.elegans.orac.tools.{Checksum, Time}
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.search.sort.SortOrder
 
 /**
   * Implements functions, eventually used by RecommendationResource
@@ -231,6 +236,88 @@ object RecommendationService {
 
     val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }
     recommendations
+  }
+
+  def getAllDocuments(index_name: String,
+                      search: Option[UpdateRecommendation] = Option.empty): Iterator[Recommendation] = {
+    val qb: QueryBuilder = if(search.isEmpty) {
+      QueryBuilders.matchAllQuery()
+    } else {
+      val document = search.get
+      val bool_query_builder = QueryBuilders.boolQuery()
+      if (document.item_id.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id))
+      if (document.user_id.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id))
+      if (document.name.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name))
+      if (document.generation_batch.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("generation_batch", document.generation_batch))
+      if (document.generation_timestamp.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("generation_timestamp", document.generation_timestamp))
+      if (document.score.isDefined)
+        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score))
+      bool_query_builder
+    }
+
+    var scrollResp: SearchResponse = elastic_client.get_client()
+      .prepareSearch(getIndexName(index_name))
+      .addSort("timestamp", SortOrder.DESC)
+      .setScroll(new TimeValue(60000))
+      .setQuery(qb)
+      .setSize(100).get()
+
+    val iterator = Iterator.continually{
+      val documents = scrollResp.getHits.getHits.toList.map( { case(e) =>
+        val item: SearchHit = e
+
+        val id : String = item.getId
+
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+
+        val name: String = source.get("name") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val user_id : String = source.get("user_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val item_id : String = source.get("item_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val generation_timestamp : Long = source.get("generation_timestamp") match {
+          case Some(t) => t.asInstanceOf[Long]
+          case None => 0
+        }
+
+        val score : Double = source.get("score") match {
+          case Some(t) => t.asInstanceOf[Double]
+          case None => 0.0
+        }
+
+        val generation_batch : String = source.get("generation_batch") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
+        val document : Recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id,
+          item_id = item_id, generation_timestamp = generation_timestamp, score = score,
+          generation_batch = generation_batch)
+
+        document
+      })
+
+      scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
+        .setScroll(new TimeValue(60000)).execute().actionGet()
+      (documents, documents.nonEmpty)
+    }.takeWhile(_._2).map(_._1).flatten
+
+    iterator
   }
 
   def getRecommendationsByUser(index_name: String, access_user_id: String, id: String,

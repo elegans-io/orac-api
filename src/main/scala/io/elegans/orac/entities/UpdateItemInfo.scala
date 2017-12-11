@@ -5,10 +5,10 @@ package io.elegans.orac.entities
   */
 
 case class UpdateItemInfo(
-                     base_fields: Option[Set[String]],
-                     tag_filters: Option[String],
-                     numerical_filters: Option[String],
-                     string_filters: Option[String],
-                     timestamp_filters: Option[String],
-                     geopoint_filters: Option[String]
+                     base_fields: Option[Set[String]] = Option.empty,
+                     tag_filters: Option[String] = Option.empty,
+                     numerical_filters: Option[String] = Option.empty,
+                     string_filters: Option[String] = Option.empty,
+                     timestamp_filters: Option[String] = Option.empty,
+                     geopoint_filters: Option[String] = Option.empty
                    )

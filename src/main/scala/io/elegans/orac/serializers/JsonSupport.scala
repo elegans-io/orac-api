@@ -48,6 +48,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  implicit object ReconcileTypeJsonFormat extends JsonFormat[ReconcileType.Value] {
+    def write(obj: ReconcileType.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): ReconcileType.Value = json match {
+      case JsString(str) => ReconcileType.withName(str)
+      case _ => throw DeserializationException("ReconcileType string expected")
+    }
+  }
+
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val forwardFormat = jsonFormat6(Forward)
@@ -55,4 +63,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val itemInfoFormat = jsonFormat7(ItemInfo)
   implicit val updateItemInfoFormat = jsonFormat6(UpdateItemInfo)
   implicit val itemInfoRecordsFormat = jsonFormat1(ItemInfoRecords)
+  implicit val reconcileFormat = jsonFormat8(Reconcile)
+  implicit val reconcileHistoryFormat = jsonFormat9(ReconcileHistory)
+  implicit val updateReconcileFormat = jsonFormat7(UpdateReconcile)
 }

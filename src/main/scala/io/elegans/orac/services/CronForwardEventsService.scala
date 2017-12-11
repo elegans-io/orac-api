@@ -12,7 +12,7 @@ import akka.actor.Actor
 import io.elegans.orac.entities.{Action, Item, OracUser}
 import akka.actor.Props
 import scala.util.{Failure, Success, Try}
-
+import akka.actor.ActorRef
 import scala.language.postfixOps
 
 class CronForwardEventsService (implicit val executionContext: ExecutionContext) {
@@ -39,7 +39,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
     if (index_check) {
       var delete_item = false
       val iterator = forwardService.getAllDocuments
-      iterator.foreach(fwd_item  => {
+      iterator.foreach(fwd_item => {
         forwardService.forwardingDestinations.getOrElse(fwd_item.index, List.empty).foreach(item => {
           val forwarder = item._2
           val index = fwd_item.index
@@ -50,7 +50,9 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
               result match {
                 case Some(document) =>
                   val forward_doc = if (document.items.nonEmpty) {
-                    Option {document.items.head}
+                    Option {
+                      document.items.head
+                    }
                   } else {
                     Option.empty[Item]
                   }
@@ -96,7 +98,9 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
               result match {
                 case Some(document) =>
                   val forward_doc = if (document.items.nonEmpty) {
-                    Option {document.items.head}
+                    Option {
+                      document.items.head
+                    }
                   } else {
                     Option.empty[OracUser]
                   }
@@ -116,7 +120,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
         })
 
         // deleting item from forwarding table
-        if(delete_item) {
+        if (delete_item) {
           forwardService.delete(id = fwd_item.id.get, refresh = 0)
           delete_item = false
         }
@@ -127,8 +131,15 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
     }
   }
 
+  val reloadDecisionTableActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
+
+  def sendEvent(): Unit = {
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds,
+      reloadDecisionTableActorRef,
+      Tick)
+  }
+
   def reloadEvents(): Unit = {
-    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
       1 seconds,

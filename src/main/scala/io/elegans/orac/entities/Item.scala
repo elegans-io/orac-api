@@ -8,8 +8,8 @@ case class Item (
   id: String,
   name: String,
   `type`: String,
-  description: Option[String],
-  properties: Option[OracProperties]
+  description: Option[String] = Option.empty,
+  properties: Option[OracProperties] = Option.empty
 )
 
 case class Items (

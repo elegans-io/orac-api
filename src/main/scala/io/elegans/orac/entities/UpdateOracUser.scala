@@ -5,8 +5,8 @@ package io.elegans.orac.entities
   */
 
 case class UpdateOracUser(
-                           name: Option[String],
-                           email: Option[String],
-                           phone: Option[String],
-                           properties: Option[OracProperties]
+                           name: Option[String] = Option.empty,
+                           email: Option[String] = Option.empty,
+                           phone: Option[String] = Option.empty,
+                           properties: Option[OracProperties] = Option.empty
 )

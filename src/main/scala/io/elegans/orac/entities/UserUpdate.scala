@@ -5,12 +5,12 @@ package io.elegans.orac.entities
   */
 
 case class UserUpdate(
-                 password: Option[String], /** user password */
-                 salt: Option[String], /** salt for password hashing */
+                 password: Option[String] = Option.empty, /** user password */
+                 salt: Option[String] = Option.empty, /** salt for password hashing */
                  permissions: Option[
                    Map[
                      String, /** index name */
                      Set[Permissions.Value] /** permissions granted for the index */
                      ]
-                   ]
+                   ] = Option.empty
                )
