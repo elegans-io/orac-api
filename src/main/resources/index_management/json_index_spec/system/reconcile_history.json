@@ -32,12 +32,17 @@
           "store": true,
           "index": true
         },
+        "retry": {
+          "type": "long",
+          "store": true,
+          "index": true
+        },
         "insert_timestamp": {
           "type": "date",
           "format": "epoch_millis",
           "store": true,
           "index": true
-        }
+        },
         "end_timestamp": {
           "type": "date",
           "format": "epoch_millis",
