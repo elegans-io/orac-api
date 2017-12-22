@@ -40,28 +40,39 @@ class CronReconcileService (implicit val executionContext: ExecutionContext) {
     if (index_check) {
       val iterator = reconcileService.getAllDocuments
       iterator.foreach(item  => {
-        item.`type` match {
+        val item_type = item.`type`.get
+        item_type match {
           case ReconcileType.orac_user =>
-            val reconcile_res = Try(reconcileService.reconcileUser(item.index, item))
-            if(item.retry < 5) {
+            val reconcile_res = Try(reconcileService.reconcileUser(item.index.get, item))
+            if(item.retry > 0) {
               reconcile_res match {
                 case Success(t) =>
                   log.info("Reconciliation: successfully completed: " + item.toString)
                   val history_element = ReconcileHistory(old_id = item.old_id, new_id = item.new_id,
                     index = item.index, `type` = item.`type`, index_suffix = item.index_suffix,
                     insert_timestamp = item.timestamp.get, retry = item.retry)
-                  reconcileHistoryService.create(history_element, 0)
-                  reconcileService.delete(item.id.get, 0)
+                  val reconcile_history_insert =
+                    Await.result(reconcileHistoryService.create(history_element, 0), 5.seconds)
+                  if(reconcile_history_insert.isDefined) {
+                    val reconcile_item_delete =
+                      Await.result(reconcileService.delete(item.id.get, item.index.get, 0), 5.seconds)
+                    if(reconcile_item_delete.isEmpty) {
+                      log.error("Reconciliation: can't delete the entry(" + item.id.get
+                        + ") from the reconciliation table")
+                    }
+                  } else {
+                    log.error("Reconciliation: can't create the reconciliation item entry: " + item.id.get)
+                  }
                 case Failure(e) =>
                   log.error("Reconciliation: failed : " + item.toString())
                   val updateReconcile = UpdateReconcile(retry = Option {
-                    item.retry + 1
+                    item.retry - 1
                   })
                   reconcileService.update(id = item.id.get, document = updateReconcile, 0)
               }
             } else {
               log.info("Reconciliation: removing entry: " + item.id)
-              reconcileService.delete(item.id.get, 0)
+              reconcileService.delete(item.id.get, item.index.get, 0)
             }
         }
       })

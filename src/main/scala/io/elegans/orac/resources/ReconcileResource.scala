@@ -31,7 +31,8 @@ trait ReconcileResource extends MyResource {
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Reconcile]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(reconcileService.create(document, refresh)) {
+                    onCompleteWithBreaker(breaker)(
+                      reconcileService.create(document, index_name, ReconcileType.getValue(reconcile_type), refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
@@ -59,7 +60,7 @@ trait ReconcileResource extends MyResource {
                 extractMethod { method =>
                   parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(reconcileService.read(id.toList)) {
+                    onCompleteWithBreaker(breaker)(reconcileService.read(id.toList, index_name)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
@@ -87,7 +88,7 @@ trait ReconcileResource extends MyResource {
                 extractMethod { method =>
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(reconcileService.delete(id, refresh)) {
+                    onCompleteWithBreaker(breaker)(reconcileService.delete(id, index_name, refresh)) {
                       case Success(t) =>
                         if (t.isDefined) {
                           completeResponse(StatusCodes.OK, t)

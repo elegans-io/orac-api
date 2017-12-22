@@ -105,6 +105,9 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
 
   /* activate cron jobs for events forwarding */
   initCronForwardEventsService.reloadEvents()
+
+  /* activate cron jobs for reconciliation */
+  initCronReconcileService.reloadEvents()
 }
 
 object Main extends App {

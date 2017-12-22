@@ -153,23 +153,23 @@ object ReconcileHistoryService {
         case None => ""
       }
 
-      val index: String = source.get("index") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val index: Option[String] = source.get("index") match {
+        case Some(t) => Some(t.asInstanceOf[String])
+        case None => Some("")
       }
 
-      val index_suffix: String = source.get("index_suffix") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val index_suffix: Option[String] = source.get("index_suffix") match {
+        case Some(t) => Some(t.asInstanceOf[String])
+        case None => Some("")
       }
 
-      val `type`: ReconcileType.Reconcile = source.get("type") match {
-        case Some(t) =>ReconcileType.getValue(t.asInstanceOf[String])
-        case None =>ReconcileType.unknown
+      val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
+        case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
+        case None => Option{ReconcileType.unknown}
       }
 
-      val retry: Long = source.get("retry") match {
-        case Some(t) => t.asInstanceOf[Long]
+      val retry : Long = source.get("retry") match {
+        case Some(t) => t.asInstanceOf[Integer].toLong
         case None => 0
       }
 
@@ -220,23 +220,23 @@ object ReconcileHistoryService {
           case None => ""
         }
 
-        val index: String = source.get("index") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val index: Option[String] = source.get("index") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some("")
         }
 
-        val index_suffix: String = source.get("index_suffix") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val index_suffix: Option[String] = source.get("index_suffix") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some("")
         }
 
-        val `type`:ReconcileType.Reconcile = source.get("type") match {
-          case Some(t) =>ReconcileType.getValue(t.asInstanceOf[String])
-          case None =>ReconcileType.unknown
+        val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
+          case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
+          case None => Option{ReconcileType.unknown}
         }
 
-        val retry: Long = source.get("retry") match {
-          case Some(t) => t.asInstanceOf[Long]
+        val retry : Long = source.get("retry") match {
+          case Some(t) => t.asInstanceOf[Integer].toLong
           case None => 0
         }
 

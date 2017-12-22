@@ -8,9 +8,9 @@ case class Reconcile(
                     id: Option[String] = Option.empty[String],
                     old_id: String,
                     new_id: String,
-                    `type`: ReconcileType.Value,
-                    index: String,
-                    index_suffix: String,
-                    retry: Long,
+                    `type`: Option[ReconcileType.Value] = Option.empty,
+                    index: Option[String] = Option.empty,
+                    index_suffix: Option[String] = Option.empty,
+                    retry: Long = 5,
                     timestamp: Option[Long] = Option.empty[Long]
                   )

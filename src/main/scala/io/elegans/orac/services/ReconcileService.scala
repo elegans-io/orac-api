@@ -17,6 +17,7 @@ import scala.collection.JavaConverters._
 import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import io.elegans.orac.entities.ReconcileType
 import io.elegans.orac.tools.{Checksum, Time}
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.action.update.UpdateResponse
@@ -47,7 +48,8 @@ object  ReconcileService {
     elastic_client.index_name + "." + elastic_client.reconcile_index_suffix
   }
 
-  def create(document: Reconcile, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(document: Reconcile, index_name: String,
+             reconcile_type: ReconcileType.Value, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val timestamp: Long = Time.getTimestampMillis
@@ -57,7 +59,7 @@ object  ReconcileService {
     builder.field("id", id)
     builder.field("old_id", document.old_id)
     builder.field("new_id", document.new_id)
-    builder.field("index", document.index)
+    builder.field("index", index_name)
     builder.field("index_suffix", document.index_suffix)
     builder.field("retry", document.retry)
     builder.field("type", document.`type`)
@@ -240,11 +242,19 @@ object  ReconcileService {
     })
   }
 
-  def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
+  def delete(id: String, index_name: String, refresh: Int): Future[Option[DeleteDocumentsResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
-      .setType(elastic_client.reconcile_index_suffix).setId(id).get()
 
+    val qb: QueryBuilder = QueryBuilders.boolQuery()
+      .must(QueryBuilders.termQuery("_id", id))
+      .must(QueryBuilders.termQuery("index", index_name))
+
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
+        .source(getIndexName)
+        .filter(qb)
+        .filter(QueryBuilders.typeQuery(elastic_client.reconcile_index_suffix))
+        .get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName)
@@ -253,15 +263,13 @@ object  ReconcileService {
       }
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
-      version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
-    )
+    val deleted: Long = response.getDeleted
 
-    Option {doc_result}
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
   }
 
-  def read(ids: List[String]): Future[Option[List[Reconcile]]] = {
+  def read(ids: List[String], index_name: String): Future[Option[List[Reconcile]]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -274,7 +282,8 @@ object  ReconcileService {
     val response: MultiGetResponse = multiget_builder.get()
 
     val documents : List[Reconcile] = response.getResponses
-      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists)
+      .filter(_.getIndex == index_name).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 
@@ -292,23 +301,23 @@ object  ReconcileService {
         case None => ""
       }
 
-      val index: String = source.get("index") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val index: Option[String] = source.get("index") match {
+        case Some(t) => Some(t.asInstanceOf[String])
+        case None => Some("")
       }
 
-      val index_suffix: String = source.get("index_suffix") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val index_suffix: Option[String] = source.get("index_suffix") match {
+        case Some(t) => Some(t.asInstanceOf[String])
+        case None => Some("")
       }
 
-      val `type`: ReconcileType.Reconcile = source.get("type") match {
-        case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
-        case None => ReconcileType.unknown
+      val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
+        case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
+        case None => Option{ReconcileType.unknown}
       }
 
       val retry : Long = source.get("retry") match {
-        case Some(t) => t.asInstanceOf[Long]
+        case Some(t) => t.asInstanceOf[Integer].toLong
         case None => 0
       }
 
@@ -354,23 +363,23 @@ object  ReconcileService {
           case None => ""
         }
 
-        val index: String = source.get("index") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val index: Option[String] = source.get("index") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some("")
         }
 
-        val index_suffix: String = source.get("index_suffix") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val index_suffix: Option[String] = source.get("index_suffix") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some("")
         }
 
-        val `type`: ReconcileType.Reconcile = source.get("type") match {
-          case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
-          case None => ReconcileType.unknown
+        val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
+          case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
+          case None => Option{ReconcileType.unknown}
         }
 
         val retry : Long = source.get("retry") match {
-          case Some(t) => t.asInstanceOf[Long]
+          case Some(t) => t.asInstanceOf[Integer].toLong
           case None => 0
         }
 
