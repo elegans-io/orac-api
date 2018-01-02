@@ -8,7 +8,7 @@ case class ReconcileHistory(
                       id: Option[String] = Option.empty[String],
                       old_id: String,
                       new_id: String,
-                      `type`: Option[ReconcileType.Value] = Option.empty,
+                      `type`: ReconcileType.Value,
                       index: Option[String] = Option.empty,
                       index_suffix: Option[String] = Option.empty,
                       insert_timestamp: Long,

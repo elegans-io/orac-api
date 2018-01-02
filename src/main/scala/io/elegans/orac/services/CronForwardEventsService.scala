@@ -15,7 +15,8 @@ import scala.util.{Failure, Success, Try}
 import akka.actor.ActorRef
 import scala.language.postfixOps
 
-class CronForwardEventsService (implicit val executionContext: ExecutionContext) {
+object CronForwardEventsService {
+  implicit def executionContext: ExecutionContext = OracActorSystem.system.dispatcher
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val itemService: ItemService.type = ItemService
   val oracUserService: OracUserService.type = OracUserService
@@ -142,7 +143,7 @@ class CronForwardEventsService (implicit val executionContext: ExecutionContext)
   def reloadEvents(): Unit = {
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      1 seconds,
+      10 seconds,
       reloadDecisionTableActorRef,
       Tick)
   }

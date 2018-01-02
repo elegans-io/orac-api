@@ -35,6 +35,7 @@ import org.elasticsearch.search.sort.SortOrder
 object ActionService {
   val elastic_client: ActionElasticClient.type = ActionElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
+  val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.action_index_suffix)
@@ -93,6 +94,7 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -169,6 +171,7 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -196,6 +199,7 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}

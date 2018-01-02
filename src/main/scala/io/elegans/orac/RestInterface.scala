@@ -30,9 +30,9 @@ trait RestInterface extends Resources {
   lazy val initRecommendationService: RecommendationService.type = RecommendationService
   lazy val initUserService: UserService.type = UserService
   lazy val initForwardService: ForwardService.type = ForwardService
-  lazy val initCronForwardEventsService = new CronForwardEventsService
+  lazy val initCronForwardEventsService = CronForwardEventsService
   lazy val initReconcileService: ReconcileService.type = ReconcileService
-  lazy val initCronReconcileService = new CronReconcileService
+  lazy val initCronReconcileService = CronReconcileService
   lazy val initReconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~
@@ -57,6 +57,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(forwardAllRoutes) ~
     LoggingEntities.logRequestAndResult(reconcileRoutes) ~
     LoggingEntities.logRequestAndResult(reconcileHistoryRoutes) ~
+    LoggingEntities.logRequestAndResult(reconcileAllRoutes) ~
     LoggingEntities.logRequestAndResult(rootAPIsRoutes)
 
 }

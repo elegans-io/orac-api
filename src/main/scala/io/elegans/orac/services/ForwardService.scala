@@ -116,7 +116,39 @@ object  ForwardService {
     Option {result}
   }
 
-  def reloadAll(index_name: String): Future[Unit] = Future {
+  def forwardDeleteAll(index_name: String): Future[Unit] = Future {
+    val item_iterator = itemService.getAllDocuments(index_name)
+    item_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id, index = index_name,
+        index_suffix = itemService.elastic_client.item_index_suffix,
+        operation = "delete")
+      forward
+    }).foreach(forward => {
+      create(forward, 0)
+    })
+
+    val orac_user_iterator = oracUserService.getAllDocuments(index_name)
+    orac_user_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id, index = index_name,
+        index_suffix = oracUserService.elastic_client.orac_user_index_suffix,
+        operation = "delete")
+      forward
+    }).foreach(forward => {
+      create(forward, 0)
+    })
+
+    val action_iterator = actionService.getAllDocuments(index_name)
+    action_iterator.map(doc => {
+      val forward = Forward(doc_id = doc.id.get, index = index_name,
+        index_suffix = actionService.elastic_client.action_index_suffix,
+        operation = "delete")
+      forward
+    }).foreach(forward => {
+      create(forward, 0)
+    })
+  }
+
+  def forwardReloadAll(index_name: String): Future[Unit] = Future {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,

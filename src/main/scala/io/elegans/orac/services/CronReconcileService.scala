@@ -15,7 +15,8 @@ import akka.actor.Props
 import scala.util.{Failure, Success, Try}
 import scala.language.postfixOps
 
-class CronReconcileService (implicit val executionContext: ExecutionContext) {
+object CronReconcileService  {
+  implicit def executionContext: ExecutionContext = OracActorSystem.system.dispatcher
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val itemService: ItemService.type = ItemService
   val oracUserService: OracUserService.type = OracUserService
@@ -40,7 +41,7 @@ class CronReconcileService (implicit val executionContext: ExecutionContext) {
     if (index_check) {
       val iterator = reconcileService.getAllDocuments
       iterator.foreach(item  => {
-        val item_type = item.`type`.get
+        val item_type = item.`type`
         item_type match {
           case ReconcileType.orac_user =>
             val reconcile_res = Try(reconcileService.reconcileUser(item.index.get, item))
@@ -79,11 +80,16 @@ class CronReconcileService (implicit val executionContext: ExecutionContext) {
     }
   }
 
+  def reloadEventsOnce(): Unit = {
+    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, reloadDecisionTableActorRef, Tick)
+  }
+
   def reloadEvents(): Unit = {
     val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      1 seconds,
+      60 seconds,
       reloadDecisionTableActorRef,
       Tick)
   }

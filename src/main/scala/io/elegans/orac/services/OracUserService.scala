@@ -36,6 +36,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object OracUserService {
   val elastic_client: OracUserElasticClient.type = OracUserElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
+  val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.orac_user_index_suffix)
@@ -136,6 +137,7 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -235,6 +237,7 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -263,6 +266,7 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}

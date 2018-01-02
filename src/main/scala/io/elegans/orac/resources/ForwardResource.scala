@@ -18,7 +18,7 @@ trait ForwardResource extends MyResource {
   val forwardService: ForwardService.type = ForwardService
 
   def forwardAllRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward_all""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
@@ -27,9 +27,9 @@ trait ForwardResource extends MyResource {
               authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(forwardService.reloadAll(index_name = index_name)) {
+                onCompleteWithBreaker(breaker)(forwardService.forwardReloadAll(index_name = index_name)) {
                   case Success(t) =>
-                      completeResponse(StatusCodes.OK)
+                    completeResponse(StatusCodes.OK)
                   case Failure(e) =>
                     log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
                       "method=" + method.toString + " : " + e.getMessage)
@@ -49,13 +49,9 @@ trait ForwardResource extends MyResource {
                 authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
                 extractMethod { method =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(forwardService.deleteAll(index_name = index_name)) {
+                  onCompleteWithBreaker(breaker)(forwardService.forwardDeleteAll(index_name = index_name)) {
                     case Success(t) =>
-                      if (t.isDefined) {
-                        completeResponse(StatusCodes.OK, t)
-                      } else {
-                        completeResponse(StatusCodes.BadRequest, t)
-                      }
+                      completeResponse(StatusCodes.OK)
                     case Failure(e) =>
                       log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
                         "method=" + method.toString + " : " + e.getMessage)

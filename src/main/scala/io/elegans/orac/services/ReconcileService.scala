@@ -48,11 +48,10 @@ object  ReconcileService {
     elastic_client.index_name + "." + elastic_client.reconcile_index_suffix
   }
 
-  def create(document: Reconcile, index_name: String,
-             reconcile_type: ReconcileType.Value, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(document: Reconcile, index_name: String, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = Time.getTimestampMillis
+    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampMillis)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.getLong))
 
@@ -60,9 +59,22 @@ object  ReconcileService {
     builder.field("old_id", document.old_id)
     builder.field("new_id", document.new_id)
     builder.field("index", index_name)
-    builder.field("index_suffix", document.index_suffix)
+
+    val reconcile_type = document.`type`
+    val index_suffix = if(document.index_suffix.isDefined) {
+      document.index_suffix
+    } else {
+      reconcile_type match {
+        case ReconcileType.orac_user =>
+          oracUserService.elastic_client.orac_user_index_suffix
+        case _ =>
+          throw new Exception(this.getClass.getCanonicalName + " : bad reconcile type value: (" + reconcile_type + ")")
+      }
+    }
+
+    builder.field("index_suffix", index_suffix)
     builder.field("retry", document.retry)
-    builder.field("type", document.`type`)
+    builder.field("type", reconcile_type)
     builder.field("timestamp", timestamp)
 
     builder.endObject()
@@ -311,9 +323,9 @@ object  ReconcileService {
         case None => Some("")
       }
 
-      val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
-        case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
-        case None => Option{ReconcileType.unknown}
+      val `type`: ReconcileType.Reconcile = source.get("type") match {
+        case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
+        case None => ReconcileType.unknown
       }
 
       val retry : Long = source.get("retry") match {
@@ -373,9 +385,9 @@ object  ReconcileService {
           case None => Some("")
         }
 
-        val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
-          case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
-          case None => Option{ReconcileType.unknown}
+        val `type`: ReconcileType.Reconcile = source.get("type") match {
+          case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
+          case None => ReconcileType.unknown
         }
 
         val retry : Long = source.get("retry") match {
@@ -402,4 +414,9 @@ object  ReconcileService {
 
     iterator
   }
+
+  def read_all(index_name: String): Future[Option[List[Reconcile]]] = {
+    Future { Option { getAllDocuments.toList } }
+  }
+
 }

@@ -18,9 +18,66 @@ trait ReconcileResource extends MyResource {
 
   val reconcileService: ReconcileService.type = ReconcileService
 
+  def reconcileAllRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "reconcile_all") { (index_name) =>
+      pathEnd {
+        delete {
+          authenticateBasicAsync(realm = auth_realm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+              extractMethod { method =>
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(reconcileService.deleteAll(index_name)) {
+                  case Success(t) =>
+                    if (t.isDefined) {
+                      completeResponse(StatusCodes.OK, t)
+                    } else {
+                      completeResponse(StatusCodes.BadRequest, t)
+                    }
+                  case Failure(e) =>
+                    log.error(this.getClass.getCanonicalName + " index(" + reconcileService.getIndexName + ") " +
+                      "method=" + method.toString + " : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 105, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        } ~
+          get {
+            authenticateBasicAsync(realm = auth_realm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+                extractMethod { method =>
+                  parameters("id".as[String].*) { id =>
+                    val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(reconcileService.read_all(index_name)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                          t
+                        })
+                      case Failure(e) =>
+                        log.error(this.getClass.getCanonicalName + " index(" + reconcileService.getIndexName + ") " +
+                          "method=" + method.toString + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest,
+                          Option {
+                            ReturnMessageData(code = 101, message = e.getMessage)
+                          })
+                    }
+                  }
+                }
+              }
+            }
+          }
+      }
+    }
+
   def reconcileRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "reconcile" ~ Slash
-        ~ """^(orac_user)$""".r) { (index_name, reconcile_type) =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "reconcile") { (index_name) =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
@@ -32,9 +89,11 @@ trait ReconcileResource extends MyResource {
                   entity(as[Reconcile]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                     onCompleteWithBreaker(breaker)(
-                      reconcileService.create(document, index_name, ReconcileType.getValue(reconcile_type), refresh)) {
+                      reconcileService.create(document, index_name, refresh)) {
                       case Success(t) =>
-                        completeResponse(StatusCodes.Created)
+                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                          t
+                        })
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
                           log.error(this.getClass.getCanonicalName + " index(" + reconcileService.getIndexName + ") " +
@@ -111,3 +170,4 @@ trait ReconcileResource extends MyResource {
         }
     }
 }
+

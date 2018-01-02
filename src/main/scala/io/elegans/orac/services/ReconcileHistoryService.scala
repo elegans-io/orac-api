@@ -48,6 +48,7 @@ object ReconcileHistoryService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val timestamp: Long = Time.getTimestampMillis
+    val end_timestamp: Long = document.end_timestamp.getOrElse(timestamp)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.getLong))
 
@@ -58,7 +59,7 @@ object ReconcileHistoryService {
     builder.field("index_suffix", document.index_suffix)
     builder.field("type", document.`type`)
     builder.field("retry", document.retry)
-    builder.field("end_timestamp", document.end_timestamp)
+    builder.field("end_timestamp", end_timestamp)
     builder.field("insert_timestamp", document.insert_timestamp)
 
     builder.endObject()
@@ -163,9 +164,9 @@ object ReconcileHistoryService {
         case None => Some("")
       }
 
-      val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
-        case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
-        case None => Option{ReconcileType.unknown}
+      val `type`: ReconcileType.Reconcile = source.get("type") match {
+        case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
+        case None => ReconcileType.unknown
       }
 
       val retry : Long = source.get("retry") match {
@@ -230,9 +231,9 @@ object ReconcileHistoryService {
           case None => Some("")
         }
 
-        val `type`: Option[ReconcileType.Reconcile] = source.get("type") match {
-          case Some(t) => Option{ReconcileType.getValue(t.asInstanceOf[String])}
-          case None => Option{ReconcileType.unknown}
+        val `type`: ReconcileType.Reconcile = source.get("type") match {
+          case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
+          case None => ReconcileType.unknown
         }
 
         val retry : Long = source.get("retry") match {

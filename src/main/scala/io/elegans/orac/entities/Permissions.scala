@@ -11,6 +11,7 @@ object Permissions extends Enumeration {
   create_item, update_item, read_item, delete_item,
   create_orac_user, update_orac_user, read_orac_user, delete_orac_user,
   create_recomm, update_recomm, read_recomm, delete_recomm,
+  create_forward, read_forward, delete_forward,
   unknown = Value
   def getValue(permission: String) = values.find(_.toString == permission).getOrElse(unknown)
 }

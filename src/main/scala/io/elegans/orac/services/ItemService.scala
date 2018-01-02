@@ -34,6 +34,7 @@ import org.elasticsearch.search.SearchHit
 object ItemService {
   val elastic_client: ItemElasticClient.type = ItemElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
+  val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
   def getIndexName(index_name: String, suffix: Option[String] = None): String = {
     index_name + "." + suffix.getOrElse(elastic_client.item_index_suffix)
@@ -126,6 +127,7 @@ object ItemService {
         index_suffix = elastic_client.item_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -224,6 +226,7 @@ object ItemService {
         index_suffix = elastic_client.item_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -251,6 +254,7 @@ object ItemService {
         index_suffix = elastic_client.item_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
+      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
