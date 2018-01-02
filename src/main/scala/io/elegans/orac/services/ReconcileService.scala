@@ -43,6 +43,7 @@ object  ReconcileService {
   val oracUserService: OracUserService.type = OracUserService
   val actionService: ActionService.type = ActionService
   val recommendationService: RecommendationService.type = RecommendationService
+  val cronReconcileService: CronReconcileService.type = CronReconcileService
 
   def getIndexName: String = {
     elastic_client.index_name + "." + elastic_client.reconcile_index_suffix
@@ -97,6 +98,8 @@ object  ReconcileService {
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
+
+    cronReconcileService.reloadEventsOnce()
 
     Option {doc_result}
   }

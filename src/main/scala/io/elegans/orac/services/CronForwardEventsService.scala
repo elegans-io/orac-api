@@ -143,7 +143,7 @@ object CronForwardEventsService {
   def reloadEvents(): Unit = {
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      10 seconds,
+      30 seconds,
       reloadDecisionTableActorRef,
       Tick)
   }

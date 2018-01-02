@@ -89,7 +89,7 @@ object CronReconcileService  {
     val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      60 seconds,
+      30 seconds,
       reloadDecisionTableActorRef,
       Tick)
   }
