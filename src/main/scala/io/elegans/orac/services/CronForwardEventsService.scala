@@ -132,19 +132,17 @@ object CronForwardEventsService {
     }
   }
 
-  val reloadDecisionTableActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
-
   def sendEvent(): Unit = {
-    OracActorSystem.system.scheduler.scheduleOnce(0 seconds,
-      reloadDecisionTableActorRef,
-      Tick)
+    val updateEventsActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, Tick)
   }
 
   def reloadEvents(): Unit = {
+    val updateEventsActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
       30 seconds,
-      reloadDecisionTableActorRef,
+      updateEventsActorRef,
       Tick)
   }
 

@@ -81,16 +81,16 @@ object CronReconcileService  {
   }
 
   def reloadEventsOnce(): Unit = {
-    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
-    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, reloadDecisionTableActorRef, Tick)
+    val updateEventsActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, Tick)
   }
 
   def reloadEvents(): Unit = {
-    val reloadDecisionTableActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
+    val updateEventsActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
       30 seconds,
-      reloadDecisionTableActorRef,
+      updateEventsActorRef,
       Tick)
   }
 
