@@ -39,6 +39,7 @@ object  ForwardService {
   val itemService: ItemService.type = ItemService
   val oracUserService: OracUserService.type = OracUserService
   val actionService: ActionService.type = ActionService
+  val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
   val forwardingDestinations: Map[String, List[(ForwardingDestination, AbstractForwardingImplService)]] =
     elastic_client.forwarding.map(forwarding_index => {
@@ -146,6 +147,8 @@ object  ForwardService {
     }).foreach(forward => {
       create(forward, 0)
     })
+
+    cronForwardEventsService.sendEvent()
   }
 
   def forwardReloadAll(index_name: String): Future[Unit] = Future {
@@ -178,6 +181,8 @@ object  ForwardService {
     }).foreach(forward => {
       create(forward, 0)
     })
+
+    cronForwardEventsService.sendEvent()
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
