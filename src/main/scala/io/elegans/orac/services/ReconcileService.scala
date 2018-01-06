@@ -191,7 +191,10 @@ object  ReconcileService {
     var new_user =
       Await.result(oracUserService.read(index_name = index_name, ids = List(reconcile.new_id)), 5.seconds)
 
-    if(old_user.isDefined && new_user.isEmpty) { // we can create the new user
+    def existsOracUser(user: Option[OracUsers]) = user.isDefined && user.get.items.nonEmpty
+    def notExistsOracUser(user: Option[OracUsers]) = user.isEmpty || user.get.items.isEmpty
+
+    if(existsOracUser(old_user) && notExistsOracUser(new_user)) { // we can create the new user
       val old_user_data = old_user.get.items.head
       val new_user_data = OracUser(id = reconcile.new_id,
         name = old_user_data.name,
@@ -204,10 +207,10 @@ object  ReconcileService {
         val message = "Reconciliation: cannot create the new_user(" + reconcile.new_id + ")"
         throw new Exception(message)
       }
-    } else if (old_user.isEmpty && new_user.isDefined) { // nothing to do
+    } else if (notExistsOracUser(old_user) && existsOracUser(new_user)) { // nothing to do
       val message = "Reconciliation: new_user is already defined, nothing to do"
       log.debug(message)
-    } else if(old_user.isEmpty && new_user.isEmpty) { // some error occurred
+    } else if(notExistsOracUser(old_user) && notExistsOracUser(new_user)) { // some error occurred
       val message = "Reconciliation: both old_user(" + reconcile.old_id +
         ") and new_user(" + reconcile.new_id + ") does not esists"
       throw new Exception(message)
@@ -215,18 +218,22 @@ object  ReconcileService {
 
     new_user =
       Await.result(oracUserService.read(index_name = index_name, ids = List(reconcile.new_id)), 5.seconds)
-    if(old_user.isDefined && new_user.isDefined) { // we can delete the old user
+    if(existsOracUser(old_user) && existsOracUser(new_user)) { // we can delete the old user
       val delete_old_user =
         Await.result(oracUserService.delete(index_name = index_name, id = reconcile.old_id, 0), 5.seconds)
       if (delete_old_user.isEmpty) {
         val message = "Reconciliation: can't delete old user" + reconcile.old_id
         throw new Exception(message)
       }
+    } else if(notExistsOracUser(new_user)) {
+      val message = "Reconciliation: new user is empty" + reconcile.new_id
+      throw new Exception(message)
     }
 
     val search_action = Some(UpdateAction(user_id = Some(reconcile.old_id)))
-    val action_iterator = actionService.getAllDocuments(index_name, search_action)
+    val action_iterator = actionService.getAllDocuments(index_name = index_name, search = search_action)
     action_iterator.foreach(doc => {
+      log.debug("Reconciliation of action: " + doc.id)
       val update_action = UpdateAction(user_id = Some(reconcile.new_id))
       val update_res =
         Await.result(actionService.update(doc.id.get, index_name, update_action, 0), 5.seconds)
@@ -241,8 +248,10 @@ object  ReconcileService {
     })
 
     val search_recommendation = Some(UpdateRecommendation(user_id = Some(reconcile.old_id)))
-    val recommendation_iterator = recommendationService.getAllDocuments(index_name, search_recommendation)
+    val recommendation_iterator = recommendationService.getAllDocuments(index_name = index_name,
+      search = search_recommendation)
     recommendation_iterator.foreach(doc => {
+      log.debug("Reconciliation of recommendation: " + doc.id)
       val update_recommendation = UpdateRecommendation(user_id = Some(reconcile.new_id))
       val update_res =
         Await.result(recommendationService.update(doc.id.get, index_name, update_recommendation, 0), 5.seconds)

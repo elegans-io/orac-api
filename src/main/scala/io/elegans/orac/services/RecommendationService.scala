@@ -246,17 +246,17 @@ object RecommendationService {
       val document = search.get
       val bool_query_builder = QueryBuilders.boolQuery()
       if (document.item_id.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id))
+        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id.get))
       if (document.user_id.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id))
+        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id.get))
       if (document.name.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name))
+        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name.get))
       if (document.generation_batch.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("generation_batch", document.generation_batch))
+        bool_query_builder.filter(QueryBuilders.termQuery("generation_batch", document.generation_batch.get))
       if (document.generation_timestamp.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("generation_timestamp", document.generation_timestamp))
+        bool_query_builder.filter(QueryBuilders.termQuery("generation_timestamp", document.generation_timestamp.get))
       if (document.score.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score))
+        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score.get))
       bool_query_builder
     }
 

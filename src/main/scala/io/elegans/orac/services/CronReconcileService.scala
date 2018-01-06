@@ -65,7 +65,7 @@ object CronReconcileService  {
                     log.error("Reconciliation: can't create the reconciliation item entry: " + item.id.get)
                   }
                 case Failure(e) =>
-                  log.error("Reconciliation: failed : " + item.toString())
+                  log.error("Reconciliation: failed : " + item.toString)
                   val updateReconcile = UpdateReconcile(retry = Option {
                     item.retry - 1
                   })

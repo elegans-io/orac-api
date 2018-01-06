@@ -282,15 +282,15 @@ object ActionService {
       val document = search.get
       val bool_query_builder = QueryBuilders.boolQuery()
       if (document.item_id.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id))
+        bool_query_builder.filter(QueryBuilders.termQuery("item_id", document.item_id.get))
       if (document.user_id.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id))
+        bool_query_builder.filter(QueryBuilders.termQuery("user_id", document.user_id.get))
       if (document.name.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name))
+        bool_query_builder.filter(QueryBuilders.termQuery("name", document.name.get))
       if (document.score.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score))
+        bool_query_builder.filter(QueryBuilders.termQuery("score", document.score.get))
       if (document.ref_recommendation.isDefined)
-        bool_query_builder.filter(QueryBuilders.termQuery("ref_recommendation", document.ref_recommendation))
+        bool_query_builder.filter(QueryBuilders.termQuery("ref_recommendation", document.ref_recommendation.get))
       bool_query_builder
     }
 
