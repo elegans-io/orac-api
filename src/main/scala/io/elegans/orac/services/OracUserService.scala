@@ -137,7 +137,6 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -237,7 +236,6 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -266,7 +264,6 @@ object OracUserService {
         index_suffix = elastic_client.orac_user_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}

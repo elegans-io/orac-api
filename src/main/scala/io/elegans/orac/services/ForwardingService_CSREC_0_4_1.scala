@@ -75,6 +75,92 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     response
   }
 
+  def forward_create_item(forward: Forward, document: Option[Item] = Option.empty[Item],
+                          item_info_filters: Option[ItemInfo]): Unit = {
+    val uri = forwardingDestination.url + "/insertitems?unique_id=_id"
+    val item = document.get
+
+    /* base fields are: type, name, description */
+    val base_fields: Map[String, Any] = item_info_filters.get.base_fields.toList.map({
+      case "type" =>
+        ("type", item.`type`)
+      case "name" =>
+        ("name", item.name)
+      case "description" =>
+        ("description", item.description)
+      case _ =>
+        (null, null)
+    }).filter(_._1 != null).toMap
+
+    val tags: CsrecItemType = if (item.properties.isDefined) {
+      val regex = item_info_filters.get.tag_filters
+      val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+        x.matches(regex)
+      })
+      if(tag_values.nonEmpty) {
+        Map("tags" -> tag_values)
+      } else {
+        Map.empty[String, Any]
+      }
+    } else {
+      Map.empty[String, Any]
+    }
+
+    val string_properties: CsrecItemType = if (item.properties.isDefined) {
+      val regex = item_info_filters.get.string_filters
+      item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
+        x.key.matches(regex)
+      }).map(x => {
+        (x.key, x.value: Any)
+      }).groupBy(_._1).map(x => {
+        val array = x._2.map(y => {y._2.toString})
+        (x._1, array)
+      })
+    } else {
+      Map.empty[String, Any]
+    }
+
+    val csrec_item: CsrecItemsArray = Array(Map[String, Any](
+      "_id" -> item.id,
+    ) ++ base_fields ++ string_properties ++ tags)
+
+    val entity_future = Marshal(csrec_item).to[MessageEntity]
+    val entity = Await.result(entity_future, 1.second)
+    val http_request = Await.result(
+      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+
+    http_request.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        throw ForwardingException(message)
+    }
+  }
+
+  def forward_delete_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
+    val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
+    val http_request = Await.result(
+      executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+    http_request.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        throw ForwardingException(message)
+    }
+  }
+
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
       itemInfoService.updateItemInfoService(forward.index)
@@ -89,92 +175,129 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
 
     forward.operation match {
-      case "create" | "update" =>
-        val uri = forwardingDestination.url + "/insertitems?unique_id=_id"
-        val item = document.get
-
-        /* base fields are: type, name, description */
-        val base_fields: Map[String, Any] = item_info_filters.get.base_fields.toList.map({
-            case "type" =>
-              ("type", item.`type`)
-            case "name" =>
-              ("name", item.name)
-            case "description" =>
-              ("description", item.description)
-            case _ =>
-              (null, null)
-        }).filter(_._1 != null).toMap
-
-        val tags: CsrecItemType = if (item.properties.isDefined) {
-          val regex = item_info_filters.get.tag_filters
-          val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
-            x.matches(regex)
-          })
-          if(tag_values.nonEmpty) {
-            Map("tags" -> tag_values)
-          } else {
-            Map.empty[String, Any]
-          }
-        } else {
-          Map.empty[String, Any]
-        }
-
-        val string_properties: CsrecItemType = if (item.properties.isDefined) {
-          val regex = item_info_filters.get.string_filters
-          item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
-            x.key.matches(regex)
-          }).map(x => {
-            (x.key, x.value: Any)
-          }).groupBy(_._1).map(x => {
-            val array = x._2.map(y => {y._2.toString})
-            (x._1, array)
-          })
-        } else {
-          Map.empty[String, Any]
-        }
-
-        val csrec_item: CsrecItemsArray = Array(Map[String, Any](
-          "_id" -> item.id,
-        ) ++ base_fields ++ string_properties ++ tags)
-
-        val entity_future = Marshal(csrec_item).to[MessageEntity]
-        val entity = Await.result(entity_future, 1.second)
-        val http_request = Await.result(
-          executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
-
-        http_request.status match {
-          case StatusCodes.Created | StatusCodes.OK =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            log.debug(message)
-          case _ =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            throw ForwardingException(message)
-        }
+      case "create" =>
+        forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
       case "delete" =>
-        val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-        val http_request = Await.result(
-          executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
-        http_request.status match {
-          case StatusCodes.Created | StatusCodes.OK =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            log.debug(message)
-          case _ =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            throw ForwardingException(message)
-        }
+        forward_delete_item(forward = forward, document = document)
+      case "update" =>
+        forward_delete_item(forward = forward, document = document)
+        forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
     }
   }
 
   def forward_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
     log.debug("called forwarding user for csrec, nothing to do")
+  }
+
+
+  def forward_create_action(forward: Forward, document: Option[Action] = Option.empty[Action],
+                            item_info_filters: Option[ItemInfo]): Unit = {
+    val doc = document.get
+    val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
+      "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
+
+    val item_option = Await.result(itemService.read(forward.index, List(doc.item_id)), 5.second)
+    if(item_option.isEmpty || item_option.get.items.isEmpty) {
+      val message = "Cannot retrieve the item id(" + doc.item_id + ") required to forward the action"
+      throw ForwardingException(message)
+    }
+
+    val item = item_option.get.items.head
+
+    /* base fields are: type, name, description */
+    val base_fields: List[String] = item_info_filters.get.base_fields.toList.map({
+      case "type" =>
+        "type"
+      case "name" =>
+        "name"
+      case "description" =>
+        "description"
+      case _ =>
+        null
+    }).filter(_ != null)
+
+    val tags: List[String] = if(item.properties.isDefined){
+      val regex = item_info_filters.get.tag_filters
+      val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+        x.matches(regex)
+      })
+      if(tag_values.nonEmpty) {
+        List("tags")
+      } else {
+        List.empty[String]
+      }
+    } else {
+      List.empty[String]
+    }
+
+    val string_properties: List[String] = if (item.properties.isDefined) {
+      val regex = item_info_filters.get.string_filters
+      item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
+        x.key.matches(regex)
+      }).map(x => {
+        (x.key, x.value: Any)
+      }).groupBy(_._1).map(x => (x._1, x._2.map(y => {y._2}))).keys.toList
+    } else {
+      List.empty[String]
+    }
+
+    val meaningful_fields = base_fields ++ tags ++ string_properties
+    val meaningful_item_info = Map[String, List[String]](
+      "item_info" -> meaningful_fields,
+    )
+
+    val entity_future = Marshal(meaningful_item_info).to[MessageEntity]
+    val entity = Await.result(entity_future, 1.second)
+
+    val http_request = Await.result(
+      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+    http_request.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        throw ForwardingException(message)
+    }
+
+    val uri_only_info = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
+      "&code=" + doc.score.getOrElse(0.0) + "&only_info=true"
+
+    val http_request_only_info = Await.result(
+      executeHttpRequest(uri = uri_only_info, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+    http_request_only_info.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        throw ForwardingException(message)
+    }
+  }
+
+  def forward_delete_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
+    val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+    http_request.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + forwardingDestination.url + ")"
+        throw ForwardingException(message)
+    }
   }
 
   def forward_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
@@ -191,111 +314,13 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
 
     forward.operation match {
-      case "create" | "update" =>
-        val doc = document.get
-        val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
-          "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
-
-        val item_option = Await.result(itemService.read(forward.index, List(doc.item_id)), 5.second)
-        if(item_option.isEmpty || item_option.get.items.isEmpty) {
-          val message = "Cannot retrieve the item id(" + doc.item_id + ") required to forward the action"
-          throw ForwardingException(message)
-        }
-
-        val item = item_option.get.items.head
-
-        /* base fields are: type, name, description */
-        val base_fields: List[String] = item_info_filters.get.base_fields.toList.map({
-          case "type" =>
-            "type"
-          case "name" =>
-            "name"
-          case "description" =>
-            "description"
-          case _ =>
-            null
-        }).filter(_ != null)
-
-        val tags: List[String] = if(item.properties.isDefined){
-          val regex = item_info_filters.get.tag_filters
-          val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
-            x.matches(regex)
-          })
-          if(tag_values.nonEmpty) {
-            List("tags")
-          } else {
-            List.empty[String]
-          }
-        } else {
-          List.empty[String]
-        }
-
-        val string_properties: List[String] = if (item.properties.isDefined) {
-          val regex = item_info_filters.get.string_filters
-          item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
-            x.key.matches(regex)
-          }).map(x => {
-            (x.key, x.value: Any)
-          }).groupBy(_._1).map(x => (x._1, x._2.map(y => {y._2}))).keys.toList
-        } else {
-          List.empty[String]
-        }
-
-        val meaningful_fields = base_fields ++ tags ++ string_properties
-        val meaningful_item_info = Map[String, List[String]](
-          "item_info" -> meaningful_fields,
-        )
-
-        val entity_future = Marshal(meaningful_item_info).to[MessageEntity]
-        val entity = Await.result(entity_future, 1.second)
-
-        val http_request = Await.result(
-          executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
-        http_request.status match {
-          case StatusCodes.Created | StatusCodes.OK =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            log.debug(message)
-          case _ =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            throw ForwardingException(message)
-        }
-
-        val uri_only_info = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
-          "&code=" + doc.score.getOrElse(0.0) + "&only_info=true"
-
-        val http_request_only_info = Await.result(
-          executeHttpRequest(uri = uri_only_info, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
-        http_request_only_info.status match {
-          case StatusCodes.Created | StatusCodes.OK =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            log.debug(message)
-          case _ =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            throw ForwardingException(message)
-        }
+      case "create" =>
+        forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
       case "delete" =>
-        val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-        val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
-        http_request.status match {
-          case StatusCodes.Created | StatusCodes.OK =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            log.debug(message)
-          case _ =>
-            val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-              " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-              " destination(" + forwardingDestination.url + ")"
-            throw ForwardingException(message)
-        }
+        forward_delete_action(forward = forward, document = document)
+      case "update" =>
+        forward_delete_action(forward = forward, document = document)
+        forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
     }
   }
 

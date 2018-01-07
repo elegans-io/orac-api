@@ -94,7 +94,6 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "create")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -171,7 +170,6 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "update")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}
@@ -199,7 +197,6 @@ object ActionService {
         index_suffix = elastic_client.action_index_suffix,
         operation = "delete")
       forwardService.create(document = forward, refresh = refresh)
-      cronForwardEventsService.sendEvent()
     }
 
     Option {doc_result}

@@ -91,11 +91,12 @@ object IndexActions extends JsonSupport {
 
     val timeout = Duration(params.timeout, "s")
 
+    val http = Http()
     actions.foreach(entry => {
       val entity_future = Marshal(entry).to[MessageEntity]
       val entity = Await.result(entity_future, 10.second)
       val responseFuture: Future[HttpResponse] =
-        Http().singleRequest(HttpRequest(
+        http.singleRequest(HttpRequest(
           method = HttpMethods.POST,
           uri = base_url,
           headers = httpHeader,

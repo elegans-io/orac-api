@@ -44,9 +44,9 @@ object CronReconcileService  {
         val item_type = item.`type`
         item_type match {
           case ReconcileType.orac_user =>
-            val reconcile_res = Try(reconcileService.reconcileUser(item.index.get, item))
             if(item.retry > 0) {
-              reconcile_res match {
+              val reconcile_res = reconcileService.reconcileUser(item.index.get, item)
+              reconcile_res.onComplete {
                 case Success(t) =>
                   log.info("Reconciliation: successfully completed: " + item.toString)
                   val history_element = ReconcileHistory(old_id = item.old_id, new_id = item.new_id,
@@ -72,7 +72,7 @@ object CronReconcileService  {
                   reconcileService.update(id = item.id.get, document = updateReconcile, 0)
               }
             } else {
-              log.info("Reconciliation: removing entry: " + item.id)
+              log.info("Reconciliation: max attemts reached (" + item.retry + ") ; removing entry: " + item.id)
               reconcileService.delete(item.id.get, item.index.get, 0)
             }
         }
@@ -89,7 +89,7 @@ object CronReconcileService  {
     val updateEventsActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      30 seconds,
+      1 seconds,
       updateEventsActorRef,
       Tick)
   }

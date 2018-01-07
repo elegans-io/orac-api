@@ -147,8 +147,6 @@ object  ForwardService {
     }).foreach(forward => {
       create(forward, 0)
     })
-
-    cronForwardEventsService.sendEvent()
   }
 
   def forwardReloadAll(index_name: String): Future[Unit] = Future {
@@ -181,8 +179,6 @@ object  ForwardService {
     }).foreach(forward => {
       create(forward, 0)
     })
-
-    cronForwardEventsService.sendEvent()
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {

@@ -236,7 +236,7 @@ object  ReconcileService {
       log.debug("Reconciliation of action: " + doc.id)
       val update_action = UpdateAction(user_id = Some(reconcile.new_id))
       val update_res =
-        Await.result(actionService.update(doc.id.get, index_name, update_action, 0), 5.seconds)
+        Await.result(actionService.update(index_name, doc.id.get, update_action, 0), 5.seconds)
       if(update_res.isEmpty) {
         val message = "Reconciliation: reconcile_id(" + reconcile.id + ") " +
           "type(" + reconcile.`type` + ") document_id(" + doc.id + ") ; "
@@ -254,7 +254,7 @@ object  ReconcileService {
       log.debug("Reconciliation of recommendation: " + doc.id)
       val update_recommendation = UpdateRecommendation(user_id = Some(reconcile.new_id))
       val update_res =
-        Await.result(recommendationService.update(doc.id.get, index_name, update_recommendation, 0), 5.seconds)
+        Await.result(recommendationService.update(index_name, doc.id.get, update_recommendation, 0), 5.seconds)
       if(update_res.isEmpty) {
         val message = "Reconciliation: reconcile_id(" + reconcile.id + ") " +
           "type(" + reconcile.`type` + ") document_id(" + doc.id + ") ; "

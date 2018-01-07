@@ -141,7 +141,7 @@ object CronForwardEventsService {
     val updateEventsActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
     OracActorSystem.system.scheduler.schedule(
       0 seconds,
-      30 seconds,
+      1 seconds,
       updateEventsActorRef,
       Tick)
   }
