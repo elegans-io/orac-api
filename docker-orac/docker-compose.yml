@@ -46,5 +46,5 @@ services:
       - "0.0.0.0:8443:8443"
     links:
       - "elasticsearch:orac-elasticsearch"
-#      - "csrec:csrec"
+      - "csrec:csrec"
 
