@@ -18,17 +18,17 @@ services:
     environment:
       - MAX_LOCKED_MEMORY=unlimited
 
-  csrec:
-    image: elegansio/csrec-webapp:1.0.0
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "10"
-    command: ["/bin/bash", "-c", "source activate csrec && exec csrec_webapp.py --port=8000"]
-    ports:
-      - "0.0.0.0:8000:8000"
+#  csrec:
+#    image: elegansio/csrec-webapp:1.0.0
+#    restart: unless-stopped
+#    logging:
+#      driver: "json-file"
+#      options:
+#        max-size: "100m"
+#        max-file: "10"
+#    command: ["/bin/bash", "-c", "source activate csrec && exec csrec_webapp.py --port=8000"]
+#    ports:
+#      - "0.0.0.0:8000:8000"
 
   orac:
     image: java:8
@@ -46,5 +46,5 @@ services:
       - "0.0.0.0:8443:8443"
     links:
       - "elasticsearch:orac-elasticsearch"
-      - "csrec:csrec"
+#      - "csrec:csrec"
 

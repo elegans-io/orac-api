@@ -218,14 +218,7 @@ object  ReconcileService {
 
     new_user =
       Await.result(oracUserService.read(index_name = index_name, ids = List(reconcile.new_id)), 5.seconds)
-    if(existsOracUser(old_user) && existsOracUser(new_user)) { // we can delete the old user
-      val delete_old_user =
-        Await.result(oracUserService.delete(index_name = index_name, id = reconcile.old_id, 0), 5.seconds)
-      if (delete_old_user.isEmpty) {
-        val message = "Reconciliation: can't delete old user" + reconcile.old_id
-        throw new Exception(message)
-      }
-    } else if(notExistsOracUser(new_user)) {
+    if(notExistsOracUser(new_user)) {
       val message = "Reconciliation: new user is empty" + reconcile.new_id
       throw new Exception(message)
     }
@@ -264,6 +257,15 @@ object  ReconcileService {
           "type(" + reconcile.`type` + ") document_id(" + doc.id + ") result("+ update_res.toString + ")")
       }
     })
+
+    if(existsOracUser(old_user) && existsOracUser(new_user)) { // we can delete the old user
+      val delete_old_user =
+        Await.result(oracUserService.delete(index_name = index_name, id = reconcile.old_id, 0), 5.seconds)
+      if (delete_old_user.isEmpty) {
+        val message = "Reconciliation: can't delete old user" + reconcile.old_id
+        throw new Exception(message)
+      }
+    }
   }
 
   def delete(id: String, index_name: String, refresh: Int): Future[Option[DeleteDocumentsResult]] = Future {

@@ -10,6 +10,7 @@ case class Forward(
                     index: String,
                     index_suffix: String,
                     operation: String,
+                    retry: Option[Long] = Option{5},
                     timestamp: Option[Long] = Option.empty[Long]
                   )
 

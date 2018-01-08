@@ -27,7 +27,7 @@ trait ForwardResource extends MyResource {
               authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(forwardService.forwardReloadAll(index_name = index_name)) {
+                onCompleteWithBreaker(breaker)(forwardService.forwardCreateAll(index_name = index_name)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK)
                   case Failure(e) =>
@@ -69,18 +69,18 @@ trait ForwardResource extends MyResource {
   }
 
   def forwardRoutes: Route =
-    pathPrefix("""forward""") {
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Forward]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.create(document, refresh)) {
+                    onCompleteWithBreaker(breaker)(forwardService.create(index_name, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
@@ -104,11 +104,11 @@ trait ForwardResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
                 extractMethod { method =>
                   parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.read(id.toList)) {
+                    onCompleteWithBreaker(breaker)(forwardService.read(index_name, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
@@ -132,11 +132,11 @@ trait ForwardResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
                 extractMethod { method =>
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.delete(id, refresh)) {
+                    onCompleteWithBreaker(breaker)(forwardService.delete(index_name, id, refresh)) {
                       case Success(t) =>
                         if (t.isDefined) {
                           completeResponse(StatusCodes.OK, t)

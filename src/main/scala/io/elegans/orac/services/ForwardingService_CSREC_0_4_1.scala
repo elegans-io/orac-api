@@ -133,12 +133,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         log.debug(message)
       case _ =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         throw ForwardingException(message)
     }
   }
@@ -151,12 +151,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         log.debug(message)
       case _ =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         throw ForwardingException(message)
     }
   }
@@ -185,10 +185,34 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
-    log.debug("called forwarding user for csrec, nothing to do")
+  def forward_delete_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
+    log.debug("called forwarding delete orac user for csrec: " + forward.doc_id)
+    val uri = forwardingDestination.url + "/user?user_id=" +  forward.doc_id
+
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+    http_request.status match {
+      case StatusCodes.Created | StatusCodes.OK =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + uri + ")"
+        log.debug(message)
+      case _ =>
+        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
+          " destination(" + uri + ")"
+        throw ForwardingException(message)
+    }
   }
 
+  def forward_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
+    log.debug("called forwarding orac user for csrec: " + forward.doc_id)
+    forward.operation match {
+      case "delete" =>
+        forward_delete_orac_user(forward = forward, document = document)
+      case _ =>
+        log.debug("called forwarding orac user for csrec: nothing to do")
+    }
+  }
 
   def forward_create_action(forward: Forward, document: Option[Action] = Option.empty[Action],
                             item_info_filters: Option[ItemInfo]): Unit = {
@@ -255,12 +279,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         log.debug(message)
       case _ =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         throw ForwardingException(message)
     }
 
@@ -273,12 +297,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         log.debug(message)
       case _ =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         throw ForwardingException(message)
     }
   }
@@ -290,12 +314,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         log.debug(message)
       case _ =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + forwardingDestination.url + ")"
+          " destination(" + uri + ")"
         throw ForwardingException(message)
     }
   }

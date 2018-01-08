@@ -63,7 +63,7 @@ object CronForwardEventsService {
                     case Success(t) =>
                       delete_item = true
                     case Failure(e) =>
-                      log.error(e.getMessage)
+                      log.error("forward item: " + e.getMessage)
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
@@ -87,7 +87,7 @@ object CronForwardEventsService {
                     case Success(t) =>
                       delete_item = true
                     case Failure(e) =>
-                      log.error(e.getMessage)
+                      log.error("forward action: " + e.getMessage)
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
@@ -111,7 +111,7 @@ object CronForwardEventsService {
                     case Success(t) =>
                       delete_item = true
                     case Failure(e) =>
-                      log.error(e.getMessage)
+                      log.error("forward orac user: " + e.getMessage)
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
@@ -122,7 +122,8 @@ object CronForwardEventsService {
 
         // deleting item from forwarding table
         if (delete_item) {
-          forwardService.delete(id = fwd_item.id.get, refresh = 0)
+          val result = Await.result(
+            forwardService.delete(index_name = fwd_item.index, id = fwd_item.id.get, refresh = 0), 5.seconds)
           delete_item = false
         }
       })

@@ -62,7 +62,7 @@ object  ForwardService {
     elastic_client.index_name + "." + elastic_client.forward_index_suffix
   }
 
-  def create(document: Forward, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(index_name: String, document: Forward, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
@@ -70,9 +70,10 @@ object  ForwardService {
         document.operation + RandomNumbers.getLong))
     builder.field("id", id)
     builder.field("doc_id", document.doc_id)
-    builder.field("index", document.index)
+    builder.field("index", index_name)
     builder.field("index_suffix", document.index_suffix)
     builder.field("operation", document.operation)
+    builder.field("retry", document.retry.getOrElse(10))
     val timestamp: Long = Time.getTimestampMillis
     builder.field("timestamp", timestamp)
 
@@ -125,7 +126,7 @@ object  ForwardService {
         operation = "delete")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
@@ -135,7 +136,7 @@ object  ForwardService {
         operation = "delete")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
 
     val action_iterator = actionService.getAllDocuments(index_name)
@@ -145,11 +146,11 @@ object  ForwardService {
         operation = "delete")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
   }
 
-  def forwardReloadAll(index_name: String): Future[Unit] = Future {
+  def forwardCreateAll(index_name: String): Future[Unit] = Future {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
@@ -157,7 +158,7 @@ object  ForwardService {
         operation = "create")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
@@ -167,7 +168,7 @@ object  ForwardService {
         operation = "create")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
 
     val action_iterator = actionService.getAllDocuments(index_name)
@@ -177,15 +178,23 @@ object  ForwardService {
         operation = "create")
       forward
     }).foreach(forward => {
-      create(forward, 0)
+      create(index_name, forward, 0)
     })
   }
 
-  def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
+  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentsResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
-      .setType(elastic_client.forward_index_suffix).setId(id).get()
 
+    val qb: QueryBuilder = QueryBuilders.boolQuery()
+      .must(QueryBuilders.termQuery("_id", id))
+      .must(QueryBuilders.termQuery("index", index_name))
+
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
+        .source(getIndexName)
+        .filter(qb)
+        .filter(QueryBuilders.typeQuery(elastic_client.forward_index_suffix))
+        .get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName)
@@ -194,15 +203,13 @@ object  ForwardService {
       }
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
-      version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
-    )
+    val deleted: Long = response.getDeleted
 
-    Option {doc_result}
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
   }
 
-  def read(ids: List[String]): Future[Option[List[Forward]]] = {
+  def read(index_name: String, ids: List[String]): Future[Option[List[Forward]]] = {
     val client: TransportClient = elastic_client.get_client()
     val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
 
@@ -215,7 +222,8 @@ object  ForwardService {
     val response: MultiGetResponse = multiget_builder.get()
 
     val documents : List[Forward] = response.getResponses
-      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
+      .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists)
+      .filter(_.getIndex == index_name).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 
@@ -243,13 +251,18 @@ object  ForwardService {
         case None => ""
       }
 
+      val retry : Option[Long] = source.get("retry") match {
+        case Some(t) => Option{t.asInstanceOf[Integer].toLong}
+        case None => Option{0}
+      }
+
       val timestamp : Option[Long] = source.get("timestamp") match {
         case Some(t) => Option{t.asInstanceOf[Long]}
         case None => Option{0}
       }
 
       val document = Forward(id = Option{id}, doc_id = doc_id, index = index, index_suffix = index_suffix,
-        operation = operation, timestamp = timestamp)
+        operation = operation, retry = retry, timestamp = timestamp)
       document
     })
 
@@ -294,13 +307,18 @@ object  ForwardService {
           case None => ""
         }
 
+        val retry : Option[Long] = source.get("retry") match {
+          case Some(t) => Option{t.asInstanceOf[Integer].toLong}
+          case None => Option{0}
+        }
+
         val timestamp : Option[Long] = source.get("timestamp") match {
           case Some(t) => Option{t.asInstanceOf[Long]}
           case None => Option{0}
         }
 
         val document = Forward(id = Option{id}, doc_id = doc_id, index = index, index_suffix = index_suffix,
-          operation = operation, timestamp = timestamp)
+          operation = operation, retry = retry, timestamp = timestamp)
         document
       })
 

@@ -262,7 +262,7 @@ object RecommendationService {
 
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName(index_name))
-      .addSort("timestamp", SortOrder.DESC)
+      .addSort("generation_timestamp", SortOrder.DESC)
       .setScroll(new TimeValue(60000))
       .setQuery(qb)
       .setSize(100).get()
