@@ -240,7 +240,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
         null
     }).filter(_ != null)
 
-    val tags: List[String] = if(item.properties.isDefined){
+    val tags: List[String] = if(item.properties.isDefined) {
       val regex = item_info_filters.get.tag_filters
       val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
         x.matches(regex)
@@ -276,24 +276,6 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val http_request = Await.result(
       executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
     http_request.status match {
-      case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + uri + ")"
-        log.debug(message)
-      case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
-          " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
-          " destination(" + uri + ")"
-        throw ForwardingException(message)
-    }
-
-    val uri_only_info = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
-      "&code=" + doc.score.getOrElse(0.0) + "&only_info=true"
-
-    val http_request_only_info = Await.result(
-      executeHttpRequest(uri = uri_only_info, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
-    http_request_only_info.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
