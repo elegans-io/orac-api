@@ -64,6 +64,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  implicit object ForwardOperationTypeJsonFormat extends JsonFormat[ForwardOperationType.Value] {
+    def write(obj: ForwardOperationType.Value): JsValue = JsString(obj.toString)
+    def read(json: JsValue): ForwardOperationType.Value = json match {
+      case JsString(str) => ForwardOperationType.withName(str)
+      case _ => throw DeserializationException("ForwardOperationType string expected")
+    }
+  }
+
   implicit val userFormat = jsonFormat4(User)
   implicit val userUpdateFormat = jsonFormat3(UserUpdate)
   implicit val forwardFormat = jsonFormat7(Forward)

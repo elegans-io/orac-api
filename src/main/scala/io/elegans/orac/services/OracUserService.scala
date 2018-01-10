@@ -135,7 +135,7 @@ object OracUserService {
     if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         `type` = ForwardType.orac_user,
-        operation = "create", retry = Option{10})
+        operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
     }
 
@@ -234,7 +234,7 @@ object OracUserService {
     if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         `type` = ForwardType.orac_user,
-        operation = "update", retry = Option{10})
+        operation = ForwardOperationType.update, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
     }
 
@@ -262,7 +262,7 @@ object OracUserService {
     if(forwardService.forwardEnabled(index_name)) {
       val forward = Forward(doc_id = id, index = index_name,
         `type` = ForwardType.orac_user,
-        operation = "delete", retry = Option{10})
+        operation = ForwardOperationType.delete, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
     }
 

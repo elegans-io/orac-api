@@ -123,7 +123,7 @@ object  ForwardService {
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
         `type` = ForwardType.item,
-        operation = "delete")
+        operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -133,7 +133,7 @@ object  ForwardService {
     orac_user_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
         `type` = ForwardType.orac_user,
-        operation = "delete")
+        operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -143,7 +143,7 @@ object  ForwardService {
     action_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = index_name,
         `type` = ForwardType.action,
-        operation = "delete")
+        operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -155,7 +155,7 @@ object  ForwardService {
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
         `type` = ForwardType.item,
-        operation = "create")
+        operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -165,7 +165,7 @@ object  ForwardService {
     orac_user_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
         `type` = ForwardType.orac_user,
-        operation = "create")
+        operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -175,7 +175,7 @@ object  ForwardService {
     action_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = index_name,
         `type` = ForwardType.action,
-        operation = "create")
+        operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
       create(index_name, forward, 0)
@@ -246,9 +246,9 @@ object  ForwardService {
         case None => ForwardType.unknown
       }
 
-      val operation: String = source.get("operation") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val operation: ForwardOperationType.ForwardOperation = source.get("operation") match {
+        case Some(t) => ForwardOperationType.getValue(t.asInstanceOf[String])
+        case None => ForwardOperationType.unknown
       }
 
       val retry : Option[Long] = source.get("retry") match {
@@ -302,9 +302,9 @@ object  ForwardService {
           case None => ForwardType.unknown
         }
 
-        val operation: String = source.get("operation") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val operation: ForwardOperationType.ForwardOperation = source.get("operation") match {
+          case Some(t) => ForwardOperationType.getValue(t.asInstanceOf[String])
+          case None => ForwardOperationType.unknown
         }
 
         val retry : Option[Long] = source.get("retry") match {

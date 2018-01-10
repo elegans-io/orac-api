@@ -175,11 +175,11 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
 
     forward.operation match {
-      case "create" =>
+      case ForwardOperationType.create =>
         forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
-      case "delete" =>
+      case ForwardOperationType.delete =>
         forward_delete_item(forward = forward, document = document)
-      case "update" =>
+      case ForwardOperationType.update =>
         forward_delete_item(forward = forward, document = document)
         forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
     }
@@ -207,7 +207,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   def forward_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
     log.debug("called forwarding orac user for csrec: " + forward.doc_id)
     forward.operation match {
-      case "delete" =>
+      case ForwardOperationType.delete =>
         forward_delete_orac_user(forward = forward, document = document)
       case _ =>
         log.debug("called forwarding orac user for csrec: nothing to do")
@@ -320,11 +320,11 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
 
     forward.operation match {
-      case "create" =>
+      case ForwardOperationType.create =>
         forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
-      case "delete" =>
+      case ForwardOperationType.delete =>
         forward_delete_action(forward = forward, document = document)
-      case "update" =>
+      case ForwardOperationType.update =>
         forward_delete_action(forward = forward, document = document)
         forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
     }
