@@ -50,7 +50,7 @@ object CronReconcileService  {
                 case Success(t) =>
                   log.info("Reconciliation: successfully completed: " + item.toString)
                   val history_element = ReconcileHistory(old_id = item.old_id, new_id = item.new_id,
-                    index = item.index, `type` = item.`type`, index_suffix = item.index_suffix,
+                    index = item.index, `type` = item.`type`,
                     insert_timestamp = item.timestamp.get, retry = item.retry)
                   val reconcile_history_insert =
                     Await.result(reconcileHistoryService.create(history_element, 0), 5.seconds)

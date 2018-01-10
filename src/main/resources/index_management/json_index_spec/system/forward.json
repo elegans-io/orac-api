@@ -17,7 +17,7 @@
           "store": true,
           "index": true
         },
-        "index_suffix": {
+        "type": {
           "type": "keyword",
           "store": true,
           "index": true

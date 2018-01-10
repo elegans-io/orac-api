@@ -66,12 +66,12 @@ object  ForwardService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.doc_id + document.index + document.index_suffix +
+      .getOrElse(Checksum.sha512(document.doc_id + document.index + document.`type` +
         document.operation + RandomNumbers.getLong))
     builder.field("id", id)
     builder.field("doc_id", document.doc_id)
     builder.field("index", index_name)
-    builder.field("index_suffix", document.index_suffix)
+    builder.field("type", document.`type`)
     builder.field("operation", document.operation)
     builder.field("retry", document.retry.getOrElse(10))
     val timestamp: Long = Time.getTimestampMillis
@@ -122,7 +122,7 @@ object  ForwardService {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
-        index_suffix = itemService.elastic_client.item_index_suffix,
+        `type` = ForwardType.item,
         operation = "delete")
       forward
     }).foreach(forward => {
@@ -132,7 +132,7 @@ object  ForwardService {
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
     orac_user_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
-        index_suffix = oracUserService.elastic_client.orac_user_index_suffix,
+        `type` = ForwardType.orac_user,
         operation = "delete")
       forward
     }).foreach(forward => {
@@ -142,7 +142,7 @@ object  ForwardService {
     val action_iterator = actionService.getAllDocuments(index_name)
     action_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = index_name,
-        index_suffix = actionService.elastic_client.action_index_suffix,
+        `type` = ForwardType.action,
         operation = "delete")
       forward
     }).foreach(forward => {
@@ -154,7 +154,7 @@ object  ForwardService {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
-        index_suffix = itemService.elastic_client.item_index_suffix,
+        `type` = ForwardType.item,
         operation = "create")
       forward
     }).foreach(forward => {
@@ -164,7 +164,7 @@ object  ForwardService {
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
     orac_user_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = index_name,
-        index_suffix = oracUserService.elastic_client.orac_user_index_suffix,
+        `type` = ForwardType.orac_user,
         operation = "create")
       forward
     }).foreach(forward => {
@@ -174,7 +174,7 @@ object  ForwardService {
     val action_iterator = actionService.getAllDocuments(index_name)
     action_iterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = index_name,
-        index_suffix = actionService.elastic_client.action_index_suffix,
+        `type` = ForwardType.action,
         operation = "create")
       forward
     }).foreach(forward => {
@@ -241,9 +241,9 @@ object  ForwardService {
         case None => ""
       }
 
-      val index_suffix: String = source.get("index_suffix") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val `type`: ForwardType.Forward = source.get("type") match {
+        case Some(t) => ForwardType.getValue(t.asInstanceOf[String])
+        case None => ForwardType.unknown
       }
 
       val operation: String = source.get("operation") match {
@@ -261,7 +261,7 @@ object  ForwardService {
         case None => Option{0}
       }
 
-      val document = Forward(id = Option{id}, doc_id = doc_id, index = index, index_suffix = index_suffix,
+      val document = Forward(id = Option{id}, doc_id = doc_id, index = index, `type` = `type`,
         operation = operation, retry = retry, timestamp = timestamp)
       document
     })
@@ -297,9 +297,9 @@ object  ForwardService {
           case None => ""
         }
 
-        val index_suffix: String = source.get("index_suffix") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val `type`: ForwardType.Forward = source.get("type") match {
+          case Some(t) => ForwardType.getValue(t.asInstanceOf[String])
+          case None => ForwardType.unknown
         }
 
         val operation: String = source.get("operation") match {
@@ -317,7 +317,7 @@ object  ForwardService {
           case None => Option{0}
         }
 
-        val document = Forward(id = Option{id}, doc_id = doc_id, index = index, index_suffix = index_suffix,
+        val document = Forward(id = Option{id}, doc_id = doc_id, index = index, `type` = `type`,
           operation = operation, retry = retry, timestamp = timestamp)
         document
       })

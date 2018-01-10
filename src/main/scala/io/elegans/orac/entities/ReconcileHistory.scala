@@ -10,7 +10,6 @@ case class ReconcileHistory(
                       new_id: String,
                       `type`: ReconcileType.Value,
                       index: Option[String] = Option.empty,
-                      index_suffix: Option[String] = Option.empty,
                       insert_timestamp: Long,
                       retry: Long,
                       end_timestamp: Option[Long] = Option.empty[Long]

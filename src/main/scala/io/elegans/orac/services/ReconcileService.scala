@@ -62,20 +62,9 @@ object  ReconcileService {
     builder.field("index", index_name)
 
     val reconcile_type = document.`type`
-    val index_suffix = if(document.index_suffix.isDefined) {
-      document.index_suffix
-    } else {
-      reconcile_type match {
-        case ReconcileType.orac_user =>
-          oracUserService.elastic_client.orac_user_index_suffix
-        case _ =>
-          throw new Exception(this.getClass.getCanonicalName + " : bad reconcile type value: (" + reconcile_type + ")")
-      }
-    }
-
-    builder.field("index_suffix", index_suffix)
-    builder.field("retry", document.retry)
     builder.field("type", reconcile_type)
+
+    builder.field("retry", document.retry)
     builder.field("timestamp", timestamp)
 
     builder.endObject()
@@ -115,11 +104,6 @@ object  ReconcileService {
 
     document.index match {
       case Some(t) => builder.field("index", t)
-      case None => ;
-    }
-
-    document.index_suffix match {
-      case Some(t) => builder.field("index_suffix", t)
       case None => ;
     }
 
@@ -211,8 +195,8 @@ object  ReconcileService {
       val message = "Reconciliation: new_user is already defined, nothing to do"
       log.debug(message)
     } else if(notExistsOracUser(old_user) && notExistsOracUser(new_user)) { // some error occurred
-      val message = "Reconciliation: both old_user(" + reconcile.old_id +
-        ") and new_user(" + reconcile.new_id + ") does not esists"
+      val message = "Reconciliation: both old_user(" + reconcile.old_id + ") and new_user(" +
+        reconcile.new_id + ") does not esists"
       throw new Exception(message)
     }
 
@@ -332,11 +316,6 @@ object  ReconcileService {
         case None => Some("")
       }
 
-      val index_suffix: Option[String] = source.get("index_suffix") match {
-        case Some(t) => Some(t.asInstanceOf[String])
-        case None => Some("")
-      }
-
       val `type`: ReconcileType.Reconcile = source.get("type") match {
         case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
         case None => ReconcileType.unknown
@@ -353,8 +332,7 @@ object  ReconcileService {
       }
 
       val document = Reconcile(id = Option{id}, new_id = new_id, old_id = old_id,
-        index = index, index_suffix = index_suffix,
-        `type` = `type`, retry = retry, timestamp = timestamp)
+        index = index, `type` = `type`, retry = retry, timestamp = timestamp)
       document
     })
 
@@ -394,11 +372,6 @@ object  ReconcileService {
           case None => Some("")
         }
 
-        val index_suffix: Option[String] = source.get("index_suffix") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case None => Some("")
-        }
-
         val `type`: ReconcileType.Reconcile = source.get("type") match {
           case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
           case None => ReconcileType.unknown
@@ -415,8 +388,7 @@ object  ReconcileService {
         }
 
         val document = Reconcile(id = Option{id}, new_id = new_id, old_id = old_id,
-          index = index, index_suffix = index_suffix,
-          `type` = `type`, retry = retry, timestamp = timestamp)
+          index = index, `type` = `type`, retry = retry, timestamp = timestamp)
         document
       })
 

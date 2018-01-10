@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import akka.actor.Actor
-import io.elegans.orac.entities.{Action, Item, OracUser}
+import io.elegans.orac.entities.{Action, Item, OracUser, ForwardType}
 import akka.actor.Props
 import scala.util.{Failure, Success, Try}
 import akka.actor.ActorRef
@@ -44,8 +44,8 @@ object CronForwardEventsService {
         forwardService.forwardingDestinations.getOrElse(fwd_item.index, List.empty).foreach(item => {
           val forwarder = item._2
           val index = fwd_item.index
-          fwd_item.index_suffix match {
-            case itemService.elastic_client.item_index_suffix =>
+          fwd_item.`type` match {
+            case ForwardType.item =>
               val ids = List(fwd_item.doc_id)
               val result = Await.result(itemService.read(index, ids), 5.seconds)
               result match {
@@ -67,9 +67,9 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.index_suffix)
+                    fwd_item.`type`)
               }
-            case actionService.elastic_client.action_index_suffix =>
+            case ForwardType.action =>
               val ids = List(fwd_item.doc_id)
               val result = Await.result(actionService.read(index, ids), 5.seconds)
               result match {
@@ -91,9 +91,9 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.index_suffix)
+                    fwd_item.`type`)
               }
-            case oracUserService.elastic_client.orac_user_index_suffix =>
+            case ForwardType.orac_user =>
               val ids = List(fwd_item.doc_id)
               val result = Await.result(oracUserService.read(index, ids), 5.seconds)
               result match {
@@ -115,7 +115,7 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.index_suffix)
+                    fwd_item.`type`)
               }
           }
         })

@@ -131,12 +131,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -149,12 +149,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -192,12 +192,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -277,12 +277,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -294,12 +294,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") index_suffix(" + forward.index_suffix + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)

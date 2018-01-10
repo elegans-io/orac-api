@@ -56,7 +56,6 @@ object ReconcileHistoryService {
     builder.field("old_id", document.old_id)
     builder.field("new_id", document.new_id)
     builder.field("index", document.index)
-    builder.field("index_suffix", document.index_suffix)
     builder.field("type", document.`type`)
     builder.field("retry", document.retry)
     builder.field("end_timestamp", end_timestamp)
@@ -159,11 +158,6 @@ object ReconcileHistoryService {
         case None => Some("")
       }
 
-      val index_suffix: Option[String] = source.get("index_suffix") match {
-        case Some(t) => Some(t.asInstanceOf[String])
-        case None => Some("")
-      }
-
       val `type`: ReconcileType.Reconcile = source.get("type") match {
         case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
         case None => ReconcileType.unknown
@@ -185,8 +179,8 @@ object ReconcileHistoryService {
       }
 
       val document = ReconcileHistory(id = Option{id}, new_id = new_id, old_id = old_id,
-        index = index, index_suffix = index_suffix,
-        `type` = `type`, retry = retry, insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
+        index = index, `type` = `type`, retry = retry,
+        insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
       document
     })
 
@@ -226,11 +220,6 @@ object ReconcileHistoryService {
           case None => Some("")
         }
 
-        val index_suffix: Option[String] = source.get("index_suffix") match {
-          case Some(t) => Some(t.asInstanceOf[String])
-          case None => Some("")
-        }
-
         val `type`: ReconcileType.Reconcile = source.get("type") match {
           case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
           case None => ReconcileType.unknown
@@ -252,8 +241,8 @@ object ReconcileHistoryService {
         }
 
         val document = ReconcileHistory(id = Option{id}, new_id = new_id, old_id = old_id,
-          index = index, index_suffix = index_suffix,
-          `type` = `type`, retry = retry, insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
+          index = index, `type` = `type`, retry = retry,
+          insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
         document
       })
 

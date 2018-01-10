@@ -9,7 +9,6 @@ case class UpdateReconcile(
                       new_id: Option[String] = Option.empty[String],
                       `type`: Option[ReconcileType.Value] = Option.empty[ReconcileType.Value],
                       index: Option[String] = Option.empty[String],
-                      index_suffix: Option[String] = Option.empty[String],
                       retry: Option[Long] = Option.empty[Long],
                       timestamp: Option[Long] = Option.empty[Long]
                     )

@@ -27,11 +27,6 @@
           "store": true,
           "index": true
         },
-        "index_suffix": {
-          "type": "keyword",
-          "store": true,
-          "index": true
-        },
         "retry": {
           "type": "long",
           "store": true,
