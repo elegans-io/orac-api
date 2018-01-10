@@ -25,8 +25,3 @@ case class Forward(
                     retry: Option[Long] = Option{5},
                     timestamp: Option[Long] = Option.empty[Long]
                   )
-
-case class ForwardAll(
-                    total_objects: Long,
-                    queued_objects: Long,
-                  )
