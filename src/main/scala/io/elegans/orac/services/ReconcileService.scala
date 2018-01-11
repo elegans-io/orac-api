@@ -196,7 +196,7 @@ object  ReconcileService {
       log.debug(message)
     } else if(notExistsOracUser(old_user) && notExistsOracUser(new_user)) { // some error occurred
       val message = "Reconciliation: both old_user(" + reconcile.old_id + ") and new_user(" +
-        reconcile.new_id + ") does not esists"
+        reconcile.new_id + ") does not exists"
       throw new Exception(message)
     }
 
