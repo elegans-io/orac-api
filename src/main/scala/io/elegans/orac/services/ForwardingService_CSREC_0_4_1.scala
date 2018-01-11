@@ -166,7 +166,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       itemInfoService.updateItemInfoService(forward.index.get)
     }
 
-    val item_info_key = forward.index + "." + forwardingDestination.item_info_id
+    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
     if (! itemInfoService.item_info_service.contains(item_info_key)) {
       val message = "the item info is not defined for the key: " + item_info_key
       throw ForwardingException(message)
