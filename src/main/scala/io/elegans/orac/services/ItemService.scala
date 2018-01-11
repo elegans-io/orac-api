@@ -123,7 +123,7 @@ object ItemService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = document.id, index = index_name,
+      val forward = Forward(doc_id = document.id, index = Some(index_name),
         `type` = ForwardType.item,
         operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
@@ -221,7 +221,7 @@ object ItemService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = Some(index_name),
         `type` = ForwardType.item,
         operation = ForwardOperationType.update, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
@@ -248,7 +248,7 @@ object ItemService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = Some(index_name),
         `type` = ForwardType.item,
         operation = ForwardOperationType.delete, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)

@@ -163,7 +163,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
-      itemInfoService.updateItemInfoService(forward.index)
+      itemInfoService.updateItemInfoService(forward.index.get)
     }
 
     val item_info_key = forward.index + "." + forwardingDestination.item_info_id
@@ -220,7 +220,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
       "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
 
-    val item_option = Await.result(itemService.read(forward.index, List(doc.item_id)), 5.second)
+    val item_option = Await.result(itemService.read(forward.index.get, List(doc.item_id)), 5.second)
     if(item_option.isEmpty || item_option.get.items.isEmpty) {
       val message = "Cannot retrieve the item id(" + doc.item_id + ") required to forward the action"
       throw ForwardingException(message)
@@ -308,7 +308,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
   def forward_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
     if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
-      itemInfoService.updateItemInfoService(forward.index)
+      itemInfoService.updateItemInfoService(forward.index.get)
     }
 
     val item_info_key = forward.index + "." + forwardingDestination.item_info_id

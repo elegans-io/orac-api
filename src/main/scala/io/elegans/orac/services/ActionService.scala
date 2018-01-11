@@ -90,7 +90,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = Some(index_name),
         `type` = ForwardType.action,
         operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
@@ -166,7 +166,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = Some(index_name),
         `type` = ForwardType.action,
         operation = ForwardOperationType.update, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)
@@ -193,7 +193,7 @@ object ActionService {
     )
 
     if(forwardService.forwardEnabled(index_name)) {
-      val forward = Forward(doc_id = id, index = index_name,
+      val forward = Forward(doc_id = id, index = Some(index_name),
         `type` = ForwardType.action,
         operation = ForwardOperationType.delete, retry = Option{10})
       forwardService.create(index_name = index_name, document = forward, refresh = refresh)

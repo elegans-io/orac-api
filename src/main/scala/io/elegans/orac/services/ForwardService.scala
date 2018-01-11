@@ -121,7 +121,7 @@ object  ForwardService {
   def forwardDeleteAll(index_name: String): Future[Unit] = Future {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id, index = index_name,
+      val forward = Forward(doc_id = doc.id, index = Some(index_name),
         `type` = ForwardType.item,
         operation = ForwardOperationType.delete)
       forward
@@ -131,7 +131,7 @@ object  ForwardService {
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
     orac_user_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id, index = index_name,
+      val forward = Forward(doc_id = doc.id, index = Some(index_name),
         `type` = ForwardType.orac_user,
         operation = ForwardOperationType.delete)
       forward
@@ -141,7 +141,7 @@ object  ForwardService {
 
     val action_iterator = actionService.getAllDocuments(index_name)
     action_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id.get, index = index_name,
+      val forward = Forward(doc_id = doc.id.get, index = Some(index_name),
         `type` = ForwardType.action,
         operation = ForwardOperationType.delete)
       forward
@@ -153,7 +153,7 @@ object  ForwardService {
   def forwardCreateAll(index_name: String): Future[Unit] = Future {
     val item_iterator = itemService.getAllDocuments(index_name)
     item_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id, index = index_name,
+      val forward = Forward(doc_id = doc.id, index = Some(index_name),
         `type` = ForwardType.item,
         operation = ForwardOperationType.create)
       forward
@@ -163,7 +163,7 @@ object  ForwardService {
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
     orac_user_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id, index = index_name,
+      val forward = Forward(doc_id = doc.id, index = Some(index_name),
         `type` = ForwardType.orac_user,
         operation = ForwardOperationType.create)
       forward
@@ -173,7 +173,7 @@ object  ForwardService {
 
     val action_iterator = actionService.getAllDocuments(index_name)
     action_iterator.map(doc => {
-      val forward = Forward(doc_id = doc.id.get, index = index_name,
+      val forward = Forward(doc_id = doc.id.get, index = Some(index_name),
         `type` = ForwardType.action,
         operation = ForwardOperationType.create)
       forward
@@ -236,9 +236,9 @@ object  ForwardService {
         case None => ""
       }
 
-      val index: String = source.get("index") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
+      val index: Option[String] = source.get("index") match {
+        case Some(t) => Some(t.asInstanceOf[String])
+        case None => Some("")
       }
 
       val `type`: ForwardType.Forward = source.get("type") match {
@@ -292,9 +292,9 @@ object  ForwardService {
           case None => ""
         }
 
-        val index: String = source.get("index") match {
-          case Some(t) => t.asInstanceOf[String]
-          case None => ""
+        val index: Option[String] = source.get("index") match {
+          case Some(t) => Some(t.asInstanceOf[String])
+          case None => Some("")
         }
 
         val `type`: ForwardType.Forward = source.get("type") match {
