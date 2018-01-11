@@ -10,6 +10,6 @@ case class Reconcile(
                     new_id: String,
                     `type`: ReconcileType.Value,
                     index: Option[String] = Option.empty,
-                    retry: Long = 5,
+                    retry: Long = 10,
                     timestamp: Option[Long] = Option.empty[Long]
                   )

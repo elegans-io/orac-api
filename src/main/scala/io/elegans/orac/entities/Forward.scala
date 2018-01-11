@@ -19,7 +19,7 @@ object ForwardOperationType extends Enumeration {
 case class Forward(
                     id: Option[String] = Option.empty[String],
                     doc_id: String,
-                    index: Option[String],
+                    index: Option[String] = Option.empty[String],
                     `type`: ForwardType.Value,
                     operation: ForwardOperationType.Value,
                     retry: Option[Long] = Option{5},
