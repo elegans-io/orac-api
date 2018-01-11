@@ -26,7 +26,7 @@ trait RecommendationHistoryResource extends MyResource {
           authenticateBasicAsync(realm = auth_realm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+              authenticator.hasPermissions(user, index_name, Permissions.create_recomm_history)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[RecommendationHistory]) { document =>
@@ -58,7 +58,7 @@ trait RecommendationHistoryResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.read_recomm_history)) {
                 extractMethod { method =>
                   parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
@@ -86,7 +86,7 @@ trait RecommendationHistoryResource extends MyResource {
             authenticateBasicAsync(realm = auth_realm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                authenticator.hasPermissions(user, index_name, Permissions.update_recomm_history)) {
                 extractMethod { method =>
                   entity(as[UpdateRecommendationHistory]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
@@ -114,7 +114,7 @@ trait RecommendationHistoryResource extends MyResource {
               authenticateBasicAsync(realm = auth_realm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.admin)) {
+                  authenticator.hasPermissions(user, index_name, Permissions.delete_recomm_history)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()

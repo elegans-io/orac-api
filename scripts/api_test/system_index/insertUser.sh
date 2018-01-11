@@ -11,6 +11,7 @@ curl -v -H "Authorization: Basic `echo -n 'admin:adminp4ssw0rd' | base64`" \
 		     "index_0": [ "create_action", "update_action", "read_action", "delete_action",
 		     "create_item", "update_item", "read_item", "delete_item",
 		     "create_orac_user", "update_orac_user", "read_orac_user", "delete_orac_user",
+             "create_recomm_history", "update_recomm_history", "read_recomm_history", "delete_recomm_history",
 		     "read_recomm"
 		     ]
 	     }
