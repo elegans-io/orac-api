@@ -75,8 +75,20 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     response
   }
 
-  def forward_create_item(forward: Forward, document: Option[Item] = Option.empty[Item],
-                          item_info_filters: Option[ItemInfo]): Unit = {
+  def forward_create_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
+
+    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
+      itemInfoService.updateItemInfoService(forward.index.get)
+    }
+
+    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
+    if (! itemInfoService.item_info_service.contains(item_info_key)) {
+      val message = "the item info is not defined for the key: " + item_info_key
+      throw ForwardingException(message)
+    }
+
+    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
+
     val uri = forwardingDestination.url + "/insertitems?unique_id=_id"
     val item = document.get
 
@@ -162,26 +174,14 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   }
 
   def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
-    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
-      itemInfoService.updateItemInfoService(forward.index.get)
-    }
-
-    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
-    if (! itemInfoService.item_info_service.contains(item_info_key)) {
-      val message = "the item info is not defined for the key: " + item_info_key
-      throw ForwardingException(message)
-    }
-
-    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
-
     forward.operation match {
       case ForwardOperationType.create =>
-        forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
+        forward_create_item(forward = forward, document = document)
       case ForwardOperationType.delete =>
         forward_delete_item(forward = forward, document = document)
       case ForwardOperationType.update =>
         forward_delete_item(forward = forward, document = document)
-        forward_create_item(forward = forward, document = document, item_info_filters = item_info_filters)
+        forward_create_item(forward = forward, document = document)
     }
   }
 
@@ -214,8 +214,20 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_create_action(forward: Forward, document: Option[Action] = Option.empty[Action],
-                            item_info_filters: Option[ItemInfo]): Unit = {
+  def forward_create_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
+
+    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
+      itemInfoService.updateItemInfoService(forward.index.get)
+    }
+
+    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
+    if (! itemInfoService.item_info_service.contains(item_info_key)) {
+      val message = "the item info is not defined for the key: " + item_info_key
+      throw ForwardingException(message)
+    }
+
+    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
+
     val doc = document.get
     val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
       "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
@@ -307,26 +319,14 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   }
 
   def forward_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
-    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
-      itemInfoService.updateItemInfoService(forward.index.get)
-    }
-
-    val item_info_key = forward.index + "." + forwardingDestination.item_info_id
-    if (! itemInfoService.item_info_service.contains(item_info_key)) {
-      val message = "the item info is not defined for the key: " + item_info_key
-      throw ForwardingException(message)
-    }
-
-    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
-
     forward.operation match {
       case ForwardOperationType.create =>
-        forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
+        forward_create_action(forward = forward, document = document)
       case ForwardOperationType.delete =>
         forward_delete_action(forward = forward, document = document)
       case ForwardOperationType.update =>
         forward_delete_action(forward = forward, document = document)
-        forward_create_action(forward = forward, document = document, item_info_filters = item_info_filters)
+        forward_create_action(forward = forward, document = document)
     }
   }
 

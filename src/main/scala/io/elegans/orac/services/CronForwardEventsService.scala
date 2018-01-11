@@ -41,13 +41,13 @@ object CronForwardEventsService {
       var delete_item = false
       val iterator = forwardService.getAllDocuments
       iterator.foreach(fwd_item => {
-        forwardService.forwardingDestinations.getOrElse(fwd_item.index.get, List.empty).foreach(item => {
+        val index = fwd_item.index.get
+        forwardService.forwardingDestinations.getOrElse(index, List.empty).foreach(item => {
           val forwarder = item._2
-          val index = fwd_item.index
           fwd_item.`type` match {
             case ForwardType.item =>
               val ids = List(fwd_item.doc_id)
-              val result = Await.result(itemService.read(index.get, ids), 5.seconds)
+              val result = Await.result(itemService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
                   val forward_doc = if (document.items.nonEmpty) {
@@ -71,7 +71,7 @@ object CronForwardEventsService {
               }
             case ForwardType.action =>
               val ids = List(fwd_item.doc_id)
-              val result = Await.result(actionService.read(index.get, ids), 5.seconds)
+              val result = Await.result(actionService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
                   val forward_doc = if (document.items.nonEmpty) {
@@ -95,7 +95,7 @@ object CronForwardEventsService {
               }
             case ForwardType.orac_user =>
               val ids = List(fwd_item.doc_id)
-              val result = Await.result(oracUserService.read(index.get, ids), 5.seconds)
+              val result = Await.result(oracUserService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
                   val forward_doc = if (document.items.nonEmpty) {
@@ -123,7 +123,7 @@ object CronForwardEventsService {
         // deleting item from forwarding table
         if (delete_item) {
           val result = Await.result(
-            forwardService.delete(index_name = fwd_item.index.get, id = fwd_item.id.get, refresh = 0), 5.seconds)
+            forwardService.delete(index_name = index, id = fwd_item.id.get, refresh = 0), 5.seconds)
           delete_item = false
         }
       })
