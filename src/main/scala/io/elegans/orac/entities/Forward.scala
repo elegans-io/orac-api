@@ -22,6 +22,6 @@ case class Forward(
                     index: Option[String] = Option.empty[String],
                     `type`: ForwardType.Value,
                     operation: ForwardOperationType.Value,
-                    retry: Option[Long] = Option{5},
+                    retry: Option[Long] = Option{5L},
                     timestamp: Option[Long] = Option.empty[Long]
                   )

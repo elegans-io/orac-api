@@ -73,7 +73,7 @@ object  ForwardService {
     builder.field("index", index_name)
     builder.field("type", document.`type`)
     builder.field("operation", document.operation)
-    builder.field("retry", document.retry.getOrElse(10))
+    builder.field("retry", document.retry.getOrElse(10L))
     val timestamp: Long = Time.getTimestampMillis
     builder.field("timestamp", timestamp)
 
@@ -208,6 +208,8 @@ object  ForwardService {
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
   }
+
+  def aaa = Future{Unit}
 
   def read(index_name: String, ids: List[String]): Future[Option[List[Forward]]] = {
     val client: TransportClient = elastic_client.get_client()

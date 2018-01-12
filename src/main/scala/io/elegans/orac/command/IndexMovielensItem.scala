@@ -58,7 +58,10 @@ object IndexMovielensItem extends JsonSupport {
       val id = item("item_id")
 
       val timestamp_properties = try {
-        val release_date = release_date_format.parse(item("release_date")).getTime
+        val release_date_millis = release_date_format.parse(item("release_date")).getTime
+        val release_date = if (release_date_millis > 0) {
+          release_date_millis
+        } else 0
         Option{
           Array(
             TimestampProperties(key = "release_date", value = release_date)

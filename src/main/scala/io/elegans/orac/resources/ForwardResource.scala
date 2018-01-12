@@ -57,7 +57,7 @@ trait ForwardResource extends MyResource {
                         "method=" + method.toString + " : " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
-                          ReturnMessageData(code = 100, message = e.getMessage)
+                          ReturnMessageData(code = 101, message = e.getMessage)
                         })
                   }
                 }
@@ -118,7 +118,7 @@ trait ForwardResource extends MyResource {
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
-                            ReturnMessageData(code = 101, message = e.getMessage)
+                            ReturnMessageData(code = 102, message = e.getMessage)
                           })
                     }
                   }
@@ -148,7 +148,7 @@ trait ForwardResource extends MyResource {
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
-                            ReturnMessageData(code = 105, message = e.getMessage)
+                            ReturnMessageData(code = 103, message = e.getMessage)
                           })
                     }
                   }

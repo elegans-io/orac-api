@@ -47,6 +47,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(getUserRoutes) ~
     LoggingEntities.logRequestAndResult(genUserRoutes) ~
     LoggingEntities.logRequestAndResultReduced(actionRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(actionUserRoutes) ~
     LoggingEntities.logRequestAndResult(itemRoutes) ~
     LoggingEntities.logRequestAndResult(itemInfoRoutes) ~
     LoggingEntities.logRequestAndResult(oracUserRoutes) ~

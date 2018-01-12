@@ -338,7 +338,12 @@ object OracUserService {
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
               val key = x.getOrDefault("key", null).asInstanceOf[String]
-              val value = x.getOrDefault("value", null).asInstanceOf[Long]
+              val value = try {
+                x.getOrDefault("value", null).asInstanceOf[Long]
+              } catch {
+                case e: Exception =>
+                  0L
+              }
               TimestampProperties(key = key, value = value)
             }).filter(_.key != null).toArray
             Option { properties }
@@ -443,7 +448,12 @@ object OracUserService {
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
                 val key = x.getOrDefault("key", null).asInstanceOf[String]
-                val value = x.getOrDefault("value", null).asInstanceOf[Long]
+                val value = try {
+                  x.getOrDefault("value", null).asInstanceOf[Long]
+                } catch {
+                  case e: Exception =>
+                    0L
+                }
                 TimestampProperties(key = key, value = value)
               }).filter(_.key != null).toArray
               Option { properties }

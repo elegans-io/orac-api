@@ -18,6 +18,37 @@ trait ActionResource extends MyResource {
 
   val actionService: ActionService.type = ActionService
 
+  def actionUserRoutes: Route =
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { index_name =>
+      path(Segment) { id =>
+        get {
+          authenticateBasicAsync(realm = auth_realm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, index_name, Permissions.read_action)) {
+              extractMethod { method =>
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                val search = Some(UpdateAction(user_id = Some(id)))
+                onCompleteWithBreaker(breaker)(actionService.read_all(index_name, search)) {
+                  case Success(t) =>
+                    completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                  case Failure(e) =>
+                    log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                      "method=" + method.toString + " : " + e.getMessage)
+                    completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        ReturnMessageData(code = 101, message = e.getMessage)
+                      })
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
   def actionRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """action""") { index_name =>
       pathEnd {
@@ -36,7 +67,7 @@ trait ActionResource extends MyResource {
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
-                          "method=" + method.toString + " : " + vcee.getMessage)
+                            "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
                           log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +

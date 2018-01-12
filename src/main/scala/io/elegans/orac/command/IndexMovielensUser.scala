@@ -59,7 +59,7 @@ object IndexMovielensUser extends JsonSupport {
       )
 
       val numerical_properties = Array(
-        NumericalProperties(key = "gender", value = user("age").toDouble)
+        NumericalProperties(key = "age", value = user("age").toDouble)
       )
 
       val properties = Option {

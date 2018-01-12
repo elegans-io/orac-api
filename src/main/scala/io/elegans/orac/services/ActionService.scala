@@ -361,4 +361,10 @@ object ActionService {
     iterator
   }
 
+  def read_all(index_name: String, search: Option[UpdateAction] = Option.empty): Future[Option[Actions]] = Future {
+    Option{
+      Actions(items = getAllDocuments(index_name, search).toList)
+    }
+  }
+
 }
