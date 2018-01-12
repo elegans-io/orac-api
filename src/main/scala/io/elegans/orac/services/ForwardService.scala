@@ -6,7 +6,7 @@ package io.elegans.orac.services
 
 import io.elegans.orac.entities._
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
@@ -25,6 +25,8 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortOrder
+import scala.concurrent.duration._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -126,7 +128,15 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
@@ -136,7 +146,15 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
 
     val action_iterator = actionService.getAllDocuments(index_name)
@@ -146,7 +164,15 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
   }
 
@@ -158,7 +184,15 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
 
     val orac_user_iterator = oracUserService.getAllDocuments(index_name)
@@ -168,7 +202,15 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
 
     val action_iterator = actionService.getAllDocuments(index_name)
@@ -178,7 +220,15 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      create(index_name, forward, 0)
+      val result = Await.result(create(index_name, forward, 0), 5.seconds)
+      result match {
+        case Some(t) =>
+          if(! t.created) {
+            log.error("forward entry was not created")
+          }
+        case _ =>
+          log.error("can't create forward entry: " + forward)
+      }
     })
   }
 
