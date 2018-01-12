@@ -6,7 +6,7 @@
 
 This is the official repository for ORAC APIs
 
-# Documentation
+# API Documentation
 
 https://app.swaggerhub.com/apis/angleto/orac/v0.0.1
 
@@ -47,4 +47,3 @@ e.g.
 ```bash
 sbt "runMain io.elegans.orac.command.IndexUsers --inputfile ./sydatacsv/us.csv --header_kv \"Authorization:Basic `echo -n 'test_user:p4ssw0rd' | base64`\""
 ```
-

@@ -30,6 +30,8 @@ import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
 import java.util.Base64
+import java.time.Instant
+import java.util.Date
 
 object IndexActions extends JsonSupport {
   private case class Params(
@@ -53,7 +55,7 @@ object IndexActions extends JsonSupport {
       val user_id = action("user")
       val item_id = action("item")
       val score = Option{action.getOrElse("score", "0.0").toDouble}
-      val timestamp = Option{ action.getOrElse("timestamp", "0").toLong * 1000 } //using timestamp in millis
+      val timestamp = Some(Date.from(Instant.ofEpochSecond(action.getOrElse("timestamp", "0").toLong)).getTime)
       val action_data = Action(
         name = "rate",
         user_id = user_id,
@@ -114,8 +116,8 @@ object IndexActions extends JsonSupport {
 
   def main(args: Array[String]) {
     val defaultParams = Params()
-    val parser = new OptionParser[Params]("IndexKnowledgeBase") {
-      head("Index conversations into the KnowledgeBase")
+    val parser = new OptionParser[Params]("IndexActions") {
+      head("Index actions")
       help("help").text("prints this usage text")
       opt[String]("path")
         .text(s"path of the action REST endpoint" +

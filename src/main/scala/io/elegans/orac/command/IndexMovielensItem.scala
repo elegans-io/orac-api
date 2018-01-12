@@ -30,14 +30,15 @@ import scala.collection.immutable
 import scala.collection.immutable.{List, Map}
 import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
 import java.util.Base64
+import java.text.ParseException
 
-object IndexItems extends JsonSupport {
+object IndexMovielensItem extends JsonSupport {
   private case class Params(
                              host: String = "http://localhost:8888",
                              index_name: String = "index_0",
                              path: String = "/item",
-                             inputfile: String = "./items.csv",
-                             separator: Char = '\t',
+                             inputfile: String = "./u.item",
+                             separator: Char = '|',
                              timeout: Int = 60,
                              header_kv: Seq[String] = Seq.empty[String]
                            )
@@ -47,25 +48,47 @@ object IndexItems extends JsonSupport {
     lazy val items_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
       quote = '"', skipLines = 0).toIterator
 
-    val header: Seq[String] = items_entries.next
+    val release_date_format = new java.text.SimpleDateFormat("dd-MMM-yyyy")
+
+    val header: Seq[String] = Seq("item_id", "title", "release_date", "video_release_date", "IMDb_URL", "unknown", "Action",
+      "Adventure", "Animation", "Childrens", "Comedy", "Crime", "Documentary", "Drama", "Fantasy",
+      "Film-Noir", "Horror", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western")
     val items_iterator = items_entries.zipWithIndex.map(entry => {
       val item = header.zip(entry._1).toMap
-      val id = item("item")
-      val string_properties = item.filter(_._1 != "item").map(e => {
-        val key = e._1
-        val value = e._2
-        StringProperties(key = key, value = value)
-      }).toArray
+      val id = item("item_id")
 
-      val properties = Option { OracProperties(string = Option {string_properties}) }
-      val name = item.getOrElse("name", "")
-      val `type` = item.getOrElse("type", "")
-      val description = item.get("description")
+      val timestamp_properties = try {
+        val release_date = release_date_format.parse(item("release_date")).getTime
+        Option{
+          Array(
+            TimestampProperties(key = "release_date", value = release_date)
+          )
+        }
+      } catch {
+        case pe: ParseException =>
+          Option.empty[Array[TimestampProperties]]
+      }
+
+      val string_properties = Array(
+        StringProperties(key = "IMDb_URL", value = item("IMDb_URL"))
+      ) ++ header.drop(5).map(x => {
+        val v = item(x)
+        if (v == "1")
+          StringProperties(key = "category", value = x)
+        else
+          null
+      }).toArray.filter(_ != null)
+
+      val properties = Option {
+        OracProperties(string = Some(string_properties), timestamp = timestamp_properties)
+      }
+
+      val name = item.getOrElse("name", item("title"))
+      val `type` = item.getOrElse("type", "movie")
       val item_data = Item(
         id = id,
         name = name,
         `type` = `type`,
-        description = description,
         properties = properties
       )
       item_data
@@ -77,8 +100,6 @@ object IndexItems extends JsonSupport {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
-
-    val vecsize = 0
 
     val base_url = params.host + "/" + params.index_name + params.path
 
@@ -121,8 +142,8 @@ object IndexItems extends JsonSupport {
 
   def main(args: Array[String]) {
     val defaultParams = Params()
-    val parser = new OptionParser[Params]("IndexItem") {
-      head("Index items")
+    val parser = new OptionParser[Params]("IndexMovielensItem") {
+      head("Index movielens items")
       help("help").text("prints this usage text")
       opt[String]("path")
         .text(s"path of the item REST endpoint" +

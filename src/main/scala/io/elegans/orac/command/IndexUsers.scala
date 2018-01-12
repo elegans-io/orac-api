@@ -115,8 +115,8 @@ object IndexUsers extends JsonSupport {
 
   def main(args: Array[String]) {
     val defaultParams = Params()
-    val parser = new OptionParser[Params]("IndexKnowledgeBase") {
-      head("Index conversations into the KnowledgeBase")
+    val parser = new OptionParser[Params]("IndexUsers") {
+      head("Index users")
       help("help").text("prints this usage text")
       opt[String]("path")
         .text(s"path of the orac_user REST endpoint" +
