@@ -45,10 +45,9 @@ object ActionService {
              refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = Time.getTimestampMillis
+    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampMillis)
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + timestamp +
-        RandomNumbers.getLong))
+      .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + timestamp))
 
     builder.field("id", id)
     builder.field("name", document.name)

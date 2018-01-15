@@ -7,6 +7,7 @@ package io.elegans.orac.services
 import io.elegans.orac.entities._
 
 import scala.concurrent.{Await, Future}
+import scala.util.{Success,Failure}
 import scala.collection.immutable.{List, Map}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.transport.TransportClient
@@ -128,14 +129,14 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
 
@@ -146,14 +147,14 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
 
@@ -164,14 +165,14 @@ object  ForwardService {
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
   }
@@ -184,14 +185,14 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
 
@@ -202,14 +203,14 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
 
@@ -220,14 +221,14 @@ object  ForwardService {
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
-      val result = Await.result(create(index_name, forward, 0), 5.seconds)
-      result match {
-        case Some(t) =>
-          if(! t.created) {
+      val result = create(index_name, forward, 0)
+      result.onComplete {
+        case Success(t) =>
+          if(! t.get.created) {
             log.error("forward entry was not created")
           }
-        case _ =>
-          log.error("can't create forward entry: " + forward)
+        case Failure(e) =>
+          log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
       }
     })
   }
@@ -258,8 +259,6 @@ object  ForwardService {
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
     Option {result}
   }
-
-  def aaa = Future{Unit}
 
   def read(index_name: String, ids: List[String]): Future[Option[List[Forward]]] = {
     val client: TransportClient = elastic_client.get_client()

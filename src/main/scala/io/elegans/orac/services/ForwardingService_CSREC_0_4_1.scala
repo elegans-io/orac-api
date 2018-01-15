@@ -23,6 +23,7 @@ import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import io.elegans.orac.tools._
+import akka.http.scaladsl.settings.ConnectionPoolSettings
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
   extends AbstractForwardingImplService with JsonSupport {
@@ -60,17 +61,22 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
                          method: HttpMethod,
                          request_entity: Option[RequestEntity] = Option.empty[RequestEntity]):
   Future[HttpResponse] = {
+    // the duration must be high for csrec
+    val orig = ConnectionPoolSettings(system.settings.config).copy(idleTimeout = Duration.Inf)
+    val clientSettings = orig.connectionSettings.withIdleTimeout(Duration.Inf)
+    val settings = orig.copy(connectionSettings = clientSettings)
+
     val response: Future[HttpResponse] = if(request_entity.isDefined) {
-      Http().singleRequest(HttpRequest(
+      Http().singleRequest(request = HttpRequest(
         method = method,
         uri = uri,
         headers = httpHeader,
-        entity = request_entity.get))
+        entity = request_entity.get), settings = settings)
     } else {
-      Http().singleRequest(HttpRequest(
+      Http().singleRequest(request = HttpRequest(
         method = method,
         uri = uri,
-        headers = httpHeader))
+        headers = httpHeader), settings = settings)
     }
     response
   }

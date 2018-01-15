@@ -12,6 +12,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.CircuitBreaker
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.util.{Failure, Success}
+import scala.concurrent.duration._
 
 trait ForwardResource extends MyResource {
 
@@ -26,7 +27,7 @@ trait ForwardResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
               extractMethod { method =>
-                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(callTimeout = 3600.seconds)
                 onCompleteWithBreaker(breaker)(forwardService.forwardCreateAll(index_name = index_name)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK)
@@ -48,7 +49,7 @@ trait ForwardResource extends MyResource {
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
                 extractMethod { method =>
-                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(callTimeout = 3600.seconds)
                   onCompleteWithBreaker(breaker)(forwardService.forwardDeleteAll(index_name = index_name)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK)
