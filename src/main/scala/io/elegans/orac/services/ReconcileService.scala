@@ -252,31 +252,25 @@ object  ReconcileService {
     }
   }
 
-  def delete(id: String, index_name: String, refresh: Int): Future[Option[DeleteDocumentsResult]] = Future {
+  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-
-    val qb: QueryBuilder = QueryBuilders.boolQuery()
-      .must(QueryBuilders.termQuery("_id", id))
-      .must(QueryBuilders.termQuery("index", index_name))
-
-    val response: BulkByScrollResponse =
-      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName)
-        .filter(qb)
-        .filter(QueryBuilders.typeQuery(elastic_client.reconcile_index_suffix))
-        .get()
+    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
+      .setType(elastic_client.reconcile_index_suffix).setId(id).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + index_name + ")")
       }
     }
 
-    val deleted: Long = response.getDeleted
+    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
+      version = response.getVersion,
+      found = response.status != RestStatus.NOT_FOUND
+    )
 
-    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
-    Option {result}
+    log.debug("Delete reconcile item: " + id)
+    Option {doc_result}
   }
 
   def read(ids: List[String], index_name: String): Future[Option[List[Reconcile]]] = {
@@ -339,12 +333,12 @@ object  ReconcileService {
     Future { Option { documents } }
   }
 
-  def getAllDocuments: Iterator[Reconcile] = {
+  def getAllDocuments(keepAlive: Long = 60000): Iterator[Reconcile] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName)
       .addSort("timestamp", SortOrder.ASC)
-      .setScroll(new TimeValue(60000))
+      .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()
 
@@ -393,7 +387,7 @@ object  ReconcileService {
       })
 
       scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(60000)).execute().actionGet()
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
 
       (documents, documents.nonEmpty)
     }.takeWhile(_._2).map(_._1).flatten
@@ -402,7 +396,7 @@ object  ReconcileService {
   }
 
   def read_all(index_name: String): Future[Option[List[Reconcile]]] = {
-    Future { Option { getAllDocuments.toList } }
+    Future { Option { getAllDocuments().toList } }
   }
 
 }

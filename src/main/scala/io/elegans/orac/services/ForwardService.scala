@@ -190,6 +190,8 @@ object  ForwardService {
         case Success(t) =>
           if(! t.get.created) {
             log.error("forward entry was not created")
+          } else {
+            log.debug("forward entry created: " + forward)
           }
         case Failure(e) =>
           log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
@@ -208,6 +210,8 @@ object  ForwardService {
         case Success(t) =>
           if(! t.get.created) {
             log.error("forward entry was not created")
+          } else {
+            log.debug("forward entry created: " + forward)
           }
         case Failure(e) =>
           log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
@@ -226,6 +230,8 @@ object  ForwardService {
         case Success(t) =>
           if(! t.get.created) {
             log.error("forward entry was not created")
+          } else {
+            log.debug("forward entry created: " + forward)
           }
         case Failure(e) =>
           log.error("can't create forward entry: " + forward + " : " + e.printStackTrace)
@@ -233,31 +239,25 @@ object  ForwardService {
     })
   }
 
-  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentsResult]] = Future {
+  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elastic_client.get_client()
-
-    val qb: QueryBuilder = QueryBuilders.boolQuery()
-      .must(QueryBuilders.termQuery("_id", id))
-      .must(QueryBuilders.termQuery("index", index_name))
-
-    val response: BulkByScrollResponse =
-      DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName)
-        .filter(qb)
-        .filter(QueryBuilders.typeQuery(elastic_client.forward_index_suffix))
-        .get()
+    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
+      .setType(elastic_client.forward_index_suffix).setId(id).get()
 
     if (refresh != 0) {
       val refresh_index = elastic_client.refresh_index(getIndexName)
       if(refresh_index.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + index_name + ")")
       }
     }
 
-    val deleted: Long = response.getDeleted
+    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
+      version = response.getVersion,
+      found = response.status != RestStatus.NOT_FOUND
+    )
 
-    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
-    Option {result}
+    log.debug("Delete forward item: " + id)
+    Option {doc_result}
   }
 
   def read(index_name: String, ids: List[String]): Future[Option[List[Forward]]] = {
@@ -320,12 +320,12 @@ object  ForwardService {
     Future { Option { documents } }
   }
 
-  def getAllDocuments: Iterator[Forward] = {
+  def getAllDocuments(keepAlive: Long = 60000): Iterator[Forward] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName)
       .addSort("timestamp", SortOrder.ASC)
-      .setScroll(new TimeValue(60000))
+      .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()
 
@@ -374,7 +374,7 @@ object  ForwardService {
       })
 
       scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(60000)).execute().actionGet()
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
 
       (documents, documents.nonEmpty)
     }.takeWhile(_._2).map(_._1).flatten

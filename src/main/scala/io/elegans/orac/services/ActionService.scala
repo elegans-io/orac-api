@@ -271,7 +271,8 @@ object ActionService {
     Option{ Actions(items = documents) }
   }
 
-  def getAllDocuments(index_name: String, search: Option[UpdateAction] = Option.empty): Iterator[Action] = {
+  def getAllDocuments(index_name: String, search: Option[UpdateAction] = Option.empty, keepAlive: Long = 60000):
+    Iterator[Action] = {
     val qb: QueryBuilder = if(search.isEmpty) {
       QueryBuilders.matchAllQuery()
     } else {
@@ -293,7 +294,7 @@ object ActionService {
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName(index_name))
       .addSort("timestamp", SortOrder.DESC)
-      .setScroll(new TimeValue(60000))
+      .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()
 
@@ -353,7 +354,7 @@ object ActionService {
       })
 
       scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(60000)).execute().actionGet()
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
     }.takeWhile(_._2).map(_._1).flatten
 

@@ -373,11 +373,11 @@ object ItemService {
     Option{ Items(items = documents) }
   }
 
-  def getAllDocuments(index_name: String): Iterator[Item] = {
+  def getAllDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Item] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elastic_client.get_client()
       .prepareSearch(getIndexName(index_name))
-      .setScroll(new TimeValue(60000))
+      .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()
 
@@ -482,7 +482,7 @@ object ItemService {
       })
 
       scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
-        .setScroll(new TimeValue(60000)).execute().actionGet()
+        .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
     }.takeWhile(_._2).map(_._1).flatten
 
