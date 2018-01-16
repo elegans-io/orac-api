@@ -145,7 +145,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val entity_future = Marshal(csrec_item).to[MessageEntity]
     val entity = Await.result(entity_future, 1.second)
     val http_request = Await.result(
-      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), Duration.Inf)
 
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
@@ -164,7 +164,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   def forward_delete_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
     val http_request = Await.result(
-      executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+      executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
@@ -195,7 +195,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     log.debug("called forwarding delete orac user for csrec: " + forward.doc_id)
     val uri = forwardingDestination.url + "/user?user_id=" +  forward.doc_id
 
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
@@ -238,7 +238,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
       "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
 
-    val item_option = Await.result(itemService.read(forward.index.get, List(doc.item_id)), 5.second)
+    val item_option = Await.result(itemService.read(forward.index.get, List(doc.item_id)), Duration.Inf)
     if(item_option.isEmpty || item_option.get.items.isEmpty) {
       val message = "Cannot retrieve the item id(" + doc.item_id + ") required to forward the action"
       throw ForwardingException(message)
@@ -292,7 +292,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val entity = Await.result(entity_future, 1.second)
 
     val http_request = Await.result(
-      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), 5.seconds)
+      executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), Duration.Inf)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
@@ -309,7 +309,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
   def forward_delete_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
     val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), 5.seconds)
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     http_request.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
@@ -339,7 +339,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
   def get_recommendations(user_id: String, from: Int = 0,
                           size: Int = 10): Option[Array[Recommendation]] = {
     val uri = forwardingDestination.url + "/recommend?user=" + user_id + "&limit=" + size
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.GET), 10.seconds)
+    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.GET), Duration.Inf)
     val recommendations = http_request.status match {
       case StatusCodes.OK =>
         val csrec_recomm_future = Unmarshal(http_request.entity).to[Map[String, Array[String]]]
