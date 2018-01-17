@@ -68,6 +68,7 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
     val ks: KeyStore = KeyStore.getInstance("PKCS12")
 
     val keystore_path: String = "/tls/certs/" + params.get.https_certificate
+    log.debug("loading keystore from: " + keystore_path)
     val keystore: InputStream = getClass.getResourceAsStream(keystore_path)
     //val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(keystore_path)
 
@@ -88,7 +89,7 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
       connectionContext = https, log = system.log) map { binding =>
       system.log.info(s"REST (HTTPS) interface bound to ${binding.localAddress}")
     } recover { case ex =>
-      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.http_host}:${params.get.http_port}",
+      system.log.error(s"REST (HTTPS) interface could not bind to ${params.get.https_host}:${params.get.https_port}",
         ex.getMessage)
     }
   }
