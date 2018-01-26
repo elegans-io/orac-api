@@ -8,8 +8,9 @@ services:
 - docker
 script:
 - sbt ++$TRAVIS_SCALA_VERSION dockerComposeUp
-- sbt ++$TRAVIS_SCALA_VERSION test
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport codacyCoverage
 - sbt ++$TRAVIS_SCALA_VERSION dockerComposeStop
 notifications:
   slack:
     secure: k6CKQ8SOmbANYu5zQfAcCftQxZPZi4JnIEjpOGnmwJDworn+Qqfu8uibqVUXDbtxp4YoZyG25U0qkSlJ1MCB+XUWQTCuhihnRKPr+QJbhVgYnz5/wfRyL1VYXQmWe/6+Gm4WVqQEcFr0CnL0I57ShpK6NgqbnMqfvfKjj/ltcpzKVOk6GzfOP2x21hryANZgksvXECTIJw1fJKu9vfVceR7pb2np7yXN/KUFWKB4dL/5i3sYMgAEgGbZFks8EDVGG+8vUueu2kbsrtSvQ4HbXzCoGKKqX/T/is9AD9G5/6xLfg3tVhWtVZ/9hsmqP/70cjZtwaHNlrDmukOGaFQ1sz7T8r+AYwhnWdPgyVc4qopGWLVOkl+YJ5aR77cCakBpesIzf/1TzNysC9DSbq/P4QKGBApVs6sZ9Z8DKR08O7Yd7coODXW75lqZebioxfz2PjWo2zsv3p/Hg3GdDL2XdTtceEiujT1tFB7oGb0+I7Y4bVoe+IbGIoYwFPPTY1S33vR9FdXYQRd5dz16Po6+ptHUeRfjeoDoipjrriQxqPs2D5IDLVKVxDLx9b7HIvhh4SP0G3QWZjPZC8wm58FfaN82scjpE/8sfw6RHeYCavUW0SetuKLlmHIzxTWQf9LCEbBXIvDF8EYg9O8+7OR6q0i5uc23hoqK7krmaRF6zHQ=
+
