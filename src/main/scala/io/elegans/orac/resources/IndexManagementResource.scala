@@ -16,7 +16,7 @@ trait IndexManagementResource extends MyResource {
   val indexManagementService: IndexManagementService.type = IndexManagementService
 
   def postIndexManagementCreateRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
       """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management" ~ Slash ~ """create""") {
       (index_name, language) =>
         post {
@@ -40,7 +40,7 @@ trait IndexManagementResource extends MyResource {
     }
 
   def postIndexManagementRefreshRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ "index_management" ~ Slash ~ """refresh""") {
       (index_name) =>
         post {
@@ -64,7 +64,7 @@ trait IndexManagementResource extends MyResource {
     }
 
   def putIndexManagementRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~
       Slash ~ """([A-Za-z0-9_]+)""".r ~ Slash ~ "index_management") {
       (index_name, language) =>
         pathEnd {
@@ -91,7 +91,7 @@ trait IndexManagementResource extends MyResource {
   }
 
   def indexManagementRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "index_management") {
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "index_management") {
       (index_name) =>
         pathEnd {
           get {

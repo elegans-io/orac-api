@@ -20,7 +20,7 @@ trait RecommendationResource extends MyResource {
   val recommendationService: RecommendationService.type = RecommendationService
 
   def recommendationRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "recommendation") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "recommendation") { index_name =>
     pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
@@ -141,7 +141,7 @@ trait RecommendationResource extends MyResource {
     }
 
   def userRecommendationRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """user_recommendation""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """user_recommendation""") { index_name =>
       path(Segment) { id =>
         get {
           authenticateBasicAsync(realm = auth_realm,

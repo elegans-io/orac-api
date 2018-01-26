@@ -19,7 +19,7 @@ trait ReconcileResource extends MyResource {
   val reconcileService: ReconcileService.type = ReconcileService
 
   def reconcileAllRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "reconcile_all") { (index_name) =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "reconcile_all") { (index_name) =>
       pathEnd {
         delete {
           authenticateBasicAsync(realm = auth_realm,
@@ -77,7 +77,7 @@ trait ReconcileResource extends MyResource {
     }
 
   def reconcileRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ "reconcile") { (index_name) =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "reconcile") { (index_name) =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,

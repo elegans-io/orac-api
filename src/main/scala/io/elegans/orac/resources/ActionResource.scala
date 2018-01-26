@@ -19,7 +19,7 @@ trait ActionResource extends MyResource {
   val actionService: ActionService.type = ActionService
 
   def actionUserRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { index_name =>
       path(Segment) { id =>
         get {
           authenticateBasicAsync(realm = auth_realm,
@@ -50,7 +50,7 @@ trait ActionResource extends MyResource {
     }
 
   def actionRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """action""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,

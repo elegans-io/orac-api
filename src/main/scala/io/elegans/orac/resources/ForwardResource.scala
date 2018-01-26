@@ -19,7 +19,7 @@ trait ForwardResource extends MyResource {
   val forwardService: ForwardService.type = ForwardService
 
   def forwardAllRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward_all""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
@@ -70,7 +70,7 @@ trait ForwardResource extends MyResource {
   }
 
   def forwardRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """forward""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,

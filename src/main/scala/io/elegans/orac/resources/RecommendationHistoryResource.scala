@@ -20,7 +20,7 @@ trait RecommendationHistoryResource extends MyResource {
   val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
   def recommendationHistoryRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]+))$""".r ~ Slash ~ """recommendation_history""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """recommendation_history""") { index_name =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = auth_realm,
