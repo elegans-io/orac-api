@@ -4,26 +4,24 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 1/12/17.
   */
 
+import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, _}
+import akka.http.scaladsl.settings.ConnectionPoolSettings
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
+import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.tools._
+import spray.json.{SerializationException, _}
 
 import scala.collection.immutable
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
-import akka.actor.ActorSystem
-import io.elegans.orac.serializers.JsonSupport
-import akka.http.scaladsl.model._
-import spray.json.SerializationException
-import spray.json._
-import akka.http.scaladsl.marshalling.{Marshal, Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import io.elegans.orac.tools._
-import akka.http.scaladsl.settings.ConnectionPoolSettings
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
   extends AbstractForwardingImplService with JsonSupport {
@@ -81,25 +79,25 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     response
   }
 
-  def forward_create_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
+  def forwardCreateItem(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
 
-    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
+    if(itemInfoService.itemInfoService.isEmpty) { //if empty refresh the map
       itemInfoService.updateItemInfoService(forward.index.get)
     }
 
-    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
-    if (! itemInfoService.item_info_service.contains(item_info_key)) {
-      val message = "the item info is not defined for the key: " + item_info_key
+    val itemInfoKey = forward.index.get + "." + forwardingDestination.item_info_id
+    if (! itemInfoService.itemInfoService.contains(itemInfoKey)) {
+      val message = "the item info is not defined for the key: " + itemInfoKey
       throw ForwardingException(message)
     }
 
-    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
+    val itemInfoFilters = itemInfoService.itemInfoService.get(itemInfoKey)
 
     val uri = forwardingDestination.url + "/insertitems?unique_id=_id"
     val item = document.get
 
     /* base fields are: type, name, description */
-    val base_fields: Map[String, Any] = item_info_filters.get.base_fields.toList.map({
+    val baseFields: Map[String, Any] = itemInfoFilters.get.base_fields.toList.map({
       case "type" =>
         ("type", item.`type`)
       case "name" =>
@@ -111,12 +109,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }).filter(_._1 != null).toMap
 
     val tags: CsrecItemType = if (item.properties.isDefined) {
-      val regex = item_info_filters.get.tag_filters
-      val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+      val regex = itemInfoFilters.get.tag_filters
+      val tagValues = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
         x.matches(regex)
       })
-      if(tag_values.nonEmpty) {
-        Map("tags" -> tag_values)
+      if(tagValues.nonEmpty) {
+        Map("tags" -> tagValues)
       } else {
         Map.empty[String, Any]
       }
@@ -124,8 +122,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       Map.empty[String, Any]
     }
 
-    val string_properties: CsrecItemType = if (item.properties.isDefined) {
-      val regex = item_info_filters.get.string_filters
+    val stringProperties: CsrecItemType = if (item.properties.isDefined) {
+      val regex = itemInfoFilters.get.string_filters
       item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
         x.key.matches(regex)
       }).map(x => {
@@ -138,16 +136,16 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       Map.empty[String, Any]
     }
 
-    val csrec_item: CsrecItemsArray = Array(Map[String, Any](
-      "_id" -> item.id,
-    ) ++ base_fields ++ string_properties ++ tags)
+    val csrecItem: CsrecItemsArray = Array(Map[String, Any](
+      "_id" -> item.id
+    ) ++ baseFields ++ stringProperties ++ tags)
 
-    val entity_future = Marshal(csrec_item).to[MessageEntity]
-    val entity = Await.result(entity_future, 1.second)
-    val http_request = Await.result(
+    val entityFuture = Marshal(csrecItem).to[MessageEntity]
+    val entity = Await.result(entityFuture, 1.second)
+    val httpRequest = Await.result(
       executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), Duration.Inf)
 
-    http_request.status match {
+    httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -161,11 +159,11 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_delete_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
+  def forwardDeleteItem(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-    val http_request = Await.result(
+    val httpRequest = Await.result(
       executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
-    http_request.status match {
+    httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -179,24 +177,24 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_item(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
+  def forwardItem(forward: Forward, document: Option[Item] = Option.empty[Item]): Unit = {
     forward.operation match {
       case ForwardOperationType.create =>
-        forward_create_item(forward = forward, document = document)
+        forwardCreateItem(forward = forward, document = document)
       case ForwardOperationType.delete =>
-        forward_delete_item(forward = forward, document = document)
+        forwardDeleteItem(forward = forward, document = document)
       case ForwardOperationType.update =>
-        forward_delete_item(forward = forward, document = document)
-        forward_create_item(forward = forward, document = document)
+        forwardDeleteItem(forward = forward, document = document)
+        forwardCreateItem(forward = forward, document = document)
     }
   }
 
-  def forward_delete_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
+  def forwardDeleteOracUser(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
     log.debug("called forwarding delete orac user for csrec: " + forward.doc_id)
     val uri = forwardingDestination.url + "/user?user_id=" +  forward.doc_id
 
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
-    http_request.status match {
+    val httpRequest = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
+    httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -210,44 +208,44 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_orac_user(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
+  def forwardOracUser(forward: Forward, document: Option[OracUser] = Option.empty[OracUser]): Unit = {
     log.debug("called forwarding orac user for csrec: " + forward.doc_id)
     forward.operation match {
       case ForwardOperationType.delete =>
-        forward_delete_orac_user(forward = forward, document = document)
+        forwardDeleteOracUser(forward = forward, document = document)
       case _ =>
         log.debug("called forwarding orac user for csrec: nothing to do")
     }
   }
 
-  def forward_create_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
+  def forwardCreateAction(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
 
-    if(itemInfoService.item_info_service.isEmpty) { //if empty refresh the map
+    if(itemInfoService.itemInfoService.isEmpty) { //if empty refresh the map
       itemInfoService.updateItemInfoService(forward.index.get)
     }
 
-    val item_info_key = forward.index.get + "." + forwardingDestination.item_info_id
-    if (! itemInfoService.item_info_service.contains(item_info_key)) {
-      val message = "the item info is not defined for the key: " + item_info_key
+    val itemInfoKey = forward.index.get + "." + forwardingDestination.item_info_id
+    if (! itemInfoService.itemInfoService.contains(itemInfoKey)) {
+      val message = "the item info is not defined for the key: " + itemInfoKey
       throw ForwardingException(message)
     }
 
-    val item_info_filters = itemInfoService.item_info_service.get(item_info_key)
+    val itemInfoFilters = itemInfoService.itemInfoService.get(itemInfoKey)
 
     val doc = document.get
     val uri = forwardingDestination.url + "/itemaction?item=" +  doc.item_id + "&user=" + doc.user_id +
       "&code=" + doc.score.getOrElse(0.0) + "&only_info=false"
 
-    val item_option = Await.result(itemService.read(forward.index.get, List(doc.item_id)), Duration.Inf)
-    if(item_option.isEmpty || item_option.get.items.isEmpty) {
+    val itemOption = Await.result(itemService.read(forward.index.get, List(doc.item_id)), Duration.Inf)
+    if(itemOption.isEmpty || itemOption.get.items.isEmpty) {
       val message = "Cannot retrieve the item id(" + doc.item_id + ") required to forward the action"
       throw ForwardingException(message)
     }
 
-    val item = item_option.get.items.head
+    val item = itemOption.get.items.head
 
     /* base fields are: type, name, description */
-    val base_fields: List[String] = item_info_filters.get.base_fields.toList.map({
+    val baseFields: List[String] = itemInfoFilters.get.base_fields.toList.map({
       case "type" =>
         "type"
       case "name" =>
@@ -259,11 +257,11 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }).filter(_ != null)
 
     val tags: List[String] = if(item.properties.isDefined) {
-      val regex = item_info_filters.get.tag_filters
-      val tag_values = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+      val regex = itemInfoFilters.get.tag_filters
+      val tagValues = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
         x.matches(regex)
       })
-      if(tag_values.nonEmpty) {
+      if(tagValues.nonEmpty) {
         List("tags")
       } else {
         List.empty[String]
@@ -272,8 +270,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       List.empty[String]
     }
 
-    val string_properties: List[String] = if (item.properties.isDefined) {
-      val regex = item_info_filters.get.string_filters
+    val stringProperties: List[String] = if (item.properties.isDefined) {
+      val regex = itemInfoFilters.get.string_filters
       item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
         x.key.matches(regex)
       }).map(x => {
@@ -283,17 +281,17 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       List.empty[String]
     }
 
-    val meaningful_fields = base_fields ++ tags ++ string_properties
-    val meaningful_item_info = Map[String, List[String]](
-      "item_info" -> meaningful_fields,
+    val meaningfulFields = baseFields ++ tags ++ stringProperties
+    val meaningfulItemInfo = Map[String, List[String]](
+      "item_info" -> meaningfulFields,
     )
 
-    val entity_future = Marshal(meaningful_item_info).to[MessageEntity]
-    val entity = Await.result(entity_future, 1.second)
+    val entityFuture = Marshal(meaningfulItemInfo).to[MessageEntity]
+    val entity = Await.result(entityFuture, 1.second)
 
-    val http_request = Await.result(
+    val httpRequest = Await.result(
       executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), Duration.Inf)
-    http_request.status match {
+    httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -307,10 +305,10 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_delete_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
+  def forwardDeleteAction(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
     val uri = forwardingDestination.url + "/item?item=" + forward.doc_id
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
-    http_request.status match {
+    val httpRequest = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
+    httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
         val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
@@ -324,36 +322,36 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     }
   }
 
-  def forward_action(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
+  def forwardAction(forward: Forward, document: Option[Action] = Option.empty[Action]): Unit = {
     forward.operation match {
       case ForwardOperationType.create =>
-        forward_create_action(forward = forward, document = document)
+        forwardCreateAction(forward = forward, document = document)
       case ForwardOperationType.delete =>
-        forward_delete_action(forward = forward, document = document)
+        forwardDeleteAction(forward = forward, document = document)
       case ForwardOperationType.update =>
-        forward_delete_action(forward = forward, document = document)
-        forward_create_action(forward = forward, document = document)
+        forwardDeleteAction(forward = forward, document = document)
+        forwardCreateAction(forward = forward, document = document)
     }
   }
 
-  def get_recommendations(user_id: String, from: Int = 0,
-                          size: Int = 10): Option[Array[Recommendation]] = {
+  def getRecommendations(user_id: String, from: Int = 0,
+                         size: Int = 10): Option[Array[Recommendation]] = {
     val uri = forwardingDestination.url + "/recommend?user=" + user_id + "&limit=" + size
-    val http_request = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.GET), Duration.Inf)
-    val recommendations = http_request.status match {
+    val httpRequest = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.GET), Duration.Inf)
+    val recommendations = httpRequest.status match {
       case StatusCodes.OK =>
-        val csrec_recomm_future = Unmarshal(http_request.entity).to[Map[String, Array[String]]]
-        val csrec_recomm = Await.result(csrec_recomm_future, 2.second)
-        val generation_timestamp = Time.getTimestampMillis
-        val generation_batch = "csrec_" + RandomNumbers.getIntPos + "_" + generation_timestamp
-        val recommendation_array = csrec_recomm.getOrElse("items", Array.empty[String]).map(x => {
-          val recommendation_id = Checksum.sha512(generation_batch + RandomNumbers.getIntPos
+        val csrecRecommFuture = Unmarshal(httpRequest.entity).to[Map[String, Array[String]]]
+        val csrecRecomm = Await.result(csrecRecommFuture, 2.second)
+        val generationTimestamp = Time.getTimestampMillis
+        val generationBatch = "csrec_" + RandomNumbers.getIntPos + "_" + generationTimestamp
+        val recommendationArray = csrecRecomm.getOrElse("items", Array.empty[String]).map(x => {
+          val recommendationId = Checksum.sha512(generationBatch + RandomNumbers.getIntPos
             + RandomNumbers.getIntPos + x)
-          Recommendation(id = Option{recommendation_id}, user_id = user_id, item_id = x,
+          Recommendation(id = Option{recommendationId}, user_id = user_id, item_id = x,
             name = "csrec_recommendation",
-            generation_batch = generation_batch, generation_timestamp = generation_timestamp, score = 0.0)
+            generation_batch = generationBatch, generation_timestamp = generationTimestamp, score = 0.0)
         })
-        Option { recommendation_array }
+        Option { recommendationArray }
       case _ =>
         val message = "No recommendation for the user from csrec: " + user_id
         log.info(message)

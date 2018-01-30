@@ -5,6 +5,6 @@ package io.elegans.orac.services
   */
 
 object RecommendationElasticClient extends ElasticClient {
-  val recommendation_index_suffix: String = config.getString("es.recommendation_index_suffix")
-  val recommendation_history_index_suffix: String = config.getString("es.recommendation_history_index_suffix")
+  val recommendationIndexSuffix: String = config.getString("es.recommendation_index_suffix")
+  val recommendationHistoryIndexSuffix: String = config.getString("es.recommendation_history_index_suffix")
 }

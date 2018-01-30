@@ -4,39 +4,29 @@ package io.elegans.orac.command
   * Created by angelo on 7/12/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-import io.elegans.orac.serializers.JsonSupport
-import io.elegans.orac.entities._
-import scopt.OptionParser
-import breeze.io.CSVReader
-import scala.util.Try
-
-import com.roundeights.hasher.Implicits._
-
-import scala.concurrent.Await
-import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
-import java.util.Base64
+import java.io.{FileInputStream, InputStreamReader, Reader}
 import java.time.Instant
 import java.util.Date
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.stream.ActorMaterializer
+import breeze.io.CSVReader
+import io.elegans.orac.entities._
+import io.elegans.orac.serializers.JsonSupport
+import scopt.OptionParser
+
+import scala.collection.immutable
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+
 object IndexActions extends JsonSupport {
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             index_name: String = "index_0",
+                             indexName: String = "index_0",
                              path: String = "/action",
                              inputfile: String = "./actions.csv",
                              separator: Char = '\t',
@@ -44,40 +34,38 @@ object IndexActions extends JsonSupport {
                              header_kv: Seq[String] = Seq.empty[String]
                            )
 
-  private def load_data(params: Params): Iterator[Action] = {
-    val questions_input_stream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
-    lazy val actions_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
+  private[this] def loadData(params: Params): Iterator[Action] = {
+    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
+    lazy val actionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0).toIterator
 
-    val header: Seq[String] = actions_entries.next
-    val actions_iterator = actions_entries.zipWithIndex.map(entry => {
+    val header: Seq[String] = actionsEntries.next
+    val actionsIterator = actionsEntries.zipWithIndex.map(entry => {
       val action = header.zip(entry._1).toMap
-      val user_id = action("user")
-      val item_id = action("item")
+      val userId = action("user")
+      val itemId = action("item")
       val score = Option{action.getOrElse("score", "0.0").toDouble}
       val timestamp = Some(Date.from(Instant.ofEpochSecond(action.getOrElse("timestamp", "0").toLong)).getTime)
-      val action_data = Action(
+      val actionData = Action(
         name = "rate",
-        user_id = user_id,
-        item_id = item_id,
+        user_id = userId,
+        item_id = itemId,
         score = score,
         timestamp = timestamp
       )
-      action_data
+      actionData
     })
-    actions_iterator
+    actionsIterator
   }
 
-  private def doIndexData(params: Params) {
+  private[this] def doIndexData(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
 
-    val vecsize = 0
+    val baseUrl = params.host + "/" + params.indexName + params.path
 
-    val base_url = params.host + "/" + params.index_name + params.path
-
-    val actions = load_data(params)
+    val actions = loadData(params)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.nonEmpty) {
       val headers: Seq[RawHeader] = params.header_kv.map(x => {
@@ -100,7 +88,7 @@ object IndexActions extends JsonSupport {
       val responseFuture: Future[HttpResponse] =
         http.singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)
@@ -133,8 +121,8 @@ object IndexActions extends JsonSupport {
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")

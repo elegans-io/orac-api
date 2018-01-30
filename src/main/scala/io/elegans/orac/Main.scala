@@ -4,18 +4,17 @@ package io.elegans.orac
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import scala.concurrent.duration._
-import akka.util.Timeout
 import java.io.InputStream
 import java.security.{KeyStore, SecureRandom}
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext, server}
 import akka.stream.ActorMaterializer
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server
+import akka.util.Timeout
 
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration._
 
 case class Parameters(
                        http_enable: Boolean,

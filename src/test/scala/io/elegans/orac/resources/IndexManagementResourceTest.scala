@@ -1,18 +1,17 @@
 package io.elegans.orac.resources
 
-import org.scalatest.{Matchers, WordSpec}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.http.scaladsl.server
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.testkit._
+import io.elegans.orac.OracService
 import io.elegans.orac.entities._
 import io.elegans.orac.serializers.JsonSupport
-import io.elegans.orac.OracService
+import org.scalatest.{Matchers, WordSpec}
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.testkit.RouteTestTimeout
 import scala.concurrent.duration._
-import akka.testkit._
-import akka.http.scaladsl.model.headers.BasicHttpCredentials
 
 class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
@@ -26,13 +25,13 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
     "return an HTTP code 200 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val index_name_regex = "(?:[A-Za-z0-9_]+)"
+        val indexNameRegex = "(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -56,15 +55,15 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
     "return an HTTP code 200 when creating a new index" in {
       Post(s"/index_0/lang_generic/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val indexNameRegex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -91,15 +90,15 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
     "return an HTTP code 200 when getting informations from the index" in {
       Get(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val index_name_regex = "index_(?:[A-Za-z0-9_]+)"
+        val indexNameRegex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCheck: " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + index_name_regex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }

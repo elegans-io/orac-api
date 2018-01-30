@@ -4,31 +4,32 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 2/12/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ForwardService
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
 import org.elasticsearch.index.engine.VersionConflictEngineException
-import scala.util.{Failure, Success}
+
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 trait ForwardResource extends MyResource {
 
   val forwardService: ForwardService.type = ForwardService
 
   def forwardAllRoutes: Route = {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { indexName =>
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+              authenticator.hasPermissions(user, indexName, Permissions.create_item)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(callTimeout = 3600.seconds)
-                onCompleteWithBreaker(breaker)(forwardService.forwardCreateAll(index_name = index_name)) {
+                onCompleteWithBreaker(breaker)(forwardService.forwardCreateAll(indexName = indexName)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK)
                   case Failure(e) =>
@@ -44,13 +45,13 @@ trait ForwardResource extends MyResource {
           }
         } ~
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+                authenticator.hasPermissions(user, indexName, Permissions.create_item)) {
                 extractMethod { method =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(callTimeout = 3600.seconds)
-                  onCompleteWithBreaker(breaker)(forwardService.forwardDeleteAll(index_name = index_name)) {
+                  onCompleteWithBreaker(breaker)(forwardService.forwardDeleteAll(indexName = indexName)) {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK)
                     case Failure(e) =>
@@ -70,18 +71,18 @@ trait ForwardResource extends MyResource {
   }
 
   def forwardRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { indexName =>
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+              authenticator.hasPermissions(user, indexName, Permissions.create_item)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Forward]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.create(index_name, document, refresh)) {
+                    onCompleteWithBreaker(breaker)(forwardService.create(indexName, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
@@ -102,14 +103,14 @@ trait ForwardResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+                authenticator.hasPermissions(user, indexName, Permissions.create_item)) {
                 extractMethod { method =>
                   parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.read(index_name, id.toList)) {
+                    onCompleteWithBreaker(breaker)(forwardService.read(indexName, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
@@ -130,14 +131,14 @@ trait ForwardResource extends MyResource {
       } ~
         path(Segment) { id =>
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.create_item)) {
+                authenticator.hasPermissions(user, indexName, Permissions.create_item)) {
                 extractMethod { method =>
                   parameters("refresh".as[Int] ? 0) { refresh =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(forwardService.delete(index_name, id, refresh)) {
+                    onCompleteWithBreaker(breaker)(forwardService.delete(indexName, id, refresh)) {
                       case Success(t) =>
                         if (t.isDefined) {
                           completeResponse(StatusCodes.OK, t)

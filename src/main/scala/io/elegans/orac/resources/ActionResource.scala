@@ -4,12 +4,12 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ActionService
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 import scala.util.{Failure, Success}
@@ -19,23 +19,23 @@ trait ActionResource extends MyResource {
   val actionService: ActionService.type = ActionService
 
   def actionUserRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { indexName =>
       path(Segment) { id =>
         get {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.read_action)) {
+              authenticator.hasPermissions(user, indexName, Permissions.read_action)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                 val search = Some(UpdateAction(user_id = Some(id)))
-                onCompleteWithBreaker(breaker)(actionService.read_all(index_name, search)) {
+                onCompleteWithBreaker(breaker)(actionService.readAll(indexName, search)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
                   case Failure(e) =>
-                    log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                    log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                       "method=" + method.toString + " : " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option {
@@ -50,27 +50,27 @@ trait ActionResource extends MyResource {
     }
 
   def actionRoutes: Route =
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { index_name =>
+    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { indexName =>
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
-              authenticator.hasPermissions(user, index_name, Permissions.create_action)) {
+              authenticator.hasPermissions(user, indexName, Permissions.create_action)) {
               extractMethod { method =>
                 parameters("refresh".as[Int] ? 0) { refresh =>
                   entity(as[Action]) { document =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(actionService.create(index_name, user.id, document, refresh)) {
+                    onCompleteWithBreaker(breaker)(actionService.create(indexName, user.id, document, refresh)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                          log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                             "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                          log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest, Option.empty[String])
                       }
@@ -82,20 +82,20 @@ trait ActionResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.read_action)) {
+                authenticator.hasPermissions(user, indexName, Permissions.read_action)) {
                 extractMethod { method =>
                   parameters("id".as[String].*) { id =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(actionService.read(index_name, id.toList)) {
+                    onCompleteWithBreaker(breaker)(actionService.read(indexName, id.toList)) {
                       case Success(t) =>
                         completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                           t
                         })
                       case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                        log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
@@ -110,26 +110,26 @@ trait ActionResource extends MyResource {
       } ~
         path(Segment) { id =>
           put {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
-                authenticator.hasPermissions(user, index_name, Permissions.update_action)) {
+                authenticator.hasPermissions(user, indexName, Permissions.update_action)) {
                 extractMethod { method =>
                   entity(as[UpdateAction]) { update =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(actionService.update(index_name, id, update, refresh)) {
+                      onCompleteWithBreaker(breaker)(actionService.update(indexName, id, update, refresh)) {
                         case Success(t) =>
                           completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                             t
                           })
                         case Failure(e) => e match {
                           case dme: DocumentMissingException =>
-                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                            log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                               "method=" + method.toString + " : " + dme.getMessage)
                             completeResponse(StatusCodes.NotFound, Option.empty[String])
                           case e: Exception =>
-                            log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                            log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                               "method=" + method.toString + " : " + e.getMessage)
                             completeResponse(StatusCodes.BadRequest, Option.empty[String])
                         }
@@ -141,14 +141,14 @@ trait ActionResource extends MyResource {
             }
           } ~
             delete {
-              authenticateBasicAsync(realm = auth_realm,
+              authenticateBasicAsync(realm = authRealm,
                 authenticator = authenticator.authenticator) { user =>
                 authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, index_name, Permissions.delete_action)) {
+                  authenticator.hasPermissions(user, indexName, Permissions.delete_action)) {
                   extractMethod { method =>
                     parameters("refresh".as[Int] ? 0) { refresh =>
                       val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                      onCompleteWithBreaker(breaker)(actionService.delete(index_name, id, refresh)) {
+                      onCompleteWithBreaker(breaker)(actionService.delete(indexName, id, refresh)) {
                         case Success(t) =>
                           if (t.isDefined) {
                             completeResponse(StatusCodes.OK, t)
@@ -156,7 +156,7 @@ trait ActionResource extends MyResource {
                             completeResponse(StatusCodes.BadRequest, t)
                           }
                         case Failure(e) =>
-                          log.error(this.getClass.getCanonicalName + " index(" + index_name + ") " +
+                          log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest,
                             Option {

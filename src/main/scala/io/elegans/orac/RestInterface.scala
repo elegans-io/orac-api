@@ -4,10 +4,11 @@ package io.elegans.orac
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import scala.concurrent.ExecutionContext
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.resources._
 import io.elegans.orac.services._
+
+import scala.concurrent.ExecutionContext
 
 trait Resources extends RootAPIResource with SystemIndexManagementResource with IndexManagementResource
   with UserResource with ActionResource with ItemResource with RecommendationResource

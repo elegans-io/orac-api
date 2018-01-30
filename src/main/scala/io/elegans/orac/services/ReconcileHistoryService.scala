@@ -4,36 +4,34 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 8/12/17.
   */
 
-import io.elegans.orac.entities._
-
-import scala.concurrent.Future
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-
-import scala.collection.JavaConverters._
-import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
+import io.elegans.orac.entities.{ReconcileHistory, _}
 import io.elegans.orac.tools.{Checksum, Time}
+import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.reindex.{BulkByScrollResponse, DeleteByQueryAction}
+import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortOrder
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
-import io.elegans.orac.entities.ReconcileHistory
+import scala.concurrent.Future
 
 /**
   * Implements reconciliation functions
   */
 
 object ReconcileHistoryService {
-  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   val itemService: ItemService.type = ItemService
@@ -41,14 +39,14 @@ object ReconcileHistoryService {
   val actionService: ActionService.type = ActionService
 
   def getIndexName: String = {
-    elastic_client.index_name + "." + elastic_client.reconcile_history_index_suffix
+    elasticClient.indexName + "." + elasticClient.reconcileHistoryIndexSuffix
   }
 
   def create(document:ReconcileHistory, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val timestamp: Long = Time.getTimestampMillis
-    val end_timestamp: Long = document.end_timestamp.getOrElse(timestamp)
+    val endTimestamp: Long = document.end_timestamp.getOrElse(timestamp)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.getLong))
 
@@ -58,20 +56,20 @@ object ReconcileHistoryService {
     builder.field("index", document.index)
     builder.field("type", document.`type`)
     builder.field("retry", document.retry)
-    builder.field("end_timestamp", end_timestamp)
+    builder.field("end_timestamp", endTimestamp)
     builder.field("insert_timestamp", document.insert_timestamp)
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elasticClient.getClient
     val response = client.prepareIndex().setIndex(getIndexName)
-      .setType(elastic_client.reconcile_history_index_suffix)
+      .setType(elasticClient.reconcileHistoryIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName)
+      val refresh_index = elasticClient.refreshIndex(getIndexName)
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
       }
@@ -86,13 +84,13 @@ object ReconcileHistoryService {
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elasticClient.getClient
     val qb = QueryBuilders.termQuery("index", index_name)
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
         .source(getIndexName)
         .filter(qb)
-        .filter(QueryBuilders.typeQuery(elastic_client.reconcile_history_index_suffix))
+        .filter(QueryBuilders.typeQuery(elasticClient.reconcileHistoryIndexSuffix))
         .get()
 
     val deleted: Long = response.getDeleted
@@ -102,37 +100,37 @@ object ReconcileHistoryService {
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
+    val client: TransportClient = elasticClient.getClient
     val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
-      .setType(elastic_client.reconcile_history_index_suffix).setId(id).get()
+      .setType(elasticClient.reconcileHistoryIndexSuffix).setId(id).get()
 
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName)
-      if(refresh_index.failed_shards_n > 0) {
+      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
       }
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
+    val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
   def read(ids: List[String]): Future[Option[List[ReconcileHistory]]] = {
-    val client: TransportClient = elastic_client.get_client()
-    val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
+    val client: TransportClient = elasticClient.getClient
+    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(getIndexName, elastic_client.reconcile_history_index_suffix, ids:_*)
+      multigetBuilder.add(getIndexName, elasticClient.reconcileHistoryIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + getIndexName + ")")
     }
 
-    val response: MultiGetResponse = multiget_builder.get()
+    val response: MultiGetResponse = multigetBuilder.get()
 
     val documents : List[ReconcileHistory] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
@@ -143,12 +141,12 @@ object ReconcileHistoryService {
 
       val source : Map[String, Any] = item.getSource.asScala.toMap
 
-      val new_id: String = source.get("new_id") match {
+      val newId: String = source.get("new_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val old_id: String = source.get("old_id") match {
+      val oldId: String = source.get("old_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -168,19 +166,19 @@ object ReconcileHistoryService {
         case None => 0
       }
 
-      val insert_timestamp : Long = source.get("insert_timestamp") match {
+      val insertTimestamp : Long = source.get("insert_timestamp") match {
         case Some(t) => t.asInstanceOf[Long]
         case None => 0
       }
 
-      val end_timestamp : Option[Long] = source.get("end_timestamp") match {
+      val endTimestamp : Option[Long] = source.get("end_timestamp") match {
         case Some(t) => Option{t.asInstanceOf[Long]}
         case None => Option{0}
       }
 
-      val document = ReconcileHistory(id = Option{id}, new_id = new_id, old_id = old_id,
+      val document = ReconcileHistory(id = Option{id}, new_id = newId, old_id = oldId,
         index = index, `type` = `type`, retry = retry,
-        insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
+        insert_timestamp = insertTimestamp, end_timestamp = endTimestamp)
       document
     })
 
@@ -189,7 +187,7 @@ object ReconcileHistoryService {
 
   def getAllDocuments: Iterator[ReconcileHistory] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    var scrollResp: SearchResponse = elastic_client.get_client()
+    var scrollResp: SearchResponse = elasticClient.getClient
       .prepareSearch(getIndexName)
       .addSort("timestamp", SortOrder.ASC)
       .setScroll(new TimeValue(60000))
@@ -205,12 +203,12 @@ object ReconcileHistoryService {
 
         val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-        val new_id: String = source.get("new_id") match {
+        val newId: String = source.get("new_id") match {
           case Some(t) => t.asInstanceOf[String]
           case None => ""
         }
 
-        val old_id: String = source.get("old_id") match {
+        val oldId: String = source.get("old_id") match {
           case Some(t) => t.asInstanceOf[String]
           case None => ""
         }
@@ -230,23 +228,23 @@ object ReconcileHistoryService {
           case None => 0
         }
 
-        val insert_timestamp : Long = source.get("insert_timestamp") match {
+        val insertTimestamp : Long = source.get("insert_timestamp") match {
           case Some(t) => t.asInstanceOf[Long]
           case None => 0
         }
 
-        val end_timestamp : Option[Long] = source.get("end_timestamp") match {
+        val endTimestamp : Option[Long] = source.get("end_timestamp") match {
           case Some(t) => Option{t.asInstanceOf[Long]}
           case None => Option{0}
         }
 
-        val document = ReconcileHistory(id = Option{id}, new_id = new_id, old_id = old_id,
+        val document = ReconcileHistory(id = Option{id}, new_id = newId, old_id = oldId,
           index = index, `type` = `type`, retry = retry,
-          insert_timestamp = insert_timestamp, end_timestamp = end_timestamp)
+          insert_timestamp = insertTimestamp, end_timestamp = endTimestamp)
         document
       })
 
-      scrollResp = elastic_client.get_client().prepareSearchScroll(scrollResp.getScrollId)
+      scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(60000)).execute().actionGet()
 
       (documents, documents.nonEmpty)

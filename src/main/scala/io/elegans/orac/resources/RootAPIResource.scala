@@ -4,14 +4,15 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
-import akka.pattern.CircuitBreaker
-import akka.http.scaladsl.model.StatusCodes
+
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 trait RootAPIResource extends MyResource {
   def rootAPIsRoutes: Route = pathPrefix("") {

@@ -4,16 +4,15 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 8/12/17.
   */
 
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
+import akka.actor.{Actor, Props}
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import akka.actor.Actor
 import io.elegans.orac.entities._
-import akka.actor.Props
 
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 object CronReconcileService  {
   implicit def executionContext: ExecutionContext = OracActorSystem.system.dispatcher
@@ -37,12 +36,12 @@ object CronReconcileService  {
   }
 
   def reconcileProcess(): Unit = {
-    val index_check = systemIndexManagementService.check_index_status
-    if (index_check) {
+    val indexCheck = systemIndexManagementService.checkIndexStatus
+    if (indexCheck) {
       val iterator = reconcileService.getAllDocuments(60000)
       iterator.foreach(item  => {
-        val item_type = item.`type`
-        item_type match {
+        val itemType = item.`type`
+        itemType match {
           case ReconcileType.orac_user =>
             if(item.retry > 0) {
               val reconcile_res = reconcileService.reconcileUser(item.index.get, item)
@@ -52,12 +51,12 @@ object CronReconcileService  {
                   val history_element = ReconcileHistory(old_id = item.old_id, new_id = item.new_id,
                     index = item.index, `type` = item.`type`,
                     insert_timestamp = item.timestamp.get, retry = item.retry)
-                  val reconcile_history_insert =
+                  val reconcileHistoryInsert =
                     Await.result(reconcileHistoryService.create(history_element, 0), 5.seconds)
-                  if(reconcile_history_insert.isDefined) {
-                    val reconcile_item_delete =
+                  if(reconcileHistoryInsert.isDefined) {
+                    val reconcileItemDelete =
                       Await.result(reconcileService.delete(item.id.get, item.index.get, 0), 5.seconds)
-                    if(reconcile_item_delete.isEmpty) {
+                    if(reconcileItemDelete.isEmpty) {
                       log.error("Reconciliation: can't delete the entry(" + item.id.get
                         + ") from the reconciliation table")
                     }

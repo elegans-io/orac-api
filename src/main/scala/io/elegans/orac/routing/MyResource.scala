@@ -2,24 +2,22 @@ package io.elegans.orac.routing
 
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-
-import scala.concurrent.ExecutionContext
-import akka.http.scaladsl.server.Directives
-import io.elegans.orac.serializers.JsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directives, Route}
+import com.typesafe.config.{Config, ConfigFactory}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.services.auth.{AbstractOracAuthenticator, AuthenticatorFactory, OracAuthenticator, SupportedAuthImpl}
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.services.auth.{AbstractOracAuthenticator, OracAuthenticator}
+
+import scala.concurrent.ExecutionContext
 
 trait MyResource extends Directives with JsonSupport {
 
   implicit def executionContext: ExecutionContext
 
   val config: Config = ConfigFactory.load()
-  val auth_realm: String = config.getString("orac.auth_realm")
+  val authRealm: String = config.getString("orac.auth_realm")
   val authenticator: AbstractOracAuthenticator = OracAuthenticator.authenticator
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 

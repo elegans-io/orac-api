@@ -4,39 +4,38 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
-import akka.event.{Logging, LoggingAdapter}
-import io.elegans.orac.entities._
-import io.elegans.orac.services.auth.AbstractOracAuthenticator
-import io.elegans.orac.OracActorSystem
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import javax.naming.AuthenticationException
 
+import akka.event.{Logging, LoggingAdapter}
+import com.typesafe.config.{Config, ConfigFactory}
+import io.elegans.orac.OracActorSystem
+import io.elegans.orac.entities._
+import io.elegans.orac.services.auth.AbstractOracAuthenticator
 import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.GetRequestBuilder
-import org.elasticsearch.action.get.GetResponse
+import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
 import org.elasticsearch.rest.RestStatus
+
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */
 class UserEsService extends AbstractUserService {
   val config: Config = ConfigFactory.load()
-  val elastic_client: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
+  val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
-  val index_name: String = elastic_client.index_name + "." + elastic_client.user_index_suffix
+  val indexName: String = elasticClient.indexName + "." + elasticClient.userIndexSuffix
 
   val admin: String = config.getString("orac.basic_http_es.admin")
   val password: String = config.getString("orac.basic_http_es.password")
   val salt: String = config.getString("orac.basic_http_es.salt")
-  val admin_user = User(id = admin, password = password, salt = salt,
+  val adminUser = User(id = admin, password = password, salt = salt,
     permissions = Map("admin" -> Set(Permissions.admin)))
 
   def create(user: User): Future[IndexDocumentResult] = Future {
@@ -61,24 +60,24 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
-    val response = client.prepareIndex().setIndex(index_name)
+    val client: TransportClient = elasticClient.getClient
+    val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
-      .setType(elastic_client.user_index_suffix)
+      .setType(elasticClient.userIndexSuffix)
       .setId(user.id)
       .setSource(builder).get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
-    if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + index_name + ")")
+    val refreshIndex = elasticClient.refreshIndex(indexName)
+    if(refreshIndex.failed_shards_n > 0) {
+      throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: IndexDocumentResult = IndexDocumentResult(id = response.getId,
+    val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    doc_result
+    docResult
   }
 
   def update(id: String, user: UserUpdate):
@@ -114,25 +113,25 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
-    val response: UpdateResponse = client.prepareUpdate().setIndex(index_name)
-      .setType(elastic_client.user_index_suffix).setId(id)
+    val client: TransportClient = elasticClient.getClient
+    val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
+      .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
-    if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User : index refresh failed: (" + index_name + ")")
+    val refreshIndex = elasticClient.refreshIndex(indexName)
+    if(refreshIndex.failed_shards_n > 0) {
+      throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    doc_result
+    docResult
   }
 
   def delete(id: String): Future[DeleteDocumentResult] = Future {
@@ -141,35 +140,35 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete().setIndex(index_name)
-      .setType(elastic_client.user_index_suffix).setId(id).get()
+    val client: TransportClient = elasticClient.getClient
+    val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
+      .setType(elasticClient.userIndexSuffix).setId(id).get()
 
-    val refresh_index = elastic_client.refresh_index(index_name)
-    if(refresh_index.failed_shards_n > 0) {
-      throw new Exception("User: index refresh failed: (" + index_name + ")")
+    val refreshIndex = elasticClient.refreshIndex(indexName)
+    if(refreshIndex.failed_shards_n > 0) {
+      throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
+    val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    doc_result
+    docResult
   }
 
   def read(id: String): Future[User] = Future {
     if(id == "admin") {
-      admin_user
+      adminUser
     } else {
 
-      val client: TransportClient = elastic_client.get_client()
-      val get_builder: GetRequestBuilder = client.prepareGet(index_name, elastic_client.user_index_suffix, id)
+      val client: TransportClient = elasticClient.getClient
+      val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
-      val response: GetResponse = get_builder.get()
+      val response: GetResponse = getBuilder.get()
       val source = response.getSource.asScala.toMap
 
-      val user_id: String = source.get("id") match {
+      val userId: String = source.get("id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -191,26 +190,26 @@ class UserEsService extends AbstractUserService {
         case None => Map.empty[String, Set[Permissions.Value]]
       }
 
-      User(id = user_id, password = password, salt = salt, permissions = permissions)
+      User(id = userId, password = password, salt = salt, permissions = permissions)
     }
   }
 
   /** given id and optionally password and permissions, generate a new user */
   def genUser(id: String, user: UserUpdate, authenticator: AbstractOracAuthenticator): Future[User] = Future {
 
-    val password_plain = user.password match {
+    val passwordPlain = user.password match {
       case Some(t) => t
       case None =>
-        generate_password()
+        generatePassword()
     }
 
     val salt = user.salt match {
       case Some(t) => t
       case None =>
-        generate_salt()
+        generateSalt()
     }
 
-    val password = authenticator.hashed_secret(password = password_plain, salt = salt)
+    val password = authenticator.hashedSecret(password = passwordPlain, salt = salt)
 
     val permissions = user.permissions match {
       case Some(t) => t
@@ -221,11 +220,11 @@ class UserEsService extends AbstractUserService {
     User(id = id, password = password, salt = salt, permissions = permissions)
   }
 
-  def generate_password(size: Int = 16): String = {
+  def generatePassword(size: Int = 16): String = {
     RandomNumbers.getString(size)
   }
 
-  def generate_salt(): String = {
-    RandomNumbers.getString(16)
+  def generateSalt(size: Int = 16): String = {
+    RandomNumbers.getString(size)
   }
 }

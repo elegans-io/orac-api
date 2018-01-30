@@ -5,5 +5,5 @@ package io.elegans.orac.services
   */
 
 object ItemInfoElasticClient extends ElasticClient {
-  val item_info_index_suffix: String = config.getString("es.item_info_index_suffix")
+  val itemInfoIndexSuffix: String = config.getString("es.item_info_index_suffix")
 }

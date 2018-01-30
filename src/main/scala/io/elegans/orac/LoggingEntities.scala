@@ -4,14 +4,13 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import java.util.Base64
+
 import akka.event.Logging
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import akka.http.scaladsl.server.directives.DebuggingDirectives
-import akka.http.scaladsl.server.directives.LogEntry
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.RouteResult
-import java.util.Base64
+import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
+import com.typesafe.config.{Config, ConfigFactory}
 
 object LoggingEntities {
   val config: Config = ConfigFactory.load()

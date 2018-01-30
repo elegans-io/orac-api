@@ -2,12 +2,11 @@ package io.elegans.orac.services
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-
 object UserService {
   val config: Config = ConfigFactory.load ()
-  val auth_credential_store_string: String = config.getString ("orac.auth_credential_store")
-  val auth_credential_store: SupportedAuthCredentialStoreImpl.Value =
-    SupportedAuthCredentialStoreImpl.getValue (auth_credential_store_string)
+  val authCredentialStoreString: String = config.getString ("orac.auth_credential_store")
+  val authCredentialStore: SupportedAuthCredentialStoreImpl.Value =
+    SupportedAuthCredentialStoreImpl.getValue (authCredentialStoreString)
 
-  val service = UserFactory.apply(user_credential_store = auth_credential_store)
+  val service = UserFactory.apply(user_credential_store = authCredentialStore)
 }

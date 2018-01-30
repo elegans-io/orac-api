@@ -4,35 +4,36 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 10/11/17.
   */
 
-import io.elegans.orac.entities._
-import scala.concurrent.Future
-import scala.collection.immutable.{List, Map}
-import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.action.update.UpdateResponse
-import org.elasticsearch.action.delete.DeleteResponse
-import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import scala.collection.JavaConverters._
-import org.elasticsearch.rest.RestStatus
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import scala.concurrent.ExecutionContext.Implicits.global
+import io.elegans.orac.entities._
 import io.elegans.orac.tools.{Checksum, Time}
+import org.elasticsearch.action.delete.DeleteResponse
+import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
+import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.rest.RestStatus
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable.{List, Map}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Implements functions, eventually used by RecommendationResource
   */
 abstract class AbstractUserRecommendationService {
-  val elastic_client: RecommendationElasticClient.type = RecommendationElasticClient
+  val elasticClient: RecommendationElasticClient.type = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
-  def getIndexName(index_name: String, suffix: Option[String] = None): String = {
-    index_name + "." + suffix.getOrElse(elastic_client.recommendation_index_suffix)
+  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+    indexName + "." + suffix.getOrElse(elasticClient.recommendationIndexSuffix)
   }
 
-  def create(index_name: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
+  def create(indexName: String, document: Recommendation, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
@@ -51,29 +52,29 @@ abstract class AbstractUserRecommendationService {
     builder.field("score", document.score)
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
-    val response = client.prepareIndex().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix)
+    val client: TransportClient = elasticClient.getClient
+    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+      .setType(elasticClient.recommendationIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + index_name + ")")
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
 
-    val doc_result: IndexDocumentResult = IndexDocumentResult(id = response.getId,
+    val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
-  def update(index_name: String, id: String, document: UpdateRecommendation, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
+  def update(indexName: String, id: String, document: UpdateRecommendation, refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     document.name match {
@@ -108,60 +109,60 @@ abstract class AbstractUserRecommendationService {
 
     builder.endObject()
 
-    val client: TransportClient = elastic_client.get_client()
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix).setId(id)
+    val client: TransportClient = elasticClient.getClient
+    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+      .setType(elasticClient.recommendationIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + index_name + ")")
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
 
-    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status == RestStatus.CREATED
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
-  def delete(index_name: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elastic_client.get_client()
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(index_name))
-      .setType(elastic_client.recommendation_index_suffix).setId(id).get()
+  def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
+    val client: TransportClient = elasticClient.getClient
+    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+      .setType(elasticClient.recommendationIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refresh_index = elastic_client.refresh_index(getIndexName(index_name))
-      if(refresh_index.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + index_name + ")")
+      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
 
-    val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
+    val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
       found = response.status != RestStatus.NOT_FOUND
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
-  def read(index_name: String, access_user_id: String, ids: List[String]): Future[Option[Recommendations]] = Future {
-    val client: TransportClient = elastic_client.get_client()
-    val multiget_builder: MultiGetRequestBuilder = client.prepareMultiGet()
+  def read(indexName: String, access_user_id: String, ids: List[String]): Future[Option[Recommendations]] = Future {
+    val client: TransportClient = elasticClient.getClient
+    val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multiget_builder.add(getIndexName(index_name), elastic_client.recommendation_index_suffix, ids:_*)
+      multigetBuilder.add(getIndexName(indexName), elasticClient.recommendationIndexSuffix, ids:_*)
     } else {
-      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + index_name + ")")
+      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
 
-    val response: MultiGetResponse = multiget_builder.get()
+    val response: MultiGetResponse = multigetBuilder.get()
 
     val documents : Array[(Recommendation, RecommendationHistory)] = response.getResponses
       .filter((p: MultiGetItemResponse) => p.getResponse.isExists).map( { case(e) =>
@@ -177,22 +178,22 @@ abstract class AbstractUserRecommendationService {
         case None => ""
       }
 
-      val user_id : String = source.get("user_id") match {
+      val userId : String = source.get("user_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val item_id : String = source.get("item_id") match {
+      val itemId : String = source.get("item_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val generation_batch : String = source.get("generation_batch") match {
+      val generationBatch : String = source.get("generation_batch") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
 
-      val generation_timestamp : Long = source.get("generation_timestamp") match {
+      val generationTimestamp : Long = source.get("generation_timestamp") match {
         case Some(t) => t.asInstanceOf[Long]
         case None => 0
       }
@@ -202,24 +203,24 @@ abstract class AbstractUserRecommendationService {
         case None => 0.0
       }
 
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp, score = score)
+      val recommendation = Recommendation(id = Option { id }, name = name, user_id = userId, item_id = itemId,
+        generation_batch = generationBatch,
+        generation_timestamp = generationTimestamp, score = score)
 
-      val access_timestamp: Option[Long] = Option{ Time.getTimestampMillis }
+      val accessTimestamp: Option[Long] = Option{ Time.getTimestampMillis }
 
-      val recommendation_history = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
+      val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },
-        user_id = user_id, item_id = item_id,
-        generation_batch = generation_batch,
-        generation_timestamp = generation_timestamp,
-        access_timestamp = access_timestamp, score = score)
+        user_id = userId, item_id = itemId,
+        generation_batch = generationBatch,
+        generation_timestamp = generationTimestamp,
+        access_timestamp = accessTimestamp, score = score)
 
-      (recommendation, recommendation_history)
+      (recommendation, recommendationHistory)
     })
 
     documents.map(_._2).foreach(recomm => {
-      recommendationHistoryService.create(index_name, access_user_id, recomm, 0)
+      recommendationHistoryService.create(indexName, access_user_id, recomm, 0)
     })
 
     val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }

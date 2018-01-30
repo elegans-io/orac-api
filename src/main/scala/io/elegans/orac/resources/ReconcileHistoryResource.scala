@@ -4,12 +4,12 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 2/12/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ReconcileHistoryService
-import akka.http.scaladsl.model.StatusCodes
-import akka.pattern.CircuitBreaker
 import org.elasticsearch.index.engine.VersionConflictEngineException
 
 import scala.util.{Failure, Success}
@@ -22,7 +22,7 @@ trait ReconcileHistoryResource extends MyResource {
     pathPrefix("reconcile_history") {
       pathEnd {
         post {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -51,7 +51,7 @@ trait ReconcileHistoryResource extends MyResource {
           }
         } ~
           get {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -79,7 +79,7 @@ trait ReconcileHistoryResource extends MyResource {
       } ~
         path(Segment) { id =>
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {

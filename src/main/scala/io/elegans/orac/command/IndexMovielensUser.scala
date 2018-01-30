@@ -4,37 +4,27 @@ package io.elegans.orac.command
   * Created by angelo on 7/12/17.
   */
 
-import akka.http.scaladsl.model.HttpRequest
+import java.io.{FileInputStream, InputStreamReader, Reader}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.unmarshalling.Unmarshal
-
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-
-import io.elegans.orac.serializers.JsonSupport
-import io.elegans.orac.entities._
-import scopt.OptionParser
 import breeze.io.CSVReader
-import scala.util.Try
+import io.elegans.orac.entities._
+import io.elegans.orac.serializers.JsonSupport
+import scopt.OptionParser
 
-import com.roundeights.hasher.Implicits._
-
-import scala.concurrent.Await
 import scala.collection.immutable
-import scala.collection.immutable.{List, Map}
-import java.io.{File, FileReader, Reader, FileInputStream, InputStreamReader}
-import java.util.Base64
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 object IndexMovielensUser extends JsonSupport {
-  private case class Params(
+  private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             index_name: String = "index_0",
+                             indexName: String = "index_0",
                              path: String = "/orac_user",
                              inputfile: String = "./u.user",
                              separator: Char = '|',
@@ -42,51 +32,49 @@ object IndexMovielensUser extends JsonSupport {
                              header_kv: Seq[String] = Seq.empty[String]
                            )
 
-  private def load_data(params: Params): Iterator[OracUser] = {
-    val questions_input_stream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
-    lazy val items_entries = CSVReader.read(input = questions_input_stream, separator = params.separator,
+  private[this] def loadData(params: Params): Iterator[OracUser] = {
+    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
+    lazy val itemsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
       quote = '"', skipLines = 0).toIterator
 
     val header: Seq[String] = Seq("user","age","gender", "occupation", "zip_code")
-    val user_iterator = items_entries.zipWithIndex.map(entry => {
+    val userIterator = itemsEntries.zipWithIndex.map(entry => {
       val user = header.zip(entry._1).toMap
       val id = user("user")
 
-      val string_properties = Array(
+      val stringProperties = Array(
         StringProperties(key = "gender", value = user("gender")),
         StringProperties(key = "occupation", value = user("occupation")),
         StringProperties(key = "zip_code", value = user("zip_code"))
       )
 
-      val numerical_properties = Array(
+      val numericalProperties = Array(
         NumericalProperties(key = "age", value = user("age").toDouble)
       )
 
       val properties = Option {
-        OracProperties(numerical = Option {numerical_properties},
-          string = Option {string_properties}
+        OracProperties(numerical = Option {numericalProperties},
+          string = Option {stringProperties}
         )
       }
 
-      val user_data = OracUser(
+      val userData = OracUser(
         id = id,
         properties = properties
       )
-      user_data
+      userData
     })
-    user_iterator
+    userIterator
   }
 
-  private def doIndexData(params: Params) {
+  private[this] def doIndexData(params: Params) {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
 
-    val vecsize = 0
+    val baseUrl = params.host + "/" + params.indexName + params.path
 
-    val base_url = params.host + "/" + params.index_name + params.path
-
-    val orac_users = load_data(params)
+    val oracUsers = loadData(params)
 
     val httpHeader: immutable.Seq[HttpHeader] = if(params.header_kv.nonEmpty) {
       val headers: Seq[RawHeader] = params.header_kv.map(x => {
@@ -103,13 +91,13 @@ object IndexMovielensUser extends JsonSupport {
     val timeout = Duration(params.timeout, "s")
 
     val http = Http()
-    orac_users.foreach(entry => {
+    oracUsers.foreach(entry => {
       val entity_future = Marshal(entry).to[MessageEntity]
       val entity = Await.result(entity_future, 10.second)
       val responseFuture: Future[HttpResponse] =
         http.singleRequest(HttpRequest(
           method = HttpMethods.POST,
-          uri = base_url,
+          uri = baseUrl,
           headers = httpHeader,
           entity = entity))
       val result = Await.result(responseFuture, timeout)
@@ -142,8 +130,8 @@ object IndexMovielensUser extends JsonSupport {
         .action((x, c) => c.copy(host = x))
       opt[String]("index_name")
         .text(s"the index_name, e.g. index_XXX" +
-          s"  default: ${defaultParams.index_name}")
-        .action((x, c) => c.copy(index_name = x))
+          s"  default: ${defaultParams.indexName}")
+        .action((x, c) => c.copy(indexName = x))
       opt[Int]("timeout")
         .text(s"the timeout in seconds of each insert operation" +
           s"  default: ${defaultParams.timeout}")

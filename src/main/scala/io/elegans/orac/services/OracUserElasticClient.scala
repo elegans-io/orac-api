@@ -5,6 +5,6 @@ package io.elegans.orac.services
   */
 
 object OracUserElasticClient extends ElasticClient {
-  val orac_user_index_suffix: String = config.getString("es.orac_user_index_suffix")
+  val oracUserIndexSuffix: String = config.getString("es.orac_user_index_suffix")
 }
 

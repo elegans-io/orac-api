@@ -6,6 +6,7 @@ package io.elegans.orac.services
 
 import io.elegans.orac.entities._
 import io.elegans.orac.services.auth.AbstractOracAuthenticator
+
 import scala.concurrent.Future
 
 abstract class AbstractUserService {

@@ -4,8 +4,8 @@ package io.elegans.orac.serializers
   * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
   */
 
-import io.elegans.orac.entities._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import io.elegans.orac.entities._
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

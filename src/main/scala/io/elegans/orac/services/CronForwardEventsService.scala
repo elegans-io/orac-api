@@ -4,16 +4,15 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 1/12/17.
   */
 
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
+import akka.actor.{Actor, ActorRef, Props}
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
-import akka.actor.Actor
-import io.elegans.orac.entities.{Action, Item, OracUser, ForwardType}
-import akka.actor.Props
-import scala.util.{Failure, Success, Try}
-import akka.actor.ActorRef
+import io.elegans.orac.entities.{Action, ForwardType, Item, OracUser}
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
 object CronForwardEventsService {
   implicit def executionContext: ExecutionContext = OracActorSystem.system.dispatcher
@@ -36,22 +35,22 @@ object CronForwardEventsService {
   }
 
   def forwardingProcess(): Unit = {
-    val index_check = systemIndexManagementService.check_index_status
-    if (index_check) {
+    val indexCheck = systemIndexManagementService.checkIndexStatus
+    if (indexCheck) {
       val iterator = forwardService.getAllDocuments(60000)
-      iterator.foreach(fwd_item => {
-        var delete_item = false
-        log.debug("forwarding item: " + fwd_item)
-        val index = fwd_item.index.get
+      iterator.foreach(fwdItem => {
+        var deleteItem = false
+        log.debug("forwarding item: " + fwdItem)
+        val index = fwdItem.index.get
         forwardService.forwardingDestinations.getOrElse(index, List.empty).foreach(item => {
           val forwarder = item._2
-          fwd_item.`type` match {
+          fwdItem.`type` match {
             case ForwardType.item =>
-              val ids = List(fwd_item.doc_id)
+              val ids = List(fwdItem.doc_id)
               val result = Await.result(itemService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
-                  val forward_doc = if (document.items.nonEmpty) {
+                  val forwardDoc = if (document.items.nonEmpty) {
                     Option {
                       document.items.head
                     }
@@ -59,23 +58,23 @@ object CronForwardEventsService {
                     Option.empty[Item]
                   }
 
-                  val try_response = Try(forwarder.forward_item(fwd_item, forward_doc))
-                  try_response match {
+                  val tryResponse = Try(forwarder.forwardItem(fwdItem, forwardDoc))
+                  tryResponse match {
                     case Success(t) =>
-                      delete_item = true
+                      deleteItem = true
                     case Failure(e) =>
                       log.error("forward item: " + e.getMessage)
                   }
                 case _ =>
-                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.`type`)
+                  log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
+                    fwdItem.`type`)
               }
             case ForwardType.action =>
-              val ids = List(fwd_item.doc_id)
+              val ids = List(fwdItem.doc_id)
               val result = Await.result(actionService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
-                  val forward_doc = if (document.items.nonEmpty) {
+                  val forwardDoc = if (document.items.nonEmpty) {
                     Option {
                       document.items.head
                     }
@@ -83,19 +82,19 @@ object CronForwardEventsService {
                     Option.empty[Action]
                   }
 
-                  val try_response = Try(forwarder.forward_action(fwd_item, forward_doc))
-                  try_response match {
+                  val tryResponse = Try(forwarder.forwardAction(fwdItem, forwardDoc))
+                  tryResponse match {
                     case Success(t) =>
-                      delete_item = true
+                      deleteItem = true
                     case Failure(e) =>
                       log.error("forward action: " + e.getMessage)
                   }
                 case _ =>
-                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.`type`)
+                  log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
+                    fwdItem.`type`)
               }
             case ForwardType.orac_user =>
-              val ids = List(fwd_item.doc_id)
+              val ids = List(fwdItem.doc_id)
               val result = Await.result(oracUserService.read(index, ids), 5.seconds)
               result match {
                 case Some(document) =>
@@ -107,24 +106,24 @@ object CronForwardEventsService {
                     Option.empty[OracUser]
                   }
 
-                  val try_response = Try(forwarder.forward_orac_user(fwd_item, forward_doc))
-                  try_response match {
+                  val tryResponse = Try(forwarder.forwardOracUser(fwdItem, forward_doc))
+                  tryResponse match {
                     case Success(t) =>
-                      delete_item = true
+                      deleteItem = true
                     case Failure(e) =>
                       log.error("forward orac user: " + e.getMessage)
                   }
                 case _ =>
-                  log.error("Error retrieving document: " + fwd_item.doc_id + " from " + fwd_item.index + ":" +
-                    fwd_item.`type`)
+                  log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
+                    fwdItem.`type`)
               }
           }
         })
 
         // deleting item from forwarding table
-        if (delete_item) {
+        if (deleteItem) {
           val result = Await.result(
-            forwardService.delete(index_name = index, id = fwd_item.id.get, refresh = 0), 5.seconds)
+            forwardService.delete(indexName = index, id = fwdItem.id.get, refresh = 0), 5.seconds)
         }
       })
 

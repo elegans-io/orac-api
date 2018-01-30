@@ -4,15 +4,15 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.pattern.CircuitBreaker
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
-import akka.http.scaladsl.model.StatusCodes
 import io.elegans.orac.services.SystemIndexManagementService
+import org.elasticsearch.index.engine.VersionConflictEngineException
 
 import scala.util.{Failure, Success}
-import akka.pattern.CircuitBreaker
-import org.elasticsearch.index.engine.VersionConflictEngineException
 
 trait SystemIndexManagementResource extends MyResource {
 
@@ -23,12 +23,12 @@ trait SystemIndexManagementResource extends MyResource {
 
       pathEnd {
         get {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(systemIndexManagementService.get_indices) {
+              onCompleteWithBreaker(breaker)(systemIndexManagementService.getIndices) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
@@ -45,7 +45,7 @@ trait SystemIndexManagementResource extends MyResource {
   def systemIndexManagementRoutes: Route = pathPrefix("system_index_management") {
     path(Segment) { operation: String =>
       post {
-        authenticateBasicAsync(realm = auth_realm,
+        authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
@@ -53,7 +53,7 @@ trait SystemIndexManagementResource extends MyResource {
               operation match {
                 case "refresh" =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.refresh_indexes) {
+                  onCompleteWithBreaker(breaker)(systemIndexManagementService.refreshIndexes) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
@@ -72,7 +72,7 @@ trait SystemIndexManagementResource extends MyResource {
                   }
                 case "create" =>
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.create_index) {
+                  onCompleteWithBreaker(breaker)(systemIndexManagementService.createIndex) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })
@@ -93,12 +93,12 @@ trait SystemIndexManagementResource extends MyResource {
     } ~
       pathEnd {
         get {
-          authenticateBasicAsync(realm = auth_realm,
+          authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(systemIndexManagementService.check_index) {
+              onCompleteWithBreaker(breaker)(systemIndexManagementService.checkIndex) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
@@ -111,12 +111,12 @@ trait SystemIndexManagementResource extends MyResource {
           }
         } ~
           delete {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(systemIndexManagementService.remove_index) {
+                onCompleteWithBreaker(breaker)(systemIndexManagementService.removeIndex) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
                   })
@@ -129,12 +129,12 @@ trait SystemIndexManagementResource extends MyResource {
             }
           } ~
           put {
-            authenticateBasicAsync(realm = auth_realm,
+            authenticateBasicAsync(realm = authRealm,
               authenticator = authenticator.authenticator) { user =>
               authorizeAsync(_ =>
                 authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(systemIndexManagementService.update_index) {
+                onCompleteWithBreaker(breaker)(systemIndexManagementService.updateIndex) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
                   })

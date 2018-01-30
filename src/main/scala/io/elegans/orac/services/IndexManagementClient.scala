@@ -5,11 +5,11 @@ package io.elegans.orac.services
   */
 
 object IndexManagementClient extends ElasticClient {
-  val item_index_suffix: String = config.getString("es.item_index_suffix")
-  val item_info_index_suffix: String = config.getString("es.item_info_index_suffix")
-  val user_index_suffix: String = config.getString("es.user_index_suffix")
-  val action_index_suffix: String = config.getString("es.action_index_suffix")
-  val recommendation_index_suffix: String = config.getString("es.recommendation_index_suffix")
-  val recommendation_history_index_suffix: String = config.getString("es.recommendation_history_index_suffix")
-  val enable_delete_index: Boolean = config.getBoolean("es.enable_delete_application_index")
+  val itemIndexSuffix: String = config.getString("es.item_index_suffix")
+  val itemInfoIndexSuffix: String = config.getString("es.item_info_index_suffix")
+  val userIndexSuffix: String = config.getString("es.user_index_suffix")
+  val actionIndexSuffix: String = config.getString("es.action_index_suffix")
+  val recommendationIndexSuffix: String = config.getString("es.recommendation_index_suffix")
+  val recommendationHistoryIndexSuffix: String = config.getString("es.recommendation_history_index_suffix")
+  val enableDeleteIndex: Boolean = config.getBoolean("es.enable_delete_application_index")
 }
