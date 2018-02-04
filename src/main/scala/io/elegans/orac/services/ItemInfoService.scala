@@ -293,7 +293,7 @@ object ItemInfoService {
       scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(60000)).execute().actionGet()
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
+    }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
 
     iterator
   }

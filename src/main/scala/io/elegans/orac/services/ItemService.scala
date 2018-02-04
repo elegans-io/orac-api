@@ -25,6 +25,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by ItemResource
@@ -307,7 +308,7 @@ object ItemService {
               val value = numericalProperty.getOrDefault("value", None).asInstanceOf[Double]
               println(NumericalProperties(key = key, value = value))
               NumericalProperties(key = key, value = value)
-            }).filter(_.key != None.orNull).toArray
+            }).filter(_.key =/= None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[NumericalProperties]]
         }
@@ -320,7 +321,7 @@ object ItemService {
               val key = x.getOrDefault("key", None.orNull)
               val value = x.getOrDefault("value", None.orNull)
               StringProperties(key = key, value = value)
-            }).filter(_.key != None.orNull).toArray
+            }).filter(_.key =/= None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[StringProperties]]
         }
@@ -338,7 +339,7 @@ object ItemService {
                   0L
               }
               TimestampProperties(key = key, value = value)
-            }).filter(_.key != None.orNull).toArray
+            }).filter(_.key =/= None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[TimestampProperties]]
         }
@@ -352,7 +353,7 @@ object ItemService {
               val geopoint = x.getOrDefault("value", None.orNull).asInstanceOf[java.util.HashMap[String, Double]].asScala
               val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
               GeoPointProperties(key = key, value = value)
-            }).filter(_.key != None.orNull).toArray
+            }).filter(_.key =/= None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[GeoPointProperties]]
         }
@@ -418,7 +419,7 @@ object ItemService {
                 val value = x.getOrDefault("value", None.orNull).asInstanceOf[Double]
                 println(NumericalProperties(key = key, value = value))
                 NumericalProperties(key = key, value = value)
-              }).filter(_.key != None.orNull).toArray
+              }).filter(_.key =/= None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[NumericalProperties]]
           }
@@ -431,7 +432,7 @@ object ItemService {
                 val key = x.getOrDefault("key", None.orNull)
                 val value = x.getOrDefault("value", None.orNull)
                 StringProperties(key = key, value = value)
-              }).filter(_.key != None.orNull).toArray
+              }).filter(_.key =/= None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[StringProperties]]
           }
@@ -449,7 +450,7 @@ object ItemService {
                     0L
                 }
                 TimestampProperties(key = key, value = value)
-              }).filter(_.key != None.orNull).toArray
+              }).filter(_.key =/= None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[TimestampProperties]]
           }
@@ -464,7 +465,7 @@ object ItemService {
                   .asInstanceOf[java.util.HashMap[String, Double]].asScala
                 val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
                 GeoPointProperties(key = key, value = value)
-              }).filter(_.key != None.orNull).toArray
+              }).filter(_.key =/= None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[GeoPointProperties]]
           }
