@@ -35,7 +35,7 @@ object OracUserService {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.oracUserIndexSuffix)
   }
 
@@ -111,14 +111,14 @@ object OracUserService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix)
       .setId(document.id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -126,7 +126,7 @@ object OracUserService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -209,13 +209,13 @@ object OracUserService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -225,7 +225,7 @@ object OracUserService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -240,12 +240,12 @@ object OracUserService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix).setId(id).get()
 
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -253,7 +253,7 @@ object OracUserService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -271,7 +271,7 @@ object OracUserService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.oracUserIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.oracUserIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
@@ -381,10 +381,10 @@ object OracUserService {
     Future { Option{OracUsers(items = documents)} }
   }
 
-  def getAllDocuments(indexName: String, keepAlive: Long = 60000): Iterator[OracUser] = {
+  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[OracUser] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName(indexName))
+      .prepareSearch(fullIndexName(indexName))
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
       .setSize(100).get()

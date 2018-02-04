@@ -27,6 +27,7 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scalaz.Scalaz._
 
 /**
   * Implements reconciliation functions
@@ -42,7 +43,7 @@ object  ReconcileService {
   val recommendationService: RecommendationService.type = RecommendationService
   val cronReconcileService: CronReconcileService.type = CronReconcileService
 
-  def getIndexName: String = {
+  def fullIndexName: String = {
     elasticClient.indexName + "." + elasticClient.reconcileIndexSuffix
   }
 
@@ -51,7 +52,7 @@ object  ReconcileService {
 
     val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampMillis)
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.getLong))
+      .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.long))
 
     builder.field("id", id)
     builder.field("old_id", document.old_id)
@@ -67,16 +68,16 @@ object  ReconcileService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName)
+    val response = client.prepareIndex().setIndex(fullIndexName)
       .setType(elasticClient.reconcileIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
       }
     }
 
@@ -127,15 +128,15 @@ object  ReconcileService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName)
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName)
       .setType(elasticClient.reconcileIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
       }
     }
 
@@ -143,7 +144,7 @@ object  ReconcileService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {doc_result}
@@ -154,7 +155,7 @@ object  ReconcileService {
     val qb = QueryBuilders.termQuery("index", indexName)
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName)
+        .source(fullIndexName)
         .filter(qb)
         .filter(QueryBuilders.typeQuery(elasticClient.reconcileIndexSuffix))
         .get()
@@ -205,7 +206,7 @@ object  ReconcileService {
     }
 
     val searchAction = Some(UpdateAction(user_id = Some(reconcile.old_id)))
-    val actionIterator = actionService.getAllDocuments(indexName = indexName, search = searchAction)
+    val actionIterator = actionService.allDocuments(indexName = indexName, search = searchAction)
     actionIterator.foreach(doc => {
       log.debug("Reconciliation of action: " + doc.id)
       val updateAction = UpdateAction(user_id = Some(reconcile.new_id))
@@ -222,7 +223,7 @@ object  ReconcileService {
     })
 
     val searchRecommendation = Some(UpdateRecommendation(user_id = Some(reconcile.old_id)))
-    val recommendationIterator = recommendationService.getAllDocuments(indexName = indexName,
+    val recommendationIterator = recommendationService.allDocuments(indexName = indexName,
       search = searchRecommendation)
     recommendationIterator.foreach(doc => {
       log.debug("Reconciliation of recommendation: " + doc.id)
@@ -251,11 +252,11 @@ object  ReconcileService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName)
       .setType(elasticClient.reconcileIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -263,7 +264,7 @@ object  ReconcileService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     log.debug("Delete reconcile item: " + id)
@@ -275,9 +276,9 @@ object  ReconcileService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName, elasticClient.reconcileIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName, elasticClient.reconcileIndexSuffix, ids:_*)
     } else {
-      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + getIndexName + ")")
+      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + fullIndexName + ")")
     }
 
     val response: MultiGetResponse = multigetBuilder.get()
@@ -330,10 +331,10 @@ object  ReconcileService {
     Future { Option { documents } }
   }
 
-  def getAllDocuments(keepAlive: Long = 60000): Iterator[Reconcile] = {
+  def allDocuments(keepAlive: Long = 60000): Iterator[Reconcile] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName)
+      .prepareSearch(fullIndexName)
       .addSort("timestamp", SortOrder.ASC)
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
@@ -387,13 +388,12 @@ object  ReconcileService {
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
 
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
-
+    }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
     iterator
   }
 
   def readAll(indexName: String): Future[Option[List[Reconcile]]] = {
-    Future { Option { getAllDocuments().toList } }
+    Future { Option { allDocuments().toList } }
   }
 
 }

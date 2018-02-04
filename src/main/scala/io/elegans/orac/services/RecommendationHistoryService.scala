@@ -20,6 +20,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by RecommendationHistoryResource
@@ -28,7 +29,7 @@ object RecommendationHistoryService {
   val elasticClient: RecommendationElasticClient.type = RecommendationElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.recommendationHistoryIndexSuffix)
   }
 
@@ -60,14 +61,14 @@ object RecommendationHistoryService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix)
       .setCreate(true)
       .setId(id)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -75,7 +76,7 @@ object RecommendationHistoryService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -133,13 +134,13 @@ object RecommendationHistoryService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -149,7 +150,7 @@ object RecommendationHistoryService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -157,11 +158,11 @@ object RecommendationHistoryService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -169,7 +170,7 @@ object RecommendationHistoryService {
 
     val doc_result: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     Option {doc_result}
@@ -180,7 +181,7 @@ object RecommendationHistoryService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.recommendationHistoryIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.recommendationHistoryIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }

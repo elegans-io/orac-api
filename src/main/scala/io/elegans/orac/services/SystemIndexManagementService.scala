@@ -167,7 +167,7 @@ object SystemIndexManagementService {
     Option { RefreshIndexResults(results = operationsResults) }
   }
 
-  def getIndices: Future[List[String]] = Future {
+  def indices: Future[List[String]] = Future {
     val indicesRes = elasticClient.getClient
       .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
     indicesRes.map(x => x.key).toList

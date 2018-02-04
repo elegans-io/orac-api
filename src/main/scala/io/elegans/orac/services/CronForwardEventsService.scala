@@ -37,7 +37,7 @@ object CronForwardEventsService {
   def forwardingProcess(): Unit = {
     val indexCheck = systemIndexManagementService.checkIndexStatus
     if (indexCheck) {
-      val iterator = forwardService.getAllDocuments()
+      val iterator = forwardService.allDocuments()
       iterator.foreach(fwdItem => {
         var deleteItem = false
         log.debug("forwarding item: " + fwdItem)

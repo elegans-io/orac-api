@@ -102,7 +102,7 @@ object IndexActions extends JsonSupport {
     Await.ready(system.terminate(), Duration.Inf)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) : Unit = {
     val defaultParams = Params()
     val parser = new OptionParser[Params]("IndexActions") {
       head("Index actions")

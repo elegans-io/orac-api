@@ -25,6 +25,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by RecommendationResource
@@ -35,7 +36,7 @@ object RecommendationService {
   val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
   val forwardService: ForwardService.type = ForwardService
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.recommendationIndexSuffix)
   }
 
@@ -48,7 +49,7 @@ object RecommendationService {
         document.user_id + document.name +
         document.generation_batch +
         document.score +
-        document.generation_timestamp + RandomNumbers.getLong))
+        document.generation_timestamp + RandomNumbers.long))
 
     builder.field("id", id)
     builder.field("name", document.name)
@@ -60,14 +61,14 @@ object RecommendationService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -75,7 +76,7 @@ object RecommendationService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -118,13 +119,13 @@ object RecommendationService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -134,7 +135,7 @@ object RecommendationService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -142,11 +143,11 @@ object RecommendationService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -154,7 +155,7 @@ object RecommendationService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     Option {docResult}
@@ -166,7 +167,7 @@ object RecommendationService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.recommendationIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.recommendationIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
@@ -236,8 +237,8 @@ object RecommendationService {
     recommendations
   }
 
-  def getAllDocuments(indexName: String,
-                      search: Option[UpdateRecommendation] = Option.empty): Iterator[Recommendation] = {
+  def allDocuments(indexName: String,
+                   search: Option[UpdateRecommendation] = Option.empty): Iterator[Recommendation] = {
     val qb: QueryBuilder = if(search.isEmpty) {
       QueryBuilders.matchAllQuery()
     } else {
@@ -259,7 +260,7 @@ object RecommendationService {
     }
 
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName(indexName))
+      .prepareSearch(fullIndexName(indexName))
       .addSort("generation_timestamp", SortOrder.DESC)
       .setScroll(new TimeValue(60000))
       .setQuery(qb)
@@ -313,7 +314,7 @@ object RecommendationService {
       scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(60000)).execute().actionGet()
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
+    }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
 
     iterator
   }
@@ -321,7 +322,7 @@ object RecommendationService {
   def getRecommendationsByUser(indexName: String, access_user_id: String, id: String,
                                from: Int = 0, size: Int = 10): Future[Option[Recommendations]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val searchBuilder : SearchRequestBuilder = client.prepareSearch(getIndexName(indexName))
+    val searchBuilder : SearchRequestBuilder = client.prepareSearch(fullIndexName(indexName))
       .setTypes(elasticClient.recommendationIndexSuffix)
       .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
 

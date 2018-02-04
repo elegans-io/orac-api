@@ -33,7 +33,7 @@ trait ForwardResource extends MyResource {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK)
                   case Failure(e) =>
-                    log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                    log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                       "method=" + method.toString + " : " + e.getMessage)
                     completeResponse(StatusCodes.BadRequest,
                       Option {
@@ -55,7 +55,7 @@ trait ForwardResource extends MyResource {
                     case Success(t) =>
                       completeResponse(StatusCodes.OK)
                     case Failure(e) =>
-                      log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                      log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                         "method=" + method.toString + " : " + e.getMessage)
                       completeResponse(StatusCodes.BadRequest,
                         Option {
@@ -87,11 +87,11 @@ trait ForwardResource extends MyResource {
                         completeResponse(StatusCodes.Created)
                       case Failure(e) => e match {
                         case vcee: VersionConflictEngineException =>
-                          log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                          log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                             "method=" + method.toString + " : " + vcee.getMessage)
                           completeResponse(StatusCodes.Conflict, Option.empty[String])
                         case e: Exception =>
-                          log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                          log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                             "method=" + method.toString + " : " + e.getMessage)
                           completeResponse(StatusCodes.BadRequest, Option.empty[String])
                       }
@@ -116,7 +116,7 @@ trait ForwardResource extends MyResource {
                           t
                         })
                       case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                        log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {
@@ -146,7 +146,7 @@ trait ForwardResource extends MyResource {
                           completeResponse(StatusCodes.BadRequest, t)
                         }
                       case Failure(e) =>
-                        log.error(this.getClass.getCanonicalName + " index(" + forwardService.getIndexName + ") " +
+                        log.error(this.getClass.getCanonicalName + " index(" + forwardService.fullIndexName + ") " +
                           "method=" + method.toString + " : " + e.getMessage)
                         completeResponse(StatusCodes.BadRequest,
                           Option {

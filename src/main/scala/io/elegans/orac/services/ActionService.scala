@@ -26,6 +26,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by ActionResource
@@ -35,7 +36,7 @@ object ActionService {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val cronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.actionIndexSuffix)
   }
 
@@ -68,14 +69,14 @@ object ActionService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix)
       .setCreate(true)
       .setId(id)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -83,7 +84,7 @@ object ActionService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -143,13 +144,13 @@ object ActionService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -159,7 +160,7 @@ object ActionService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -174,11 +175,11 @@ object ActionService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -186,7 +187,7 @@ object ActionService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     if(forwardService.forwardEnabled(indexName)) {
@@ -204,7 +205,7 @@ object ActionService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.actionIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.actionIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
@@ -269,7 +270,7 @@ object ActionService {
     Option{ Actions(items = documents) }
   }
 
-  def getAllDocuments(indexName: String, search: Option[UpdateAction] = Option.empty, keepAlive: Long = 60000):
+  def allDocuments(indexName: String, search: Option[UpdateAction] = Option.empty, keepAlive: Long = 60000):
     Iterator[Action] = {
     val qb: QueryBuilder = if(search.isEmpty) {
       QueryBuilders.matchAllQuery()
@@ -290,7 +291,7 @@ object ActionService {
     }
 
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName(indexName))
+      .prepareSearch(fullIndexName(indexName))
       .addSort("timestamp", SortOrder.DESC)
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
@@ -360,7 +361,7 @@ object ActionService {
 
   def readAll(indexName: String, search: Option[UpdateAction] = Option.empty): Future[Option[Actions]] = Future {
     Option{
-      Actions(items = getAllDocuments(indexName, search).toList)
+      Actions(items = allDocuments(indexName, search).toList)
     }
   }
 

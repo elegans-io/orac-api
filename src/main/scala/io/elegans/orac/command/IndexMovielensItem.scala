@@ -69,8 +69,8 @@ object IndexMovielensItem extends JsonSupport {
         if (v == "1")
           StringProperties(key = "category", value = x)
         else
-          null
-      }).toArray.filter(_ != null)
+          None.orNull
+      }).toArray.filter(_ != None.orNull)
 
       val properties = Option {
         OracProperties(string = Some(stringProperties), timestamp = timestampProperties)
@@ -133,7 +133,7 @@ object IndexMovielensItem extends JsonSupport {
     Await.ready(system.terminate(), Duration.Inf)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) : Unit = {
     val defaultParams = Params()
     val parser = new OptionParser[Params]("IndexMovielensItem") {
       head("Index movielens items")

@@ -22,6 +22,7 @@ import org.elasticsearch.rest.RestStatus
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -74,7 +75,7 @@ class UserEsService extends AbstractUserService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     docResult
@@ -128,7 +129,7 @@ class UserEsService extends AbstractUserService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     docResult
@@ -151,7 +152,7 @@ class UserEsService extends AbstractUserService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     docResult
@@ -221,10 +222,10 @@ class UserEsService extends AbstractUserService {
   }
 
   def generatePassword(size: Int = 16): String = {
-    RandomNumbers.getString(size)
+    RandomNumbers.string(size)
   }
 
   def generateSalt(size: Int = 16): String = {
-    RandomNumbers.getString(size)
+    RandomNumbers.string(size)
   }
 }

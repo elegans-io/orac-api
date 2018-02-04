@@ -20,6 +20,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by RecommendationResource
@@ -29,7 +30,7 @@ abstract class AbstractUserRecommendationService {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.recommendationIndexSuffix)
   }
 
@@ -41,7 +42,7 @@ abstract class AbstractUserRecommendationService {
         document.user_id + document.name +
         document.generation_batch +
         document.score +
-        document.generation_timestamp + RandomNumbers.getLong))
+        document.generation_timestamp + RandomNumbers.long))
 
     builder.field("id", id)
     builder.field("name", document.name)
@@ -53,14 +54,14 @@ abstract class AbstractUserRecommendationService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -68,7 +69,7 @@ abstract class AbstractUserRecommendationService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -110,13 +111,13 @@ abstract class AbstractUserRecommendationService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -126,7 +127,7 @@ abstract class AbstractUserRecommendationService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -134,11 +135,11 @@ abstract class AbstractUserRecommendationService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -146,7 +147,7 @@ abstract class AbstractUserRecommendationService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     Option {docResult}
@@ -157,7 +158,7 @@ abstract class AbstractUserRecommendationService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.recommendationIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.recommendationIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }

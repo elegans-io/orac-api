@@ -24,11 +24,11 @@ object CronReconcileService  {
   val reconcileService: ReconcileService.type = ReconcileService
   val reconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
-  val Tick = "tick"
+  val tickCheckReconcileItems = "tick"
 
   class ForwardEventsTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
-      case Tick =>
+      case `tickCheckReconcileItems` =>
         reconcileProcess()
       case _ =>
         log.error("Unknown error in reconciliation process")
@@ -38,7 +38,7 @@ object CronReconcileService  {
   def reconcileProcess(): Unit = {
     val indexCheck = systemIndexManagementService.checkIndexStatus
     if (indexCheck) {
-      val iterator = reconcileService.getAllDocuments(60000)
+      val iterator = reconcileService.allDocuments(60000)
       iterator.foreach(item  => {
         val itemType = item.`type`
         itemType match {
@@ -81,7 +81,7 @@ object CronReconcileService  {
 
   def reloadEventsOnce(): Unit = {
     val updateEventsActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
-    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, Tick)
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickCheckReconcileItems)
   }
 
   def reloadEvents(): Unit = {
@@ -90,7 +90,7 @@ object CronReconcileService  {
       0 seconds,
       1 seconds,
       updateEventsActorRef,
-      Tick)
+      tickCheckReconcileItems)
   }
 
 }

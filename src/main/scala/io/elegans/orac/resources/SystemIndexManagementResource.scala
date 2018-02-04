@@ -28,7 +28,7 @@ trait SystemIndexManagementResource extends MyResource {
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(systemIndexManagementService.getIndices) {
+              onCompleteWithBreaker(breaker)(systemIndexManagementService.indices) {
                 case Success(t) =>
                   completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option{t})
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,

@@ -26,7 +26,7 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-
+import scalaz.Scalaz._
 
 /**
   * Implements forwarding functions
@@ -58,7 +58,7 @@ object  ForwardService {
     forwardingDestinations.contains(indexName)
   }
 
-  def getIndexName: String = {
+  def fullIndexName: String = {
     elasticClient.indexName + "." + elasticClient.forwardIndexSuffix
   }
 
@@ -67,7 +67,7 @@ object  ForwardService {
 
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.doc_id + document.index + document.`type` +
-        document.operation + RandomNumbers.getLong))
+        document.operation + RandomNumbers.long))
     builder.field("id", id)
     builder.field("doc_id", document.doc_id)
     builder.field("index", indexName)
@@ -80,22 +80,22 @@ object  ForwardService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName)
+    val response = client.prepareIndex().setIndex(fullIndexName)
       .setType(elasticClient.forwardIndexSuffix)
       .setId(id)
       .setCreate(true)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
-        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + getIndexName + ")")
+        throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
       }
     }
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     Option {docResult}
@@ -107,7 +107,7 @@ object  ForwardService {
     //val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
-        .source(getIndexName)
+        .source(fullIndexName)
         .filter(qb)
         .filter(QueryBuilders.typeQuery(elasticClient.forwardIndexSuffix))
         .get()
@@ -119,7 +119,7 @@ object  ForwardService {
   }
 
   def forwardDeleteAll(indexName: String): Future[Unit] = Future {
-    val itemIterator = itemService.getAllDocuments(indexName)
+    val itemIterator = itemService.allDocuments(indexName)
     itemIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
         `type` = ForwardType.item,
@@ -137,7 +137,7 @@ object  ForwardService {
       }
     })
 
-    val oracUserIterator = oracUserService.getAllDocuments(indexName)
+    val oracUserIterator = oracUserService.allDocuments(indexName)
     oracUserIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
         `type` = ForwardType.orac_user,
@@ -155,7 +155,7 @@ object  ForwardService {
       }
     })
 
-    val actionIterator = actionService.getAllDocuments(indexName)
+    val actionIterator = actionService.allDocuments(indexName)
     actionIterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = Some(indexName),
         `type` = ForwardType.action,
@@ -175,7 +175,7 @@ object  ForwardService {
   }
 
   def forwardCreateAll(indexName: String): Future[Unit] = Future {
-    val itemIterator = itemService.getAllDocuments(indexName)
+    val itemIterator = itemService.allDocuments(indexName)
     itemIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
         `type` = ForwardType.item,
@@ -195,7 +195,7 @@ object  ForwardService {
       }
     })
 
-    val oracUserIterator = oracUserService.getAllDocuments(indexName)
+    val oracUserIterator = oracUserService.allDocuments(indexName)
     oracUserIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
         `type` = ForwardType.orac_user,
@@ -215,7 +215,7 @@ object  ForwardService {
       }
     })
 
-    val actionIterator = actionService.getAllDocuments(indexName)
+    val actionIterator = actionService.allDocuments(indexName)
     actionIterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = Some(indexName),
         `type` = ForwardType.action,
@@ -238,11 +238,11 @@ object  ForwardService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName)
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName)
       .setType(elasticClient.forwardIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName)
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -250,7 +250,7 @@ object  ForwardService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     log.debug("Delete forward item: " + id)
@@ -262,9 +262,9 @@ object  ForwardService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName, elasticClient.forwardIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName, elasticClient.forwardIndexSuffix, ids:_*)
     } else {
-      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + getIndexName + ")")
+      throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + fullIndexName + ")")
     }
 
     val response: MultiGetResponse = multigetBuilder.get()
@@ -317,10 +317,10 @@ object  ForwardService {
     Future { Option { documents } }
   }
 
-  def getAllDocuments(keepAlive: Long = 60000): Iterator[Forward] = {
+  def allDocuments(keepAlive: Long = 60000): Iterator[Forward] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName)
+      .prepareSearch(fullIndexName)
       .addSort("timestamp", SortOrder.ASC)
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
@@ -374,7 +374,7 @@ object  ForwardService {
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
 
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
+    }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
 
     iterator
   }

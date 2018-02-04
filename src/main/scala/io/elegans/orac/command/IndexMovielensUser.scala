@@ -111,7 +111,7 @@ object IndexMovielensUser extends JsonSupport {
     Await.ready(system.terminate(), Duration.Inf)
   }
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) : Unit = {
     val defaultParams = Params()
     val parser = new OptionParser[Params]("IndexMovielensUser") {
       head("Index users from movielens format")

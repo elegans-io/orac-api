@@ -15,6 +15,7 @@ import akka.util.Timeout
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
+import scalaz.Scalaz._
 
 case class Parameters(
                        http_enable: Boolean,
@@ -71,7 +72,7 @@ class OracService(parameters: Option[Parameters] = None) extends RestInterface {
     val keystore: InputStream = getClass.getResourceAsStream(keystore_path)
     //val keystore: InputStream = getClass.getClassLoader.getResourceAsStream(keystore_path)
 
-    require(keystore != null, "Keystore required!")
+    require(keystore != None.orNull, "Keystore required!")
     ks.load(keystore, password)
 
     val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")

@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by ItemInfoResource
@@ -33,13 +34,13 @@ object ItemInfoService {
   var itemInfoService = Map.empty[String, ItemInfo]
   val indexManagementService: IndexManagementService.type = IndexManagementService
 
-  def getIndexName(indexName: String, suffix: Option[String] = None): String = {
+  private[this] def fullIndexName(indexName: String, suffix: Option[String] = None): String = {
     indexName + "." + suffix.getOrElse(elasticClient.itemInfoIndexSuffix)
   }
 
   def updateItemInfoService(indexName: String): Unit = {
     if(indexManagementService.checkIndexStatus(indexName)) {
-      itemInfoService = getAllDocuments(indexName).map(x => {
+      itemInfoService = allDocuments(indexName).map(x => {
         (indexName + "." + x.id, x)
       }).toMap
     } else {
@@ -68,14 +69,14 @@ object ItemInfoService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response = client.prepareIndex().setIndex(getIndexName(indexName))
+    val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix)
       .setCreate(true)
       .setId(document.id)
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elasticClient.refreshIndex(getIndexName(indexName))
+      val refresh_index = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -83,7 +84,7 @@ object ItemInfoService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     updateItemInfoService(indexName)
@@ -126,13 +127,13 @@ object ItemInfoService {
     builder.endObject()
 
     val client: TransportClient = elasticClient.getClient
-    val response: UpdateResponse = client.prepareUpdate().setIndex(getIndexName(indexName))
+    val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix).setId(id)
       .setDoc(builder)
       .get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
@@ -142,7 +143,7 @@ object ItemInfoService {
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     updateItemInfoService(indexName)
@@ -151,11 +152,11 @@ object ItemInfoService {
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
     val client: TransportClient = elasticClient.getClient
-    val response: DeleteResponse = client.prepareDelete().setIndex(getIndexName(indexName))
+    val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix).setId(id).get()
 
     if (refresh != 0) {
-      val refreshIndex = elasticClient.refreshIndex(getIndexName(indexName))
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("Item : index refresh failed: (" + indexName + ")")
       }
@@ -163,7 +164,7 @@ object ItemInfoService {
 
     val docResult: DeleteDocumentResult = DeleteDocumentResult(id = response.getId,
       version = response.getVersion,
-      found = response.status != RestStatus.NOT_FOUND
+      found = response.status =/= RestStatus.NOT_FOUND
     )
 
     updateItemInfoService(indexName)
@@ -175,7 +176,7 @@ object ItemInfoService {
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
-      multigetBuilder.add(getIndexName(indexName), elasticClient.itemInfoIndexSuffix, ids:_*)
+      multigetBuilder.add(fullIndexName(indexName), elasticClient.itemInfoIndexSuffix, ids:_*)
     } else {
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
@@ -234,10 +235,10 @@ object ItemInfoService {
     Option{ ItemInfoRecords(items = documents) }
   }
 
-  def getAllDocuments(indexName: String): Iterator[ItemInfo] = {
+  def allDocuments(indexName: String): Iterator[ItemInfo] = {
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
     var scrollResp: SearchResponse = elasticClient.getClient
-      .prepareSearch(getIndexName(indexName))
+      .prepareSearch(fullIndexName(indexName))
       .setScroll(new TimeValue(60000))
       .setQuery(qb)
       .setSize(100).get()
