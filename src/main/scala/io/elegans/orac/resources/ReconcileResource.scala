@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait ReconcileResource extends MyResource {
 
-  val reconcileService: ReconcileService.type = ReconcileService
+  private[this] val reconcileService: ReconcileService.type = ReconcileService
 
   def reconcileAllRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "reconcile_all") { (indexName) =>

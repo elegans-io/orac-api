@@ -169,7 +169,7 @@ object  ReconcileService {
     val oldUser =
       Await.result(oracUserService.read(indexName = indexName, ids = List(reconcile.old_id)), 5.seconds)
 
-    var newUser =
+    val newUser =
       Await.result(oracUserService.read(indexName = indexName, ids = List(reconcile.new_id)), 5.seconds)
 
     def existsOracUser(user: Option[OracUsers]) = user.isDefined && user.get.items.nonEmpty
@@ -197,9 +197,9 @@ object  ReconcileService {
       throw new Exception(message)
     }
 
-    newUser =
+    val newUserJustFetched =
       Await.result(oracUserService.read(indexName = indexName, ids = List(reconcile.new_id)), 5.seconds)
-    if(notExistsOracUser(newUser)) {
+    if(notExistsOracUser(newUserJustFetched)) {
       val message = "Reconciliation: new user is empty" + reconcile.new_id
       throw new Exception(message)
     }
@@ -239,7 +239,7 @@ object  ReconcileService {
       }
     })
 
-    if(existsOracUser(oldUser) && existsOracUser(newUser)) { // we can delete the old user
+    if(existsOracUser(oldUser) && existsOracUser(newUserJustFetched)) { // we can delete the old user
       val deleteOldUser =
         Await.result(oracUserService.delete(indexName = indexName, id = reconcile.old_id, 0), 5.seconds)
       if (deleteOldUser.isEmpty) {

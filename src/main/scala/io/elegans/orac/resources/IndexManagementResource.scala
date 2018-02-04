@@ -14,7 +14,7 @@ import io.elegans.orac.services.IndexManagementService
 import scala.util.{Failure, Success}
 
 trait IndexManagementResource extends MyResource {
-  val indexManagementService: IndexManagementService.type = IndexManagementService
+  private[this] val indexManagementService: IndexManagementService.type = IndexManagementService
 
   def postIndexManagementCreateRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~

@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 
 trait ForwardResource extends MyResource {
 
-  val forwardService: ForwardService.type = ForwardService
+  private[this] val forwardService: ForwardService.type = ForwardService
 
   def forwardAllRoutes: Route = {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { indexName =>

@@ -105,8 +105,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case "description" =>
         ("description", item.description)
       case _ =>
-        (null, null)
-    }).filter(_._1 != null).toMap
+        (None.orNull, None.orNull)
+    }).filter(_._1 != None.orNull).toMap
 
     val tags: CsrecItemType = if (item.properties.isDefined) {
       val regex = itemInfoFilters.get.tag_filters
@@ -253,8 +253,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case "description" =>
         "description"
       case _ =>
-        null
-    }).filter(_ != null)
+        None.orNull
+    }).filter(_ != None.orNull)
 
     val tags: List[String] = if(item.properties.isDefined) {
       val regex = itemInfoFilters.get.tag_filters

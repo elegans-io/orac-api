@@ -306,11 +306,11 @@ object OracUserService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
-              val value = x.getOrDefault("value", null).asInstanceOf[Double]
+              val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+              val value = x.getOrDefault("value", None.orNull).asInstanceOf[Double]
               println(NumericalProperties(key = key, value = value))
               NumericalProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[NumericalProperties]]
         }
@@ -320,10 +320,10 @@ object OracUserService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null)
-              val value = x.getOrDefault("value", null)
+              val key = x.getOrDefault("key", None.orNull)
+              val value = x.getOrDefault("value", None.orNull)
               StringProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[StringProperties]]
         }
@@ -333,15 +333,15 @@ object OracUserService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
               val value = try {
-                x.getOrDefault("value", null).asInstanceOf[Long]
+                x.getOrDefault("value", None.orNull).asInstanceOf[Long]
               } catch {
                 case e: Exception =>
                   0L
               }
               TimestampProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[TimestampProperties]]
         }
@@ -351,11 +351,11 @@ object OracUserService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
-              val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+              val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+              val geopoint = x.getOrDefault("value", None.orNull).asInstanceOf[java.util.HashMap[String, Double]].asScala
               val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
               GeoPointProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[GeoPointProperties]]
         }
@@ -416,11 +416,11 @@ object OracUserService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
-                val value = x.getOrDefault("value", null).asInstanceOf[Double]
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+                val value = x.getOrDefault("value", None.orNull).asInstanceOf[Double]
                 println(NumericalProperties(key = key, value = value))
                 NumericalProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[NumericalProperties]]
           }
@@ -430,10 +430,10 @@ object OracUserService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null)
-                val value = x.getOrDefault("value", null)
+                val key = x.getOrDefault("key", None.orNull)
+                val value = x.getOrDefault("value", None.orNull)
                 StringProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[StringProperties]]
           }
@@ -443,15 +443,15 @@ object OracUserService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
                 val value = try {
-                  x.getOrDefault("value", null).asInstanceOf[Long]
+                  x.getOrDefault("value", None.orNull).asInstanceOf[Long]
                 } catch {
                   case e: Exception =>
                     0L
                 }
                 TimestampProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[TimestampProperties]]
           }
@@ -461,11 +461,11 @@ object OracUserService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
-                val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+                val geopoint = x.getOrDefault("value", None.orNull).asInstanceOf[java.util.HashMap[String, Double]].asScala
                 val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
                 GeoPointProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[GeoPointProperties]]
           }
@@ -490,7 +490,8 @@ object OracUserService {
       scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
+    }.takeWhile{case(_, docNonEmpty) => docNonEmpty}
+      .flatMap{case (docs, _) => docs}
 
     iterator
   }

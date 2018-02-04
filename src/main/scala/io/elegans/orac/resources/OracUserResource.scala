@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 
 trait OracUserResource extends MyResource {
 
-  val oracUserService: OracUserService.type = OracUserService
+  private[this] val oracUserService: OracUserService.type = OracUserService
 
   def oracUserRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "orac_user") { indexName =>

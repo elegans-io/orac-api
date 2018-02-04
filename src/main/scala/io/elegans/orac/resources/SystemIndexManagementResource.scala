@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait SystemIndexManagementResource extends MyResource {
 
-  val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
+  private[this] val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
 
   def systemGetIndexesRoutes: Route =
     pathPrefix("system_indices") {

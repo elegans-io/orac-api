@@ -8,5 +8,5 @@ object UserService {
   val authCredentialStore: SupportedAuthCredentialStoreImpl.Value =
     SupportedAuthCredentialStoreImpl.getValue (authCredentialStoreString)
 
-  val service = UserFactory.apply(user_credential_store = authCredentialStore)
+  val service = UserFactory.apply(userCredentialStore = authCredentialStore)
 }

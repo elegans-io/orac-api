@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait ReconcileHistoryResource extends MyResource {
 
-  val reconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
+  private[this] val reconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
   def reconcileHistoryRoutes: Route =
     pathPrefix("reconcile_history") {

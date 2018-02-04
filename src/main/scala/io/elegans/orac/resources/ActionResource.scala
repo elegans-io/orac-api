@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 trait ActionResource extends MyResource {
 
-  val actionService: ActionService.type = ActionService
+  private[this] val actionService: ActionService.type = ActionService
 
   def actionUserRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { indexName =>

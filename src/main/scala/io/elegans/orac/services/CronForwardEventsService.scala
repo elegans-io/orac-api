@@ -23,11 +23,11 @@ object CronForwardEventsService {
   val systemIndexManagementService: SystemIndexManagementService.type = SystemIndexManagementService
   val forwardService: ForwardService.type = ForwardService
 
-  val Tick = "tick"
+  val tickCheckForwardingItems = "tick"
 
   class ForwardEventsTickActor extends Actor {
     def receive: PartialFunction[Any, Unit] = {
-      case Tick =>
+      case `tickCheckForwardingItems` =>
         forwardingProcess()
       case _ =>
         log.error("Unknown error in forwarding process")
@@ -37,7 +37,7 @@ object CronForwardEventsService {
   def forwardingProcess(): Unit = {
     val indexCheck = systemIndexManagementService.checkIndexStatus
     if (indexCheck) {
-      val iterator = forwardService.getAllDocuments(60000)
+      val iterator = forwardService.getAllDocuments()
       iterator.foreach(fwdItem => {
         var deleteItem = false
         log.debug("forwarding item: " + fwdItem)
@@ -134,7 +134,7 @@ object CronForwardEventsService {
 
   def sendEvent(): Unit = {
     val updateEventsActorRef: ActorRef = OracActorSystem.system.actorOf(Props(new ForwardEventsTickActor))
-    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, Tick)
+    OracActorSystem.system.scheduler.scheduleOnce(0 seconds, updateEventsActorRef, tickCheckForwardingItems)
   }
 
   def reloadEvents(): Unit = {
@@ -143,7 +143,7 @@ object CronForwardEventsService {
       0 seconds,
       1 seconds,
       updateEventsActorRef,
-      Tick)
+      tickCheckForwardingItems)
   }
 
 }

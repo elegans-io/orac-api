@@ -45,13 +45,15 @@ object SystemIndexManagementService {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
-      val jsonInStream: InputStream = getClass.getResourceAsStream(item.path)
-      if (jsonInStream == null) {
-        val message = "Check the file: (" + item.path + ")"
-        throw new FileNotFoundException(message)
+      val jsonInStream: Option[InputStream] = Option {getClass.getResourceAsStream(item.path)}
+
+      val schemaJson = jsonInStream match {
+        case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+        case _ =>
+          val message = "Check the file: (" + item.path + ")"
+          throw new FileNotFoundException(message)
       }
 
-      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
 
       val createIndexRes: CreateIndexResponse =
@@ -127,14 +129,14 @@ object SystemIndexManagementService {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
-      val jsonInStream: InputStream = getClass.getResourceAsStream(item.updatePath)
-
-      if (jsonInStream == null) {
-        val message = "Check the file: (" + item.path + ")"
-        throw new FileNotFoundException(message)
+      val jsonInStream: Option[InputStream] = Option{getClass.getResourceAsStream(item.updatePath)}
+      val schemaJson: String = jsonInStream match {
+        case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
+        case _ =>
+          val message = "Check the file: (" + item.path + ")"
+          throw new FileNotFoundException(message)
       }
 
-      val schemaJson: String = Source.fromInputStream(jsonInStream, "utf-8").mkString
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
 
       val updateIndexRes  =

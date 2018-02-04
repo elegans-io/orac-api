@@ -148,52 +148,59 @@ object ItemService {
       case None => ;
     }
 
-    if (document.properties.isDefined) {
-      if (document.properties.get.numerical.isDefined) {
-        val properties = document.properties.get.numerical.get
-        val propertiesArray = builder.startArray("numerical_properties")
-        properties.foreach(e => {
-          propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
-        })
-        propertiesArray.endArray()
-      }
+    document.properties match {
+      case Some(properties) =>
+        properties.numerical match {
+          case Some(numericalProps) =>
+            val propertiesArray = builder.startArray("numerical_properties")
+            numericalProps.foreach(e => {
+              propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
+            })
+            propertiesArray.endArray()
+          case _ => ;
+        }
 
-      if (document.properties.get.string.isDefined) {
-        val properties = document.properties.get.string.get
-        val propertiesArray = builder.startArray("string_properties")
-        properties.foreach(e => {
-          propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
-        })
-        propertiesArray.endArray()
-      }
+        properties.string match {
+          case Some(stringProps) =>
+            val propertiesArray = builder.startArray("string_properties")
+            stringProps.foreach(e => {
+              propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
+            })
+            propertiesArray.endArray()
+          case _ => ;
+        }
 
-      if (document.properties.get.timestamp.isDefined) {
-        val properties = document.properties.get.timestamp.get
-        val propertiesArray = builder.startArray("timestamp_properties")
-        properties.foreach(e => {
-          propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
-        })
-        propertiesArray.endArray()
-      }
+        properties.timestamp match {
+          case Some(timestampProps) =>
+            val propertiesArray = builder.startArray("timestamp_properties")
+            timestampProps.foreach(e => {
+              propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
+            })
+            propertiesArray.endArray()
+          case _ => ;
+        }
 
-      if (document.properties.get.geopoint.isDefined) {
-        val properties = document.properties.get.geopoint.get
-        val propertiesArray = builder.startArray("geopoint_properties")
-        properties.foreach(e => {
-          val geopointValue = new GeoPoint(e.value.lat, e.value.lon)
-          propertiesArray.startObject.field("key", e.key).field("value", geopointValue).endObject()
-        })
-        propertiesArray.endArray()
-      }
+        properties.geopoint match {
+          case Some(geopointProps) =>
+            val propertiesArray = builder.startArray("geopoint_properties")
+            geopointProps.foreach(e => {
+              val geopointValue = new GeoPoint(e.value.lat, e.value.lon)
+              propertiesArray.startObject.field("key", e.key).field("value", geopointValue).endObject()
+            })
+            propertiesArray.endArray()
+          case _ => ;
+        }
 
-      if (document.properties.get.tags.isDefined) {
-        val properties = document.properties.get.tags.get
-        val propertiesArray = builder.startArray("tag_properties")
-        properties.foreach(e => {
-          propertiesArray.value(e)
-        })
-        propertiesArray.endArray()
-      }
+        properties.tags match {
+          case Some(tagsProp) =>
+            val propertiesArray = builder.startArray("tag_properties")
+            tagsProp.foreach(e => {
+              propertiesArray.value(e)
+            })
+            propertiesArray.endArray()
+          case _ => ;
+        }
+      case _ => ;
     }
 
     builder.endObject()
@@ -295,12 +302,12 @@ object ItemService {
         source.get("numerical_properties") match {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
-              .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
-              val value = x.getOrDefault("value", null).asInstanceOf[Double]
+              .asScala.map( numericalProperty => {
+              val key = numericalProperty.getOrDefault("key", None).asInstanceOf[String]
+              val value = numericalProperty.getOrDefault("value", None).asInstanceOf[Double]
               println(NumericalProperties(key = key, value = value))
               NumericalProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[NumericalProperties]]
         }
@@ -310,10 +317,10 @@ object ItemService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null)
-              val value = x.getOrDefault("value", null)
+              val key = x.getOrDefault("key", None.orNull)
+              val value = x.getOrDefault("value", None.orNull)
               StringProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[StringProperties]]
         }
@@ -323,15 +330,15 @@ object ItemService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
+              val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
               val value = try {
-                x.getOrDefault("value", null).asInstanceOf[Long]
+                x.getOrDefault("value", None.orNull).asInstanceOf[Long]
               } catch {
                 case e: Exception =>
                   0L
               }
               TimestampProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[TimestampProperties]]
         }
@@ -341,11 +348,11 @@ object ItemService {
           case Some(t) =>
             val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
               .asScala.map( x => {
-              val key = x.getOrDefault("key", null).asInstanceOf[String]
-              val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+              val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+              val geopoint = x.getOrDefault("value", None.orNull).asInstanceOf[java.util.HashMap[String, Double]].asScala
               val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
               GeoPointProperties(key = key, value = value)
-            }).filter(_.key != null).toArray
+            }).filter(_.key != None.orNull).toArray
             Option { properties }
           case None => Option.empty[Array[GeoPointProperties]]
         }
@@ -407,11 +414,11 @@ object ItemService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
-                val value = x.getOrDefault("value", null).asInstanceOf[Double]
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+                val value = x.getOrDefault("value", None.orNull).asInstanceOf[Double]
                 println(NumericalProperties(key = key, value = value))
                 NumericalProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[NumericalProperties]]
           }
@@ -421,10 +428,10 @@ object ItemService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, String]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null)
-                val value = x.getOrDefault("value", null)
+                val key = x.getOrDefault("key", None.orNull)
+                val value = x.getOrDefault("value", None.orNull)
                 StringProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[StringProperties]]
           }
@@ -434,15 +441,15 @@ object ItemService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
                 val value = try {
-                  x.getOrDefault("value", null).asInstanceOf[Long]
+                  x.getOrDefault("value", None.orNull).asInstanceOf[Long]
                 } catch {
                   case e: Exception =>
                     0L
                 }
                 TimestampProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[TimestampProperties]]
           }
@@ -452,11 +459,12 @@ object ItemService {
             case Some(t) =>
               val properties = t.asInstanceOf[java.util.ArrayList[java.util.HashMap[String, Any]]]
                 .asScala.map( x => {
-                val key = x.getOrDefault("key", null).asInstanceOf[String]
-                val geopoint = x.getOrDefault("value", null).asInstanceOf[java.util.HashMap[String, Double]].asScala
+                val key = x.getOrDefault("key", None.orNull).asInstanceOf[String]
+                val geopoint = x.getOrDefault("value", None.orNull)
+                  .asInstanceOf[java.util.HashMap[String, Double]].asScala
                 val value = OracGeoPoint(lat = geopoint("lat"), lon = geopoint("lon"))
                 GeoPointProperties(key = key, value = value)
-              }).filter(_.key != null).toArray
+              }).filter(_.key != None.orNull).toArray
               Option { properties }
             case None => Option.empty[Array[GeoPointProperties]]
           }
@@ -482,7 +490,8 @@ object ItemService {
       scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
-    }.takeWhile(_._2).map(_._1).flatten
+    }.takeWhile{case (_, docNonEmpty) => docNonEmpty}
+      .flatMap{case (doc, _) => doc}
 
     iterator
   }

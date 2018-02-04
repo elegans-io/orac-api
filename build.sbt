@@ -40,7 +40,8 @@ libraryDependencies ++= {
     "org.apache.tika" % "tika-app" % "1.16",
     "com.github.scopt" %% "scopt" % "3.6.0",
     "com.roundeights" %% "hasher" % "1.2.0",
-    "org.parboiled" %% "parboiled" % "2.1.4"
+    "org.parboiled" %% "parboiled" % "2.1.4",
+    "org.scalaz" %% "scalaz-core" % "7.2.18"
   )
 }
 

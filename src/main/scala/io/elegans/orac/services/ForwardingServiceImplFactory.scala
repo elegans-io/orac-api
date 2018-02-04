@@ -4,7 +4,7 @@ package io.elegans.orac.services
   * Created by Angelo Leto <angelo.leto@elegans.io> on 1/12/17.
   */
 
-case class ForwardingImplementationNotFoundException(message: String = "", cause: Throwable = null)
+case class ForwardingImplementationNotFoundException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 object SupportedForwardingServicesImpl extends Enumeration {

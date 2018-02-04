@@ -6,7 +6,7 @@ package io.elegans.orac.services
 
 import io.elegans.orac.entities._
 
-case class ForwardingException(message: String = "", cause: Throwable = null)
+case class ForwardingException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 abstract class AbstractForwardingImplService {

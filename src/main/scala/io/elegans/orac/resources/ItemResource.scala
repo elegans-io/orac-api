@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
 
 trait ItemResource extends MyResource {
 
-  val itemService = ItemService
+  private[this] val itemService = ItemService
 
   def itemRoutes: Route =
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """item""") { indexName =>

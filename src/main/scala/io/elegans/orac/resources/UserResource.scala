@@ -19,7 +19,7 @@ import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflict
 
 trait UserResource extends MyResource {
 
-  private val userService: AbstractUserService = UserService.service
+  private[this] val userService: AbstractUserService = UserService.service
 
   def postUserRoutes: Route = pathPrefix("user") {
     post {
