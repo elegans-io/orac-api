@@ -89,7 +89,7 @@ object IndexMovielensItem extends JsonSupport {
     itemsIterator
   }
 
-  private[this] def doIndexData(params: Params) {
+  private[this] def doIndexData(params: Params) : Unit = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher

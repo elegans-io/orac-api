@@ -9,11 +9,11 @@ import java.io.{FileInputStream, InputStreamReader, Reader}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.model.{HttpRequest, HttpHeader, MessageEntity, HttpResponse, HttpMethods, StatusCodes}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
-import io.elegans.orac.entities._
+import io.elegans.orac.entities.{OracUser, NumericalProperties, OracProperties}
 import io.elegans.orac.serializers.JsonSupport
 import scopt.OptionParser
 
@@ -57,7 +57,7 @@ object IndexUsers extends JsonSupport {
     userIterator
   }
 
-  private[this] def doIndexData(params: Params) {
+  private[this] def doIndexData(params: Params) : Unit = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher

@@ -7,13 +7,13 @@ package io.elegans.orac.entities
 object ForwardType extends Enumeration {
   type Forward = Value
   val item, orac_user, action, unknown = Value
-  def getValue(`type`: String) = values.find(_.toString == `type`).getOrElse(unknown)
+  def getValue(`type`: String): ForwardType.Value = values.find(_.toString == `type`).getOrElse(unknown)
 }
 
 object ForwardOperationType extends Enumeration {
   type ForwardOperation = Value
   val create, update, delete, unknown = Value
-  def getValue(`type`: String) = values.find(_.toString == `type`).getOrElse(unknown)
+  def getValue(`type`: String): ForwardOperationType.Value = values.find(_.toString == `type`).getOrElse(unknown)
 }
 
 case class Forward(

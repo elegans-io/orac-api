@@ -9,17 +9,17 @@ import java.io.{FileInputStream, InputStreamReader, Reader}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
-import io.elegans.orac.entities._
+import io.elegans.orac.entities.{NumericalProperties, OracUser, OracProperties, StringProperties}
 import io.elegans.orac.serializers.JsonSupport
 import scopt.OptionParser
 
 import scala.collection.immutable
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 object IndexMovielensUser extends JsonSupport {
   private[this] case class Params(
@@ -67,7 +67,7 @@ object IndexMovielensUser extends JsonSupport {
     userIterator
   }
 
-  private[this] def doIndexData(params: Params) {
+  private[this] def doIndexData(params: Params) : Unit = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher

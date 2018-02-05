@@ -76,8 +76,8 @@ object ItemInfoService {
       .setSource(builder).get()
 
     if (refresh != 0) {
-      val refresh_index = elasticClient.refreshIndex(fullIndexName(indexName))
-      if(refresh_index.failed_shards_n > 0) {
+      val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
+      if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }

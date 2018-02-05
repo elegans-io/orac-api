@@ -140,14 +140,14 @@ object  ReconcileService {
       }
     }
 
-    val doc_result: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
+    val docResult: UpdateDocumentResult = UpdateDocumentResult(index = response.getIndex,
       dtype = response.getType,
       id = response.getId,
       version = response.getVersion,
       created = response.status === RestStatus.CREATED
     )
 
-    Option {doc_result}
+    Option {docResult}
   }
 
   def deleteAll(indexName: String): Future[Option[DeleteDocumentsResult]] = Future {
