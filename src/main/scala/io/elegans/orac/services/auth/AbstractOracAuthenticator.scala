@@ -5,7 +5,7 @@ import io.elegans.orac.entities.{Permissions, User}
 
 import scala.concurrent.Future
 
-case class AuthenticatorException(message: String = "", cause: Throwable = null)
+case class AuthenticatorException(message: String = "", cause: Throwable = None.orNull)
   extends Exception(message, cause)
 
 abstract class AbstractOracAuthenticator {

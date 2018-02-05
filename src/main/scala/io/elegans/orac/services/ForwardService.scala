@@ -74,7 +74,7 @@ object  ForwardService {
     builder.field("type", document.`type`)
     builder.field("operation", document.operation)
     builder.field("retry", document.retry.getOrElse(10L))
-    val timestamp: Long = Time.getTimestampMillis
+    val timestamp: Long = Time.timestampMillis
     builder.field("timestamp", timestamp)
 
     builder.endObject()
@@ -86,7 +86,7 @@ object  ForwardService {
       .setCreate(true)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
@@ -241,7 +241,7 @@ object  ForwardService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName)
       .setType(elasticClient.forwardIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -271,7 +271,7 @@ object  ForwardService {
 
     val documents : List[Forward] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists)
-      .filter(_.getIndex == indexName).map( { case(e) =>
+      .filter(_.getIndex === indexName).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 

@@ -10,6 +10,6 @@ case class User(
                  salt: String, /** salt for password hashing */
                  permissions: Map[
                    String, /** index name */
-                   Set[Permissions.Value] /** permissions granted for the index */
+                   Set[Permissions.Permission] /** permissions granted for the index */
                    ]
                )

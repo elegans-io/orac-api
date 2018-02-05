@@ -6,7 +6,7 @@ package io.elegans.orac
 
 import akka.http.scaladsl.server.Route
 import io.elegans.orac.resources._
-import io.elegans.orac.services._
+import io.elegans.orac.services.{CronForwardEventsService, _}
 
 import scala.concurrent.ExecutionContext
 
@@ -31,9 +31,9 @@ trait RestInterface extends Resources {
   lazy val initRecommendationService: RecommendationService.type = RecommendationService
   lazy val initUserService: UserService.type = UserService
   lazy val initForwardService: ForwardService.type = ForwardService
-  lazy val initCronForwardEventsService = CronForwardEventsService
+  lazy val initCronForwardEventsService: CronForwardEventsService.type = CronForwardEventsService
   lazy val initReconcileService: ReconcileService.type = ReconcileService
-  lazy val initCronReconcileService = CronReconcileService
+  lazy val initCronReconcileService: CronReconcileService.type = CronReconcileService
   lazy val initReconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~

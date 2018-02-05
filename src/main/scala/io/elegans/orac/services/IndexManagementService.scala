@@ -180,8 +180,6 @@ object IndexManagementService {
   }
 
   def refreshIndexes(indexName: String) : Future[Option[RefreshIndexResults]] = Future {
-    val client: TransportClient = elasticClient.getClient
-
     val operationsResults: List[RefreshIndexResult] = schemaFiles.map(item => {
       val fullIndexName = indexName + "." + item.indexSuffix
       val refreshIndexRes: RefreshIndexResult = elasticClient.refreshIndex(fullIndexName)

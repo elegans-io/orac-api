@@ -67,7 +67,7 @@ object RecommendationService {
       .setCreate(true)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -124,7 +124,7 @@ object RecommendationService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -146,7 +146,7 @@ object RecommendationService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -217,7 +217,7 @@ object RecommendationService {
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp, score = score)
 
-      val accessTimestamp: Option[Long] = Option{ Time.getTimestampMillis }
+      val accessTimestamp: Option[Long] = Option{ Time.timestampMillis }
 
       val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { accessUserId },
@@ -395,7 +395,7 @@ object RecommendationService {
     }
 
     val recommendationsHistory = documents.map(rec => {
-      val accessTimestamp: Option[Long] = Option{Time.getTimestampMillis}
+      val accessTimestamp: Option[Long] = Option{Time.timestampMillis}
       val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = rec.id.get,
         name = rec.name, access_user_id = Option { access_user_id },
         user_id = rec.user_id, item_id = rec.item_id,

@@ -14,7 +14,7 @@ import org.scalatest.{Matchers, WordSpec}
 import scala.concurrent.duration._
 
 class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(10.seconds.dilated(system))
+  implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(10.seconds.dilated(system))
   val service = new OracService()
   val routes: server.Route = service.routes
 
@@ -37,10 +37,11 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
   }
 
   it should {
-     "return an HTTP code 200 when creating a new user" in {
+    "return an HTTP code 200 when creating a new user" in {
       val user = User(
         id = "test_user",
-        password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9",
+        password = "3c98bf19cb962ac4cd0227142b3495ab1be46534061919f792254b80" +
+          "c0f3e566f7819cae73bdc616af0ff555f7460ac96d88d56338d659ebd93e2be858ce1cf9",
         salt = "salt",
         permissions = Map[String, Set[Permissions.Value]]("index_0" -> Set(Permissions.create_item,
           Permissions.create_orac_user, Permissions.create_action))
@@ -53,7 +54,8 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_0/lang_generic/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Post(s"/index_0/lang_generic/index_management/create") ~>
+        addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val indexNameRegex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
@@ -70,7 +72,8 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 400 when trying to create again the same index" in {
-      Post(s"/index_0/lang_generic/index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Post(s"/index_0/lang_generic/index_management/create") ~>
+        addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "index \\[.*\\] already exists"

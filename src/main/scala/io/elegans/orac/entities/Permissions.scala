@@ -16,6 +16,6 @@ object Permissions extends Enumeration {
   create_recomm_history, update_recomm_history, read_recomm_history, delete_recomm_history,
   create_forward, read_forward, delete_forward,
   unknown = Value
-  def getValue(permission: String) = values.find(_.toString === permission).getOrElse(unknown)
+  def getValue(permission: String): Permission = values.find(_.toString === permission).getOrElse(unknown)
 }
 

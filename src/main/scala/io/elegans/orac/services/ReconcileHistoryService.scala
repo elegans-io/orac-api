@@ -46,7 +46,7 @@ object ReconcileHistoryService {
   def create(document:ReconcileHistory, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = Time.getTimestampMillis
+    val timestamp: Long = Time.timestampMillis
     val endTimestamp: Long = document.end_timestamp.getOrElse(timestamp)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.long))
@@ -69,7 +69,7 @@ object ReconcileHistoryService {
       .setCreate(true)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(fullIndexName)
       if(refresh_index.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
@@ -106,7 +106,7 @@ object ReconcileHistoryService {
       .setType(elasticClient.reconcileHistoryIndexSuffix).setId(id).get()
 
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")

@@ -208,7 +208,7 @@ abstract class AbstractUserRecommendationService {
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp, score = score)
 
-      val accessTimestamp: Option[Long] = Option{ Time.getTimestampMillis }
+      val accessTimestamp: Option[Long] = Option{ Time.timestampMillis }
 
       val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },

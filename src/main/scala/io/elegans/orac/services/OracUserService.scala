@@ -117,7 +117,7 @@ object OracUserService {
       .setCreate(true)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -214,7 +214,7 @@ object OracUserService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -244,7 +244,7 @@ object OracUserService {
       .setType(elasticClient.oracUserIndexSuffix).setId(id).get()
 
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")

@@ -41,7 +41,7 @@ object SystemIndexManagementService {
       indexSuffix = elasticClient.reconcileHistoryIndexSuffix)
   )
 
-  def createIndex : Future[Option[IndexManagementResponse]] = Future {
+  def createIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
@@ -68,7 +68,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def removeIndex : Future[Option[IndexManagementResponse]] = Future {
+  def removeIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
 
     if (! elasticClient.enableDeleteIndex) {
@@ -125,7 +125,7 @@ object SystemIndexManagementService {
     status
   }
 
-  def updateIndex : Future[Option[IndexManagementResponse]] = Future {
+  def updateIndex() : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
@@ -152,7 +152,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def refreshIndexes : Future[Option[RefreshIndexResults]] = Future {
+  def refreshIndexes() : Future[Option[RefreshIndexResults]] = Future {
     val operationsResults: List[RefreshIndexResult] = schemaFiles.map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
       val refreshIndexRes: RefreshIndexResult = elasticClient.refreshIndex(fullIndexName)

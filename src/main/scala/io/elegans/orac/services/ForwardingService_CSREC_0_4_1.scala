@@ -342,7 +342,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       case StatusCodes.OK =>
         val csrecRecommFuture = Unmarshal(httpRequest.entity).to[Map[String, Array[String]]]
         val csrecRecomm = Await.result(csrecRecommFuture, 2.second)
-        val generationTimestamp = Time.getTimestampMillis
+        val generationTimestamp = Time.timestampMillis
         val generationBatch = "csrec_" + RandomNumbers.intPos + "_" + generationTimestamp
         val recommendationArray = csrecRecomm.getOrElse("items", Array.empty[String]).map(x => {
           val recommendationId = Checksum.sha512(generationBatch + RandomNumbers.intPos

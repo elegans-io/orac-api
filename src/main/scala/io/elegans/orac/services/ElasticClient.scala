@@ -22,7 +22,9 @@ trait ElasticClient {
   val ignoreClusterName: Boolean = config.getBoolean("es.ignore_cluster_name")
 
   val hostMapStr : String = config.getString("es.host_map")
-  val hostMap : Map[String, Int] = hostMapStr.split(";").map(x => x.split("=")).map(x => (x(0), x(1).toInt)).toMap
+  val hostMap : Map[String, Int] =
+    hostMapStr.split(";").map(x => x.split("="))
+      .map(hostPortPair => (hostPortPair(0), hostPortPair(1).toInt)).toMap
 
   val settings: Settings = Settings.builder()
     .put("cluster.name", clusterName)

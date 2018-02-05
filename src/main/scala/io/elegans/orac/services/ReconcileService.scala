@@ -50,7 +50,7 @@ object  ReconcileService {
   def create(document: Reconcile, indexName: String, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampMillis)
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.toString + timestamp + RandomNumbers.long))
 
@@ -74,7 +74,7 @@ object  ReconcileService {
       .setCreate(true)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
@@ -83,7 +83,7 @@ object  ReconcileService {
 
     val docResult: IndexDocumentResult = IndexDocumentResult(id = response.getId,
       version = response.getVersion,
-      created = response.status == RestStatus.CREATED
+      created = response.status === RestStatus.CREATED
     )
 
     cronReconcileService.reloadEventsOnce()
@@ -133,7 +133,7 @@ object  ReconcileService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
@@ -255,7 +255,7 @@ object  ReconcileService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName)
       .setType(elasticClient.reconcileIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -285,7 +285,7 @@ object  ReconcileService {
 
     val documents : List[Reconcile] = response.getResponses
       .toList.filter((p: MultiGetItemResponse) => p.getResponse.isExists)
-      .filter(_.getIndex == index_name).map( { case(e) =>
+      .filter(_.getIndex === index_name).map( { case(e) =>
 
       val item: GetResponse = e.getResponse
 

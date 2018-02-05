@@ -109,7 +109,7 @@ object ItemService {
       .setId(document.id)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -212,7 +212,7 @@ object ItemService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -241,7 +241,7 @@ object ItemService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception("Item : index refresh failed: (" + indexName + ")")

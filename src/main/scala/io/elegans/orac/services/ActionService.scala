@@ -44,7 +44,7 @@ object ActionService {
              refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    val timestamp: Long = document.timestamp.getOrElse(Time.getTimestampMillis)
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name + timestamp))
 
@@ -75,7 +75,7 @@ object ActionService {
       .setId(id)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -149,7 +149,7 @@ object ActionService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -178,7 +178,7 @@ object ActionService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")

@@ -38,7 +38,7 @@ object RecommendationHistoryService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
 
-    val accessTimestamp: Long = document.access_timestamp.getOrElse(Time.getTimestampMillis)
+    val accessTimestamp: Long = document.access_timestamp.getOrElse(Time.timestampMillis)
 
     val id: String = document.id
       .getOrElse(Checksum.sha512(document.item_id + document.user_id + document.name +
@@ -67,7 +67,7 @@ object RecommendationHistoryService {
       .setId(id)
       .setSource(builder).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -139,7 +139,7 @@ object RecommendationHistoryService {
       .setDoc(builder)
       .get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
@@ -161,7 +161,7 @@ object RecommendationHistoryService {
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix).setId(id).get()
 
-    if (refresh != 0) {
+    if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
