@@ -60,7 +60,7 @@ object IndexMovielensUser extends JsonSupport {
 
       val userData = OracUser(
         id = id,
-        properties = properties
+        props = properties
       )
       userData
     })

@@ -17,7 +17,7 @@
           "store": true,
           "index": true
         },
-        "type": {
+        "item_type": {
           "type": "keyword",
           "store": true,
           "index": true

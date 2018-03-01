@@ -44,7 +44,7 @@ object CronForwardEventsService {
         val index = fwdItem.index.get
         forwardService.forwardingDestinations.getOrElse(index, List.empty).foreach(item => {
           val forwarder = item._2
-          fwdItem.`type` match {
+          fwdItem.item_type match {
             case ForwardType.item =>
               val ids = List(fwdItem.doc_id)
               val result = Await.result(itemService.read(index, ids), 5.seconds)
@@ -67,7 +67,7 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
-                    fwdItem.`type`)
+                    fwdItem.item_type)
               }
             case ForwardType.action =>
               val ids = List(fwdItem.doc_id)
@@ -91,7 +91,7 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
-                    fwdItem.`type`)
+                    fwdItem.item_type)
               }
             case ForwardType.orac_user =>
               val ids = List(fwdItem.doc_id)
@@ -115,7 +115,7 @@ object CronForwardEventsService {
                   }
                 case _ =>
                   log.error("Error retrieving document: " + fwdItem.doc_id + " from " + fwdItem.index + ":" +
-                    fwdItem.`type`)
+                    fwdItem.item_type)
               }
           }
         })

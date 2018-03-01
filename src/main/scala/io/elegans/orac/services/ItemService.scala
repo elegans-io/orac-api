@@ -43,7 +43,7 @@ object ItemService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     builder.field("id", document.id)
-    builder.field("type", document.`type`)
+    builder.field("category", document.category)
 
     document.description match {
       case Some(t) => builder.field("description", t)
@@ -52,9 +52,9 @@ object ItemService {
 
     builder.field("name", document.name)
 
-    if (document.properties.isDefined) {
-      if (document.properties.get.numerical.isDefined) {
-        val properties = document.properties.get.numerical.get
+    if (document.props.isDefined) {
+      if (document.props.get.numerical.isDefined) {
+        val properties = document.props.get.numerical.get
         val propertiesArray = builder.startArray("numerical_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -62,8 +62,8 @@ object ItemService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.string.isDefined) {
-        val properties = document.properties.get.string.get
+      if (document.props.get.string.isDefined) {
+        val properties = document.props.get.string.get
         val propertiesArray = builder.startArray("string_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -71,8 +71,8 @@ object ItemService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.geopoint.isDefined) {
-        val properties = document.properties.get.geopoint.get
+      if (document.props.get.geopoint.isDefined) {
+        val properties = document.props.get.geopoint.get
         val propertiesArray = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
@@ -81,8 +81,8 @@ object ItemService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.timestamp.isDefined) {
-        val properties = document.properties.get.timestamp.get
+      if (document.props.get.timestamp.isDefined) {
+        val properties = document.props.get.timestamp.get
         val propertiesArray = builder.startArray("timestamp_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -90,8 +90,8 @@ object ItemService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.tags.isDefined) {
-        val properties = document.properties.get.tags.get
+      if (document.props.get.tags.isDefined) {
+        val properties = document.props.get.tags.get
         val properties_array = builder.startArray("tag_properties")
         properties.foreach(e => {
           properties_array.value(e)
@@ -123,7 +123,7 @@ object ItemService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = document.id, index = Some(indexName),
-        `type` = ForwardType.item,
+        item_type = ForwardType.item,
         operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -135,8 +135,8 @@ object ItemService {
              refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    document.`type` match {
-      case Some(t) => builder.field("type", t)
+    document.category match {
+      case Some(t) => builder.field("category", t)
       case None => ;
     }
 
@@ -149,7 +149,7 @@ object ItemService {
       case None => ;
     }
 
-    document.properties match {
+    document.props match {
       case Some(properties) =>
         properties.numerical match {
           case Some(numericalProps) =>
@@ -228,7 +228,7 @@ object ItemService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = id, index = Some(indexName),
-        `type` = ForwardType.item,
+        item_type = ForwardType.item,
         operation = ForwardOperationType.update, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -255,7 +255,7 @@ object ItemService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = id, index = Some(indexName),
-        `type` = ForwardType.item,
+        item_type = ForwardType.item,
         operation = ForwardOperationType.delete, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -289,7 +289,7 @@ object ItemService {
         case None => ""
       }
 
-      val `type` : String = source.get("type") match {
+      val category : String = source.get("category") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
       }
@@ -371,8 +371,8 @@ object ItemService {
         tags = tagProperties)
       }
 
-      val document : Item = Item(id = id, name = name, `type` = `type`, description = description,
-        properties = properties)
+      val document : Item = Item(id = id, name = name, category = category, description = description,
+        props = properties)
       document
     })
 
@@ -400,7 +400,7 @@ object ItemService {
           case None => ""
         }
 
-        val `type` : String = source.get("type") match {
+        val category : String = source.get("category") match {
           case Some(t) => t.asInstanceOf[String]
           case None => ""
         }
@@ -483,8 +483,8 @@ object ItemService {
           tags = tagProperties)
         }
 
-        val document : Item = Item(id = id, name = name, `type` = `type`, description = description,
-          properties = properties)
+        val document : Item = Item(id = id, name = name, category = category, description = description,
+          props = properties)
         document
       })
 

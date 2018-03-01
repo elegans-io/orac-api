@@ -59,8 +59,8 @@ object  ReconcileService {
     builder.field("new_id", document.new_id)
     builder.field("index", indexName)
 
-    val reconcile_type = document.`type`
-    builder.field("type", reconcile_type)
+    val item_type = document.item_type
+    builder.field("item_type", item_type)
 
     builder.field("retry", document.retry)
     builder.field("timestamp", timestamp)
@@ -95,8 +95,8 @@ object  ReconcileService {
              refresh: Int): Future[Option[UpdateDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
-    document.`type` match {
-      case Some(t) => builder.field("type", t)
+    document.item_type match {
+      case Some(t) => builder.field("item_type", t)
       case None => ;
     }
 
@@ -182,7 +182,7 @@ object  ReconcileService {
         name = oldUserData.name,
         email = oldUserData.email,
         phone = oldUserData.phone,
-        properties = oldUserData.properties)
+        props = oldUserData.props)
       val createNewUser =
         Await.result(oracUserService.create(indexName = indexName, document = newUserData, refresh = 0), 5.seconds)
       if(createNewUser.isEmpty) {
@@ -214,11 +214,11 @@ object  ReconcileService {
         Await.result(actionService.update(indexName, doc.id.get, updateAction, 0), 5.seconds)
       if(updateRes.isEmpty) {
         val message = "Reconciliation: reconcile_id(" + reconcile.id + ") " +
-          "type(" + reconcile.`type` + ") document_id(" + doc.id + ") ; "
+          "item_type(" + reconcile.item_type + ") document_id(" + doc.id + ") ; "
         throw new Exception(message)
       } else {
         log.debug("Reconciliation: reconcile_id(" + reconcile.id + ") " +
-          "type(" + reconcile.`type` + ") document_id(" + doc.id + ") result("+ updateRes.toString + ")")
+          "item_type(" + reconcile.item_type + ") document_id(" + doc.id + ") result("+ updateRes.toString + ")")
       }
     })
 
@@ -232,11 +232,11 @@ object  ReconcileService {
         Await.result(recommendationService.update(indexName, doc.id.get, updateRecommendation, 0), 5.seconds)
       if(updateRes.isEmpty) {
         val message = "Reconciliation: reconcile_id(" + reconcile.id + ") " +
-          "type(" + reconcile.`type` + ") document_id(" + doc.id + ") ; "
+          "item_type(" + reconcile.item_type + ") document_id(" + doc.id + ") ; "
         throw new Exception(message)
       } else {
         log.debug("Reconciliation: reconcile_id(" + reconcile.id + ") " +
-          "type(" + reconcile.`type` + ") document_id(" + doc.id + ") result("+ updateRes.toString + ")")
+          "item_type(" + reconcile.item_type + ") document_id(" + doc.id + ") result("+ updateRes.toString + ")")
       }
     })
 
@@ -308,7 +308,7 @@ object  ReconcileService {
         case None => Some("")
       }
 
-      val `type`: ReconcileType.Reconcile = source.get("type") match {
+      val item_type: ReconcileType.Reconcile = source.get("item_type") match {
         case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
         case None => ReconcileType.unknown
       }
@@ -324,7 +324,7 @@ object  ReconcileService {
       }
 
       val document = Reconcile(id = Option{id}, new_id = newId, old_id = oldId,
-        index = index, `type` = `type`, retry = retry, timestamp = timestamp)
+        index = index, item_type = item_type, retry = retry, timestamp = timestamp)
       document
     })
 
@@ -364,7 +364,7 @@ object  ReconcileService {
           case None => Some("")
         }
 
-        val `type`: ReconcileType.Reconcile = source.get("type") match {
+        val item_type: ReconcileType.Reconcile = source.get("item_type") match {
           case Some(t) => ReconcileType.getValue(t.asInstanceOf[String])
           case None => ReconcileType.unknown
         }
@@ -380,7 +380,7 @@ object  ReconcileService {
         }
 
         val document = Reconcile(id = Option{id}, new_id = newId, old_id = oldId,
-          index = index, `type` = `type`, retry = retry, timestamp = timestamp)
+          index = index, item_type = item_type, retry = retry, timestamp = timestamp)
         document
       })
 

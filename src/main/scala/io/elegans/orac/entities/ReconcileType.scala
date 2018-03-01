@@ -7,5 +7,5 @@ package io.elegans.orac.entities
 object ReconcileType extends Enumeration {
   type Reconcile = Value
   val orac_user, unknown = Value
-  def getValue(`type`: String): Reconcile = values.find(_.toString == `type`).getOrElse(unknown)
+  def getValue(item_type: String): Reconcile = values.find(_.toString == item_type).getOrElse(unknown)
 }

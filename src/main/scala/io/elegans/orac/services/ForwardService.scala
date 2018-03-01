@@ -66,12 +66,12 @@ object  ForwardService {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
     val id: String = document.id
-      .getOrElse(Checksum.sha512(document.doc_id + document.index + document.`type` +
+      .getOrElse(Checksum.sha512(document.doc_id + document.index + document.item_type +
         document.operation + RandomNumbers.long))
     builder.field("id", id)
     builder.field("doc_id", document.doc_id)
     builder.field("index", indexName)
-    builder.field("type", document.`type`)
+    builder.field("item_type", document.item_type)
     builder.field("operation", document.operation)
     builder.field("retry", document.retry.getOrElse(10L))
     val timestamp: Long = Time.timestampMillis
@@ -122,7 +122,7 @@ object  ForwardService {
     val itemIterator = itemService.allDocuments(indexName)
     itemIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
-        `type` = ForwardType.item,
+        item_type = ForwardType.item,
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
@@ -140,7 +140,7 @@ object  ForwardService {
     val oracUserIterator = oracUserService.allDocuments(indexName)
     oracUserIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
-        `type` = ForwardType.orac_user,
+        item_type = ForwardType.orac_user,
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
@@ -158,7 +158,7 @@ object  ForwardService {
     val actionIterator = actionService.allDocuments(indexName)
     actionIterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = Some(indexName),
-        `type` = ForwardType.action,
+        item_type = ForwardType.action,
         operation = ForwardOperationType.delete)
       forward
     }).foreach(forward => {
@@ -178,7 +178,7 @@ object  ForwardService {
     val itemIterator = itemService.allDocuments(indexName)
     itemIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
-        `type` = ForwardType.item,
+        item_type = ForwardType.item,
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
@@ -198,7 +198,7 @@ object  ForwardService {
     val oracUserIterator = oracUserService.allDocuments(indexName)
     oracUserIterator.map(doc => {
       val forward = Forward(doc_id = doc.id, index = Some(indexName),
-        `type` = ForwardType.orac_user,
+        item_type = ForwardType.orac_user,
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
@@ -218,7 +218,7 @@ object  ForwardService {
     val actionIterator = actionService.allDocuments(indexName)
     actionIterator.map(doc => {
       val forward = Forward(doc_id = doc.id.get, index = Some(indexName),
-        `type` = ForwardType.action,
+        item_type = ForwardType.action,
         operation = ForwardOperationType.create)
       forward
     }).foreach(forward => {
@@ -289,7 +289,7 @@ object  ForwardService {
         case None => Some("")
       }
 
-      val `type`: ForwardType.Forward = source.get("type") match {
+      val item_type: ForwardType.Forward = source.get("item_type") match {
         case Some(t) => ForwardType.getValue(t.asInstanceOf[String])
         case None => ForwardType.unknown
       }
@@ -309,7 +309,7 @@ object  ForwardService {
         case None => Option{0}
       }
 
-      val document = Forward(id = Option{id}, doc_id = doc_id, index = index, `type` = `type`,
+      val document = Forward(id = Option{id}, doc_id = doc_id, index = index, item_type = item_type,
         operation = operation, retry = retry, timestamp = timestamp)
       document
     })
@@ -345,7 +345,7 @@ object  ForwardService {
           case None => Some("")
         }
 
-        val `type`: ForwardType.Forward = source.get("type") match {
+        val item_type: ForwardType.Forward = source.get("item_type") match {
           case Some(t) => ForwardType.getValue(t.asInstanceOf[String])
           case None => ForwardType.unknown
         }
@@ -365,7 +365,7 @@ object  ForwardService {
           case None => Option{0}
         }
 
-        val document = Forward(id = Option{id}, doc_id = doc_id, index = index, `type` = `type`,
+        val document = Forward(id = Option{id}, doc_id = doc_id, index = index, item_type = item_type,
           operation = operation, retry = retry, timestamp = timestamp)
         document
       })

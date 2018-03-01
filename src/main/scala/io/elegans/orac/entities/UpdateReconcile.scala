@@ -5,10 +5,10 @@ package io.elegans.orac.entities
   */
 
 case class UpdateReconcile(
-                      old_id: Option[String] = Option.empty[String],
-                      new_id: Option[String] = Option.empty[String],
-                      `type`: Option[ReconcileType.Reconcile] = Option.empty[ReconcileType.Reconcile],
-                      index: Option[String] = Option.empty[String],
-                      retry: Option[Long] = Option.empty[Long],
-                      timestamp: Option[Long] = Option.empty[Long]
+                            old_id: Option[String] = Option.empty[String],
+                            new_id: Option[String] = Option.empty[String],
+                            item_type: Option[ReconcileType.Reconcile] = Option.empty[ReconcileType.Reconcile],
+                            index: Option[String] = Option.empty[String],
+                            retry: Option[Long] = Option.empty[Long],
+                            timestamp: Option[Long] = Option.empty[Long]
                     )

@@ -77,12 +77,12 @@ object IndexMovielensItem extends JsonSupport {
       }
 
       val name = item.getOrElse("name", item("title"))
-      val `type` = item.getOrElse("type", "movie")
+      val category = item.getOrElse("category", "movie")
       val item_data = Item(
         id = id,
         name = name,
-        `type` = `type`,
-        properties = properties
+        category = category,
+        props = properties
       )
       item_data
     })

@@ -5,12 +5,12 @@ package io.elegans.orac.entities
   */
 
 case class ReconcileHistory(
-                      id: Option[String] = Option.empty[String],
-                      old_id: String,
-                      new_id: String,
-                      `type`: ReconcileType.Reconcile,
-                      index: Option[String] = Option.empty,
-                      insert_timestamp: Long,
-                      retry: Long,
-                      end_timestamp: Option[Long] = Option.empty[Long]
+                             id: Option[String] = Option.empty[String],
+                             old_id: String,
+                             new_id: String,
+                             item_type: ReconcileType.Reconcile,
+                             index: Option[String] = Option.empty,
+                             insert_timestamp: Long,
+                             retry: Long,
+                             end_timestamp: Option[Long] = Option.empty[Long]
                     )

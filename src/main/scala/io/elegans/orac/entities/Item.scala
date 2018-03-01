@@ -5,11 +5,11 @@ package io.elegans.orac.entities
   */
 
 case class Item (
-  id: String,
-  name: String,
-  `type`: String,
-  description: Option[String] = Option.empty,
-  properties: Option[OracProperties] = Option.empty
+                  id: String,
+                  name: String,
+                  category: String,
+                  description: Option[String] = Option.empty,
+                  props: Option[OracProperties] = Option.empty
 )
 
 case class Items (

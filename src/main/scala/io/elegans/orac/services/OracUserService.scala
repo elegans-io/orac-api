@@ -60,9 +60,9 @@ object OracUserService {
       case None => ;
     }
 
-    if (document.properties.isDefined) {
-      if (document.properties.get.numerical.isDefined) {
-        val properties = document.properties.get.numerical.get
+    if (document.props.isDefined) {
+      if (document.props.get.numerical.isDefined) {
+        val properties = document.props.get.numerical.get
         val propertiesArray = builder.startArray("numerical_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -70,8 +70,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.string.isDefined) {
-        val properties = document.properties.get.string.get
+      if (document.props.get.string.isDefined) {
+        val properties = document.props.get.string.get
         val propertiesArray = builder.startArray("string_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -79,8 +79,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.timestamp.isDefined) {
-        val properties = document.properties.get.timestamp.get
+      if (document.props.get.timestamp.isDefined) {
+        val properties = document.props.get.timestamp.get
         val propertiesArray = builder.startArray("timestamp_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -88,8 +88,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.geopoint.isDefined) {
-        val properties = document.properties.get.geopoint.get
+      if (document.props.get.geopoint.isDefined) {
+        val properties = document.props.get.geopoint.get
         val propertiesArray = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopoint_value = new GeoPoint(e.value.lat, e.value.lon)
@@ -98,8 +98,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.tags.isDefined) {
-        val properties = document.properties.get.tags.get
+      if (document.props.get.tags.isDefined) {
+        val properties = document.props.get.tags.get
         val propertiesArray = builder.startArray("tag_properties")
         properties.foreach(e => {
           propertiesArray.value(e)
@@ -131,7 +131,7 @@ object OracUserService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = id, index = Some(indexName),
-        `type` = ForwardType.orac_user,
+        item_type = ForwardType.orac_user,
         operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -158,9 +158,9 @@ object OracUserService {
       case None => ;
     }
 
-    if (document.properties.isDefined) {
-      if (document.properties.get.numerical.isDefined) {
-        val properties = document.properties.get.numerical.get
+    if (document.props.isDefined) {
+      if (document.props.get.numerical.isDefined) {
+        val properties = document.props.get.numerical.get
         val propertiesArray = builder.startArray("numerical_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -168,8 +168,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.string.isDefined) {
-        val properties = document.properties.get.string.get
+      if (document.props.get.string.isDefined) {
+        val properties = document.props.get.string.get
         val propertiesArray = builder.startArray("string_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -177,8 +177,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.geopoint.isDefined) {
-        val properties = document.properties.get.geopoint.get
+      if (document.props.get.geopoint.isDefined) {
+        val properties = document.props.get.geopoint.get
         val propertiesArray = builder.startArray("geopoint_properties")
         properties.foreach(e => {
           val geopointValue = new GeoPoint(e.value.lat, e.value.lon)
@@ -187,8 +187,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.timestamp.isDefined) {
-        val properties = document.properties.get.timestamp.get
+      if (document.props.get.timestamp.isDefined) {
+        val properties = document.props.get.timestamp.get
         val propertiesArray = builder.startArray("timestamp_properties")
         properties.foreach(e => {
           propertiesArray.startObject.field("key", e.key).field("value", e.value).endObject()
@@ -196,8 +196,8 @@ object OracUserService {
         propertiesArray.endArray()
       }
 
-      if (document.properties.get.tags.isDefined) {
-        val properties = document.properties.get.tags.get
+      if (document.props.get.tags.isDefined) {
+        val properties = document.props.get.tags.get
         val propertiesArray = builder.startArray("tag_properties")
         properties.foreach(e => {
           propertiesArray.value(e)
@@ -230,7 +230,7 @@ object OracUserService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = id, index = Some(indexName),
-        `type` = ForwardType.orac_user,
+        item_type = ForwardType.orac_user,
         operation = ForwardOperationType.update, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -258,7 +258,7 @@ object OracUserService {
 
     if(forwardService.forwardEnabled(indexName)) {
       val forward = Forward(doc_id = id, index = Some(indexName),
-        `type` = ForwardType.orac_user,
+        item_type = ForwardType.orac_user,
         operation = ForwardOperationType.delete, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
@@ -374,7 +374,7 @@ object OracUserService {
         tags = tagProperties)
       }
 
-      val document = OracUser(id = id, name = name, email = email, phone = phone, properties = properties)
+      val document = OracUser(id = id, name = name, email = email, phone = phone, props = properties)
       document
     })
 
@@ -484,7 +484,7 @@ object OracUserService {
           tags = tagProperties)
         }
 
-        val document = OracUser(id = id, name = name, email = email, phone = phone, properties = properties)
+        val document = OracUser(id = id, name = name, email = email, phone = phone, props = properties)
         document
       })
 

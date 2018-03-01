@@ -8,7 +8,7 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
   -H "Content-Type: application/json" -X POST http://localhost:${PORT}/${INDEX_NAME}/reconcile -d "{
 		    \"old_id\": \"${OLD_ID}\",
 		    \"new_id\": \"${NEW_ID}\",
-                    \"type\": \"orac_user\",
+                    \"item_type\": \"orac_user\",
                     \"retry\": 5
 }"
 

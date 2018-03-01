@@ -5,8 +5,8 @@ package io.elegans.orac.entities
   */
 
 case class UpdateItem (
-  name: Option[String] = Option.empty,
-  `type`: Option[String] = Option.empty,
-  description: Option[String] = Option.empty,
-  properties: Option[OracProperties] = Option.empty
+                        name: Option[String] = Option.empty,
+                        category: Option[String] = Option.empty,
+                        description: Option[String] = Option.empty,
+                        props: Option[OracProperties] = Option.empty
 )

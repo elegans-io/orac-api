@@ -99,7 +99,7 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     /* base fields are: type, name, description */
     val baseFields: Map[String, Any] = itemInfoFilters.get.base_fields.toList.map({
       case "type" =>
-        ("type", item.`type`)
+        ("type", item.category)
       case "name" =>
         ("name", item.name)
       case "description" =>
@@ -108,9 +108,9 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
         (None.orNull, None.orNull)
     }).filter(_._1 != None.orNull).toMap
 
-    val tags: CsrecItemType = if (item.properties.isDefined) {
+    val tags: CsrecItemType = if (item.props.isDefined) {
       val regex = itemInfoFilters.get.tag_filters
-      val tagValues = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+      val tagValues = item.props.get.tags.getOrElse(Array.empty[String]).filter(x => {
         x.matches(regex)
       })
       if(tagValues.nonEmpty) {
@@ -122,9 +122,9 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       Map.empty[String, Any]
     }
 
-    val stringProperties: CsrecItemType = if (item.properties.isDefined) {
+    val stringProperties: CsrecItemType = if (item.props.isDefined) {
       val regex = itemInfoFilters.get.string_filters
-      item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
+      item.props.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
         x.key.matches(regex)
       }).map(x => {
         (x.key, x.value: Any)
@@ -147,12 +147,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
     httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -165,12 +165,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -196,12 +196,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val httpRequest = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -256,9 +256,9 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
         None.orNull
     }).filter(_ != None.orNull)
 
-    val tags: List[String] = if(item.properties.isDefined) {
+    val tags: List[String] = if(item.props.isDefined) {
       val regex = itemInfoFilters.get.tag_filters
-      val tagValues = item.properties.get.tags.getOrElse(Array.empty[String]).filter(x => {
+      val tagValues = item.props.get.tags.getOrElse(Array.empty[String]).filter(x => {
         x.matches(regex)
       })
       if(tagValues.nonEmpty) {
@@ -270,9 +270,9 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       List.empty[String]
     }
 
-    val stringProperties: List[String] = if (item.properties.isDefined) {
+    val stringProperties: List[String] = if (item.props.isDefined) {
       val regex = itemInfoFilters.get.string_filters
-      item.properties.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
+      item.props.get.string.getOrElse(Array.empty[StringProperties]).filter(x => {
         x.key.matches(regex)
       }).map(x => {
         (x.key, x.value: Any)
@@ -293,12 +293,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
       executeHttpRequest(uri = uri, method = HttpMethods.POST, request_entity = Option{entity}), Duration.Inf)
     httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)
@@ -310,12 +310,12 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
     val httpRequest = Await.result(executeHttpRequest(uri = uri, method = HttpMethods.DELETE), Duration.Inf)
     httpRequest.status match {
       case StatusCodes.Created | StatusCodes.OK =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         log.debug(message)
       case _ =>
-        val message = "index(" + forward.index + ") forward_type(" + forward.`type` + ")" +
+        val message = "index(" + forward.index + ") forward_type(" + forward.item_type + ")" +
           " operation(" + forward.operation + ") docid(" + forward.doc_id + ")" +
           " destination(" + uri + ")"
         throw ForwardingException(message)

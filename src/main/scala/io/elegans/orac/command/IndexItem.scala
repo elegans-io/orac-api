@@ -49,14 +49,14 @@ object IndexItem extends JsonSupport {
 
       val properties = Option { OracProperties(string = Option {stringProperties}) }
       val name = item.getOrElse("name", "")
-      val `type` = item.getOrElse("type", "")
+      val category = item.getOrElse("category", "")
       val description = item.get("description")
       val itemData = Item(
         id = id,
         name = name,
-        `type` = `type`,
+        category = category,
         description = description,
-        properties = properties
+        props = properties
       )
       itemData
     })

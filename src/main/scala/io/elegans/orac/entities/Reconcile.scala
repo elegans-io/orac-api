@@ -9,11 +9,11 @@ object ReconcileDefaults {
 }
 
 case class Reconcile(
-                    id: Option[String] = Option.empty[String],
-                    old_id: String,
-                    new_id: String,
-                    `type`: ReconcileType.Reconcile,
-                    index: Option[String] = Option.empty,
-                    retry: Long = ReconcileDefaults.maxRetry,
-                    timestamp: Option[Long] = Option.empty[Long]
+                      id: Option[String] = Option.empty[String],
+                      old_id: String,
+                      new_id: String,
+                      item_type: ReconcileType.Reconcile,
+                      index: Option[String] = Option.empty,
+                      retry: Long = ReconcileDefaults.maxRetry,
+                      timestamp: Option[Long] = Option.empty[Long]
                   )

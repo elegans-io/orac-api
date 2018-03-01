@@ -9,7 +9,7 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
   "name": "Mario Rossi",
   "email": "user@example.com",
   "phone": "string",
-  "properties": {
+  "props": {
     "string": [
       {
         "key": "address",

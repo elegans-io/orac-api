@@ -50,7 +50,7 @@ object IndexUsers extends JsonSupport {
       val properties = Option { OracProperties(numerical = Option {numericalProperties}) }
       val userData = OracUser(
         id = id,
-        properties = properties
+        props = properties
       )
       userData
     })

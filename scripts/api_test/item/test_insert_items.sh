@@ -7,9 +7,9 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
 {
   "id": "item1",
   "name": "book1",
-  "type": "book",
+  "category": "book",
   "description": "descripion of the book 1",
-  "properties": {
+  "props": {
     "string": [
       {
         "key": "author",
@@ -29,9 +29,9 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
 {
   "id": "item2",
   "name": "book2",
-  "type": "book",
+  "category": "book",
   "description": "descripion of the book 2",
-  "properties": {
+  "props": {
     "string": [
       {
         "key": "author",
@@ -54,9 +54,9 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
 {
   "id": "item3",
   "name": "book3",
-  "type": "book",
+  "category": "book",
   "description": "descripion of the book 3",
-  "properties": {
+  "props": {
     "string": [
       {
         "key": "author",
@@ -75,9 +75,9 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
 {
   "id": "item4",
   "name": "book4",
-  "type": "book",
+  "category": "book",
   "description": "descripion of the book 4",
-  "properties": {
+  "props": {
     "string": [
       {
         "key": "author",

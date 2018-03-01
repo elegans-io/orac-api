@@ -40,7 +40,7 @@ object CronReconcileService  {
     if (indexCheck) {
       val iterator = reconcileService.allDocuments()
       iterator.foreach(item  => {
-        val itemType = item.`type`
+        val itemType = item.item_type
         itemType match {
           case ReconcileType.orac_user =>
             if(item.retry > 0) {
@@ -49,7 +49,7 @@ object CronReconcileService  {
                 case Success(t) =>
                   log.info("Reconciliation: successfully completed: " + item.toString)
                   val history_element = ReconcileHistory(old_id = item.old_id, new_id = item.new_id,
-                    index = item.index, `type` = item.`type`,
+                    index = item.index, item_type = item.item_type,
                     insert_timestamp = item.timestamp.get, retry = item.retry)
                   val reconcileHistoryInsert =
                     Await.result(reconcileHistoryService.create(history_element, 0), 5.seconds)
