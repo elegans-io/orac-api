@@ -6,6 +6,7 @@ case class RecommendationHistory (
                                    access_user_id: Option[String] = Option.empty, /** system user id who accessed to the recommendation */
                                    user_id: String, /** user id (from original recommendation) */
                                    item_id: String, /** item id (from original recommendation) */
+                                   algorithm: String, /** algorithm name (from original recommendation) */
                                    name: String, /** name (from original recommendation) */
                                    generation_batch: String, /** generation batch id */
                                    generation_timestamp: Long, /** generation timestamp (from original recommendation) */

@@ -32,6 +32,11 @@
           "store": true,
           "index": true
         },
+        "algorithm": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
         "generation_batch": {
           "type": "keyword",
           "store": true,

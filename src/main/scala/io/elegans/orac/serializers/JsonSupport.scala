@@ -33,12 +33,12 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val failedShardFormat = jsonFormat4(FailedShard)
   implicit val refreshIndexResultFormat = jsonFormat5(RefreshIndexResult)
   implicit val refreshIndexResultsFormat = jsonFormat1(RefreshIndexResults)
-  implicit val recommendationFormat = jsonFormat7(Recommendation)
+  implicit val recommendationFormat = jsonFormat8(Recommendation)
   implicit val recommendationsFormat = jsonFormat1(Recommendations)
-  implicit val updateRecommendationFormat = jsonFormat6(UpdateRecommendation)
-  implicit val recommendationHistoryFormat = jsonFormat10(RecommendationHistory)
+  implicit val updateRecommendationFormat = jsonFormat7(UpdateRecommendation)
+  implicit val recommendationHistoryFormat = jsonFormat11(RecommendationHistory)
   implicit val recommendationsHistoryFormat = jsonFormat1(RecommendationsHistory)
-  implicit val updateRecommendationHistoryFormat = jsonFormat9(UpdateRecommendationHistory)
+  implicit val updateRecommendationHistoryFormat = jsonFormat10(UpdateRecommendationHistory)
 
   implicit object PermissionsJsonFormat extends JsonFormat[Permissions.Value] {
     def write(obj: Permissions.Value): JsValue = JsString(obj.toString)

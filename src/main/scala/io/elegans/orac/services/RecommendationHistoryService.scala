@@ -52,6 +52,7 @@ object RecommendationHistoryService {
     builder.field("recommendation_id", document.recommendation_id)
     builder.field("access_user_id", accessUserId)
     builder.field("name", document.name)
+    builder.field("algorithm", document.algorithm)
     builder.field("generation_batch", document.generation_batch)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
@@ -88,6 +89,11 @@ object RecommendationHistoryService {
 
     document.name match {
       case Some(t) => builder.field("name", t)
+      case None => ;
+    }
+
+    document.algorithm match {
+      case Some(t) => builder.field("algorithm", t)
       case None => ;
     }
 
@@ -202,6 +208,11 @@ object RecommendationHistoryService {
         case None => ""
       }
 
+      val algorithm: String = source.get("algorithm") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
       val recommendationId: String = source.get("recommendation_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -244,6 +255,7 @@ object RecommendationHistoryService {
 
       val document = RecommendationHistory(id = Option { id }, recommendation_id = recommendationId,
         name = name, access_user_id = accessUserId,
+        algorithm = algorithm,
         user_id = userId, item_id = itemId,
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp,

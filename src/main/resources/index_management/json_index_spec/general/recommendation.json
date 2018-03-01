@@ -22,6 +22,11 @@
           "store": true,
           "index": true
         },
+        "algorithm": {
+          "type": "keyword",
+          "store": true,
+          "index": true
+        },
         "generation_timestamp": {
           "type": "date",
           "format": "epoch_millis",

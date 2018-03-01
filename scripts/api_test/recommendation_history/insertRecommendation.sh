@@ -9,6 +9,7 @@ curl -v -H "Authorization: Basic `echo -n 'test_user:p4ssw0rd' | base64`" \
           "recommendation_id" : "d290f1ee-6c54-4b01-90e6-d701748f0852",
           "access_user_id" : "test_user",
           "name" : "like",
+          "algorithm" : "algorithm0",
           "generation_batch" : "test",
           "user_id" : "d290f1ee-6c54-4b01-90e6-d701748f0851",
           "item_id" : "d290f1ee-6c54-4b01-90e6-d701748f0851",

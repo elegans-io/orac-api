@@ -98,8 +98,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
     /* base fields are: type, name, description */
     val baseFields: Map[String, Any] = itemInfoFilters.get.base_fields.toList.map({
-      case "type" =>
-        ("type", item.category)
+      case "category" =>
+        ("category", item.category)
       case "name" =>
         ("name", item.name)
       case "description" =>
@@ -244,10 +244,10 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
 
     val item = itemOption.get.items.head
 
-    /* base fields are: type, name, description */
+    /* base fields are: category, name, description */
     val baseFields: List[String] = itemInfoFilters.get.base_fields.toList.map({
-      case "type" =>
-        "type"
+      case "category" =>
+        "baseFields"
       case "name" =>
         "name"
       case "description" =>
@@ -348,7 +348,8 @@ class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination
           val recommendationId = Checksum.sha512(generationBatch + RandomNumbers.intPos
             + RandomNumbers.intPos + x)
           Recommendation(id = Option{recommendationId}, user_id = user_id, item_id = x,
-            name = "csrec_recommendation",
+            name = "rate",
+            algorithm = "csrec_recommendation",
             generation_batch = generationBatch, generation_timestamp = generationTimestamp, score = 0.0)
         })
         Option { recommendationArray }

@@ -8,6 +8,7 @@ case class UpdateRecommendation (
                                   user_id: Option[String] = Option.empty,
                                   item_id: Option[String] = Option.empty,
                                   name: Option[String] = Option.empty, /** name of the action */
+                                  algorithm: Option[String] = Option.empty, /** algorithm name */
                                   generation_batch: Option[String] = Option.empty, /** generation batch id */
                                   generation_timestamp: Option[Long] = Option.empty,
                                   score: Option[Double] = Option.empty /** the recommendation score */

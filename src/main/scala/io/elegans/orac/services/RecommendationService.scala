@@ -53,6 +53,7 @@ object RecommendationService {
 
     builder.field("id", id)
     builder.field("name", document.name)
+    builder.field("algorithm", document.algorithm)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
     builder.field("generation_batch", document.generation_batch)
@@ -88,6 +89,11 @@ object RecommendationService {
 
     document.name match {
       case Some(t) => builder.field("name", t)
+      case None => ;
+    }
+
+    document.algorithm match {
+      case Some(t) => builder.field("algorithm", t)
       case None => ;
     }
 
@@ -188,6 +194,11 @@ object RecommendationService {
         case None => ""
       }
 
+      val algorithm: String = source.get("algorithm") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
       val userId : String = source.get("user_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -213,14 +224,15 @@ object RecommendationService {
         case None => 0.0
       }
 
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = userId, item_id = itemId,
+      val recommendation = Recommendation(id = Option { id }, name = name, algorithm = algorithm,
+        user_id = userId, item_id = itemId,
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp, score = score)
 
       val accessTimestamp: Option[Long] = Option{ Time.timestampMillis }
 
       val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
-        name = name, access_user_id = Option { accessUserId },
+        name = name, algorithm = algorithm, access_user_id = Option { accessUserId },
         user_id = userId, item_id = itemId,
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp,
@@ -250,6 +262,8 @@ object RecommendationService {
         boolQueryBuilder.filter(QueryBuilders.termQuery("user_id", document.user_id.get))
       if (document.name.isDefined)
         boolQueryBuilder.filter(QueryBuilders.termQuery("name", document.name.get))
+      if (document.algorithm.isDefined)
+        boolQueryBuilder.filter(QueryBuilders.termQuery("algorithm", document.algorithm.get))
       if (document.generation_batch.isDefined)
         boolQueryBuilder.filter(QueryBuilders.termQuery("generation_batch", document.generation_batch.get))
       if (document.generation_timestamp.isDefined)
@@ -279,6 +293,11 @@ object RecommendationService {
           case None => ""
         }
 
+        val algorithm: String = source.get("algorithm") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
+
         val userId : String = source.get("user_id") match {
           case Some(t) => t.asInstanceOf[String]
           case None => ""
@@ -304,7 +323,8 @@ object RecommendationService {
           case None => ""
         }
 
-        val document : Recommendation = Recommendation(id = Option { id }, name = name, user_id = userId,
+        val document : Recommendation = Recommendation(id = Option { id }, name = name,
+          algorithm = algorithm, user_id = userId,
           item_id = itemId, generation_timestamp = generationTimestamp, score = score,
           generation_batch = generationBatch)
 
@@ -338,46 +358,52 @@ object RecommendationService {
 
     val oracDocuments : Array[Recommendation] =
       searchResponse.getHits.getHits.map({ case (e) =>
-      val item: SearchHit = e
-      val id: String = item.getId
+        val item: SearchHit = e
+        val id: String = item.getId
 
-      val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
+        val source : Map[String, Any] = item.getSourceAsMap.asScala.toMap
 
-      val userId : String = source.get("user_id") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val userId : String = source.get("user_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val itemId : String = source.get("item_id") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val itemId : String = source.get("item_id") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val name : String = source.get("name") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val name : String = source.get("name") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val generationBatch : String = source.get("generation_batch") match {
-        case Some(t) => t.asInstanceOf[String]
-        case None => ""
-      }
+        val algorithm : String = source.get("algorithm") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val generationTimestamp : Long = source.get("generation_timestamp") match {
-        case Some(t) => t.asInstanceOf[Long]
-        case None => 0
-      }
+        val generationBatch : String = source.get("generation_batch") match {
+          case Some(t) => t.asInstanceOf[String]
+          case None => ""
+        }
 
-      val score : Double = source.get("score") match {
-        case Some(t) => t.asInstanceOf[Double]
-        case None => 0.0
-      }
+        val generationTimestamp : Long = source.get("generation_timestamp") match {
+          case Some(t) => t.asInstanceOf[Long]
+          case None => 0
+        }
 
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = userId, item_id = itemId,
-        generation_batch = generationBatch,
-        generation_timestamp = generationTimestamp, score = score)
-      recommendation
-    })
+        val score : Double = source.get("score") match {
+          case Some(t) => t.asInstanceOf[Double]
+          case None => 0.0
+        }
+
+        val recommendation = Recommendation(id = Option { id }, name = name, algorithm = algorithm,
+          user_id = userId, item_id = itemId,
+          generation_batch = generationBatch,
+          generation_timestamp = generationTimestamp, score = score)
+        recommendation
+      })
 
     val documents = if (oracDocuments.nonEmpty) {
       oracDocuments
@@ -396,8 +422,10 @@ object RecommendationService {
 
     val recommendationsHistory = documents.map(rec => {
       val accessTimestamp: Option[Long] = Option{Time.timestampMillis}
-      val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = rec.id.get,
+      val recommendationHistory = RecommendationHistory(id = Option.empty[String],
+        recommendation_id = rec.id.get,
         name = rec.name, access_user_id = Option { access_user_id },
+        algorithm = rec.algorithm,
         user_id = rec.user_id, item_id = rec.item_id,
         generation_batch = rec.generation_batch,
         generation_timestamp = rec.generation_timestamp,

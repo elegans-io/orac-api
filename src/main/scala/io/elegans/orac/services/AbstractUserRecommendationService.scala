@@ -46,6 +46,7 @@ abstract class AbstractUserRecommendationService {
 
     builder.field("id", id)
     builder.field("name", document.name)
+    builder.field("algorithm", document.algorithm)
     builder.field("user_id", document.user_id)
     builder.field("item_id", document.item_id)
     builder.field("generation_batch", document.generation_batch)
@@ -80,6 +81,11 @@ abstract class AbstractUserRecommendationService {
 
     document.name match {
       case Some(t) => builder.field("name", t)
+      case None => ;
+    }
+
+    document.algorithm match {
+      case Some(t) => builder.field("algorithm", t)
       case None => ;
     }
 
@@ -179,6 +185,11 @@ abstract class AbstractUserRecommendationService {
         case None => ""
       }
 
+      val algorithm: String = source.get("algorithm") match {
+        case Some(t) => t.asInstanceOf[String]
+        case None => ""
+      }
+
       val userId : String = source.get("user_id") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -204,7 +215,9 @@ abstract class AbstractUserRecommendationService {
         case None => 0.0
       }
 
-      val recommendation = Recommendation(id = Option { id }, name = name, user_id = userId, item_id = itemId,
+      val recommendation = Recommendation(id = Option { id }, name = name,
+        algorithm = algorithm,
+        user_id = userId, item_id = itemId,
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp, score = score)
 
@@ -212,6 +225,7 @@ abstract class AbstractUserRecommendationService {
 
       val recommendationHistory = RecommendationHistory(id = Option.empty[String], recommendation_id = id,
         name = name, access_user_id = Option { access_user_id },
+        algorithm = algorithm,
         user_id = userId, item_id = itemId,
         generation_batch = generationBatch,
         generation_timestamp = generationTimestamp,
