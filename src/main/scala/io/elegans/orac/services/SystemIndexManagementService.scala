@@ -19,6 +19,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
+import scalaz.Scalaz._
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -46,7 +47,7 @@ object SystemIndexManagementService {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {
-      val jsonInStream: Option[InputStream] = Option {getClass.getResourceAsStream(item.path)}
+      val jsonInStream: Option[InputStream] = Some(getClass.getResourceAsStream(item.path))
 
       val schemaJson = jsonInStream match {
         case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
@@ -97,7 +98,7 @@ object SystemIndexManagementService {
 
     schemaFiles.filter(item => {
       indexSuffix match {
-        case Some(t) => t == item.indexSuffix
+        case Some(t) => t === item.indexSuffix
         case _ => true
       }
     }).map(item => {

@@ -63,12 +63,12 @@ object IndexManagementService {
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-    val indexPatterns = indexName match {
-      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
-        (index_pattern, language_pattern, arbitrary_pattern)
-      case _ => throw IndexManagementServiceException("index name is not well formed")
+
+    val (_, language, _) = indexName match {
+      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
+        (indexPattern, languagePattern, arbitraryPattern)
+      case _ => throw new Exception("index name is not well formed")
     }
-    val language: String = indexPatterns._2
 
     val analyzerJsonPath: String = analyzerFiles(language).path
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -189,12 +189,12 @@ object IndexManagementService {
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-    val indexPatterns = indexName match {
-      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
-        (index_pattern, language_pattern, arbitrary_pattern)
-      case _ => throw IndexManagementServiceException("index name is not well formed")
+
+    val (_, language, _) = indexName match {
+      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
+        (indexPattern, languagePattern, arbitraryPattern)
+      case _ => throw new Exception("index name is not well formed")
     }
-    val language: String = indexPatterns._2
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -229,12 +229,11 @@ object IndexManagementService {
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-    val indexPatterns = indexName match {
-      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
-        (index_pattern, language_pattern, arbitrary_pattern)
-      case _ => throw IndexManagementServiceException("index name is not well formed")
+    val (_, language, _) = indexName match {
+      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
+        (indexPattern, languagePattern, arbitraryPattern)
+      case _ => throw new Exception("index name is not well formed")
     }
-    val language: String = indexPatterns._2
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
