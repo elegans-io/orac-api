@@ -20,18 +20,19 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   val testAdminCredentials = BasicHttpCredentials("admin", "adminp4ssw0rd")
   val testUserCredentials = BasicHttpCredentials("test_user", "p4ssw0rd")
+  val systemIndexNameRegex = "(?:[A-Za-z0-9_]+)"
+  val indexNameRegex = """(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))"""
 
   "Orac" should {
     "return an HTTP code 200 when creating a new system index" in {
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val indexNameRegex = "(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
@@ -54,25 +55,24 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when creating a new index" in {
-      Post(s"/index_0/lang_generic/index_management/create") ~>
+      Post(s"/index_english_0/index_management/create") ~>
         addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val indexNameRegex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCreation: " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
 
   it should {
     "return an HTTP code 400 when trying to create again the same index" in {
-      Post(s"/index_0/lang_generic/index_management/create") ~>
+      Post(s"/index_english_0/index_management/create") ~>
         addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
         val response = responseAs[IndexManagementResponse]
@@ -83,7 +83,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when calling elasticsearch index refresh" in {
-      Post(s"/index_0/index_management/refresh") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Post(s"/index_english_0/index_management/refresh") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
       }
     }
@@ -91,35 +91,34 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
 
   it should {
     "return an HTTP code 200 when getting informations from the index" in {
-      Get(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Get(s"/index_english_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val indexNameRegex = "index_(?:[A-Za-z0-9_]+)"
         val response = responseAs[IndexManagementResponse]
         response.message should fullyMatch regex "IndexCheck: " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
-          "(?:[A-Za-z0-9_]+)\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
+          "(?:[A-Za-z0-9_]+)\\s*\\(" + indexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\)".r
       }
     }
   }
 
   it should {
     "return an HTTP code 200 when deleting an existing index" in {
-      Delete(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Delete(s"/index_english_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
-        val response = responseAs[IndexManagementResponse]
+        //val response = responseAs[IndexManagementResponse]
       }
     }
   }
 
   it should {
     "return an HTTP code 400 when deleting a non existing index" in {
-      Delete(s"/index_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
+      Delete(s"/index_english_0/index_management") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.BadRequest
-        val response = responseAs[IndexManagementResponse]
+        //val response = responseAs[IndexManagementResponse]
       }
     }
   }

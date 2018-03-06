@@ -20,7 +20,7 @@ trait ForwardResource extends OracResource {
   private[this] val forwardService: ForwardService.type = ForwardService
 
   def forwardAllRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
@@ -71,7 +71,7 @@ trait ForwardResource extends OracResource {
   }
 
   def forwardRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

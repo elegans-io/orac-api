@@ -20,7 +20,8 @@ trait RecommendationHistoryResource extends OracResource {
   private[this] val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
   def recommendationHistoryRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """recommendation_history""") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ """recommendation_history""") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

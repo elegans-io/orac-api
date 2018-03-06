@@ -20,7 +20,7 @@ trait ItemResource extends OracResource {
   private[this] val itemService = ItemService
 
   def itemRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """item""") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """item""") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

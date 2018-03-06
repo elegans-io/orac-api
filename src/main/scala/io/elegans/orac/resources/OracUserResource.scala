@@ -20,7 +20,7 @@ trait OracUserResource extends OracResource {
   private[this] val oracUserService: OracUserService.type = OracUserService
 
   def oracUserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "orac_user") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "orac_user") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,

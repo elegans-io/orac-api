@@ -19,7 +19,7 @@ trait ReconcileResource extends OracResource {
   private[this] val reconcileService: ReconcileService.type = ReconcileService
 
   def reconcileAllRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "reconcile_all") { (indexName) =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "reconcile_all") { (indexName) =>
       pathEnd {
         delete {
           authenticateBasicAsync(realm = authRealm,

@@ -19,7 +19,8 @@ trait ActionResource extends OracResource {
   private[this] val actionService: ActionService.type = ActionService
 
   def actionUserRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+      Slash ~ """action""" ~ Slash ~ """user""" ) { indexName =>
       path(Segment) { id =>
         get {
           authenticateBasicAsync(realm = authRealm,
@@ -51,7 +52,7 @@ trait ActionResource extends OracResource {
   }
 
   def actionRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { indexName =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { indexName =>
       pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
