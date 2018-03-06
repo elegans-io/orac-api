@@ -1,138 +1,149 @@
 {
-	"index.queries.cache.enabled": true,
-	"analysis":
-	{
-		"char_filter":
-		{
-			"&_to_and": {
-				"type":       "mapping",
-				"mappings": [ "&=> and "]
-			}
-		},
-		"filter":
-		{
-			"elegans_russian_stopwords":
-			{
-				"type":       "stop",
-				"stopwords": "_russian_"
-			},
-			"russian_stemmer": {
-				"type":       "stemmer",
-				"language":   "russian"
-			},
-			"elegans_russian_shingle_2":
-			{
-				"type":	"shingle",
-				"min_shingle_size": 2,
-				"max_shingle_size": 2,
-				"output_unigrams": true
-			},
-			"elegans_russian_shingle_3":
-			{
-				"type":	"shingle",
-				"min_shingle_size": 3,
-				"max_shingle_size": 3,
-				"output_unigrams": true
-			},
-			"elegans_russian_shingle_4":
-			{
-				"type":	"shingle",
-				"min_shingle_size": 4,
-				"max_shingle_size": 4,
-				"output_unigrams": true
-			},
-			"elegans_russian_shingle_2_10":
-			{
-				"type":	"shingle",
-				"min_shingle_size": 2,
-				"max_shingle_size": 10,
-				"output_unigrams": true
-			}
-		},
-		"analyzer":
-		{
-			"elegans_raw_analyzer":
-			{
-				"tokenizer":    "keyword",
-				"filter":       [ "lowercase"]
-			},
-			"elegans_base_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "&_to_and" ],
-				"filter":       [ "lowercase"]
-			},
-			"elegans_stop_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_stopwords"]
-			},
-			"elegans_base_stem_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "&_to_and" ],
-				"filter":       [ "lowercase", "russian_stemmer"]
-			},
-			"elegans_stem_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_stopwords", "russian_stemmer"]
-			},
-			"elegans_shingles_2_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_shingle_2"]
-			},
-			"elegans_stemmed_shingles_2_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_2"]
-			},
-			"elegans_shingles_3_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_shingle_3"]
-			},
-			"elegans_stemmed_shingles_3_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_3"]
-			},
-			"elegans_shingles_4_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_shingle_4"]
-			},
-			"elegans_stemmed_shingles_4_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_4"]
-			},
-			"elegans_shingles_2_10_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "elegans_russian_shingle_2_10"]
-			},
-			"elegans_stemmed_shingles_2_10_analyzer":
-			{
-				"tokenizer":    "standard",
-				"char_filter":  [ "html_strip", "&_to_and" ],
-				"filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_2_10"]
-			},
-			"elegans_delimited_double": {
-				"tokenizer":"whitespace",
-				"encoding": "double",
-				"filter": "delimited_payload_filter"
-			}
-		}
-	}
+  "index.queries.cache.enabled": true,
+  "analysis":
+  {
+    "tokenizer": {
+      "space_punctuation": {
+        "type": "pattern",
+        "pattern": "[ |.,!?:;()\\[\\]\\{\\}]"
+      }
+    },
+    "char_filter":
+    {
+      "&_to_and": {
+        "type":       "mapping",
+        "mappings": [ "&=> and "]
+      }
+    },
+    "filter":
+    {
+      "elegans_russian_stopwords":
+      {
+        "type":       "stop",
+        "stopwords": "_russian_"
+      },
+      "russian_stemmer": {
+        "type":       "stemmer",
+        "language":   "russian"
+      },
+      "elegans_russian_shingle_2":
+      {
+        "type":	"shingle",
+        "min_shingle_size": 2,
+        "max_shingle_size": 2,
+        "output_unigrams": true
+      },
+      "elegans_russian_shingle_3":
+      {
+        "type":	"shingle",
+        "min_shingle_size": 3,
+        "max_shingle_size": 3,
+        "output_unigrams": true
+      },
+      "elegans_russian_shingle_4":
+      {
+        "type":	"shingle",
+        "min_shingle_size": 4,
+        "max_shingle_size": 4,
+        "output_unigrams": true
+      },
+      "elegans_russian_shingle_2_10":
+      {
+        "type":	"shingle",
+        "min_shingle_size": 2,
+        "max_shingle_size": 10,
+        "output_unigrams": true
+      }
+    },
+    "analyzer":
+    {
+      "elegans_raw_analyzer":
+      {
+        "tokenizer":    "keyword",
+        "filter":       [ "lowercase"]
+      },
+      "elegans_base_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "&_to_and" ],
+        "filter":       [ "lowercase"]
+      },
+      "jenny_space_punctuation_analyzer":
+      {
+        "tokenizer":    "space_punctuation",
+        "filter":       [ "lowercase"]
+      },
+      "elegans_stop_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_stopwords"]
+      },
+      "elegans_base_stem_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "&_to_and" ],
+        "filter":       [ "lowercase", "russian_stemmer"]
+      },
+      "elegans_stem_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_stopwords", "russian_stemmer"]
+      },
+      "elegans_shingles_2_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_shingle_2"]
+      },
+      "elegans_stemmed_shingles_2_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_2"]
+      },
+      "elegans_shingles_3_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_shingle_3"]
+      },
+      "elegans_stemmed_shingles_3_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_3"]
+      },
+      "elegans_shingles_4_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_shingle_4"]
+      },
+      "elegans_stemmed_shingles_4_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_4"]
+      },
+      "elegans_shingles_2_10_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "elegans_russian_shingle_2_10"]
+      },
+      "elegans_stemmed_shingles_2_10_analyzer":
+      {
+        "tokenizer":    "standard",
+        "char_filter":  [ "html_strip", "&_to_and" ],
+        "filter":       [ "lowercase", "russian_stemmer", "elegans_russian_shingle_2_10"]
+      },
+      "elegans_delimited_double": {
+        "tokenizer":"whitespace",
+        "encoding": "double",
+        "filter": "delimited_payload_filter"
+      }
+    }
+  }
 }

@@ -18,7 +18,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -102,9 +102,14 @@ object SystemIndexManagementService {
       }
     }).map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
-      val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
-      val check = getMappingsReq.mappings.containsKey(fullIndexName)
-      (fullIndexName, elasticClient.indexName, item.indexSuffix, check)
+      Try(client.admin.indices.prepareGetMappings(fullIndexName).get()) match {
+        case Success(getMappingsReq) =>
+          val check = getMappingsReq.mappings.containsKey(fullIndexName)
+          (fullIndexName, elasticClient.indexName, item.indexSuffix, check)
+        case Failure(e) =>
+          log.error("Index check failed: " + fullIndexName + " : " + e)
+          (fullIndexName, elasticClient.indexName, item.indexSuffix, false)
+      }
     })
   }
 
@@ -116,7 +121,7 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def updateIndex() : Future[Option[IndexManagementResponse]] = Future {
+  def updateIndex : Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
 
     val operationsMessage: List[String] = schemaFiles.map(item => {

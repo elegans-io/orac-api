@@ -12,7 +12,7 @@ import io.elegans.orac.OracActorSystem
 import io.elegans.orac.serializers.JsonSupport
 import io.elegans.orac.services.UserEsServiceException
 import io.elegans.orac.services.auth.{AbstractOracAuthenticator, OracAuthenticator}
-
+import org.elasticsearch.index.IndexNotFoundException
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
@@ -27,6 +27,13 @@ trait OracResource extends Directives with JsonSupport {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
   val routesExceptionHandler = ExceptionHandler {
+    case e: IndexNotFoundException =>
+      extractUri { uri =>
+        log.error("uri(" + uri + ") index error: " + e)
+        respondWithDefaultHeader(defaultHeader) {
+          complete(StatusCodes.BadRequest)
+        }
+      }
     case e: TimeoutException =>
       extractUri { uri =>
         log.error("uri(" + uri + ") request timeout: " + e)

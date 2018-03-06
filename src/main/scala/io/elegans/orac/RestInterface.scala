@@ -42,6 +42,7 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResultB64(postIndexManagementRefreshRoutes) ~
     LoggingEntities.logRequestAndResultB64(putIndexManagementRoutes) ~
     LoggingEntities.logRequestAndResultB64(indexManagementRoutes) ~
+    LoggingEntities.logRequestAndResultB64(postIndexManagementOpenCloseRoutes) ~
     LoggingEntities.logRequestAndResult(postUserRoutes) ~
     LoggingEntities.logRequestAndResult(putUserRoutes) ~
     LoggingEntities.logRequestAndResult(deleteUserRoutes) ~

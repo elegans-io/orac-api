@@ -183,9 +183,18 @@ object IndexManagementService {
     })
   }
 
-  def updateIndexSettings(indexName: String, language: String,
-                          indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def updateIndexSettings(indexName: String, indexSuffix: Option[String] = None) :
+  Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
+
+    // extract language from index name
+    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
+    val indexPatterns = indexName match {
+      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
+        (index_pattern, language_pattern, arbitrary_pattern)
+      case _ => throw IndexManagementServiceException("index name is not well formed")
+    }
+    val language: String = indexPatterns._2
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -214,9 +223,18 @@ object IndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def updateIndexMappings(indexName: String, language: String,
-                          indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+  def updateIndexMappings(indexName: String, indexSuffix: Option[String] = None) :
+  Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
+
+    // extract language from index name
+    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
+    val indexPatterns = indexName match {
+      case indexLanguageRegex(index_pattern, language_pattern, arbitrary_pattern) =>
+        (index_pattern, language_pattern, arbitrary_pattern)
+      case _ => throw IndexManagementServiceException("index name is not well formed")
+    }
+    val language: String = indexPatterns._2
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {

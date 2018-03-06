@@ -28,7 +28,7 @@ trait IndexManagementResource extends OracResource {
               authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
                 val breaker: CircuitBreaker = OracCircuitBreaker
-                  .getCircuitBreaker(maxFailure = 10, callTimeout = 20.seconds)
+                  .getCircuitBreaker(callTimeout = 20.seconds)
                 onCompleteWithBreaker(breaker)(
                   indexManagementService.createIndex(indexName = indexName, indexSuffix = indexSuffix)
                 ) {
@@ -109,9 +109,9 @@ trait IndexManagementResource extends OracResource {
   }
 
   def putIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
-    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~ """([A-Za-z0-9_]{1,256})""".r ~ Slash ~ "index_management" ~ Slash ~ """(mappings|settings)""".r) {
-      (indexName, language, mappingOrSettings) =>
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r
+      ~ Slash ~ "index_management" ~ Slash ~ """(mappings|settings)""".r) {
+      (indexName, mappingOrSettings) =>
         val indexManagementService = IndexManagementService
         pathEnd {
           put {
@@ -124,9 +124,9 @@ trait IndexManagementResource extends OracResource {
                   onCompleteWithBreaker(breaker)(
                     mappingOrSettings match {
                       case "mappings" => indexManagementService.updateIndexMappings(indexName = indexName,
-                        indexSuffix = indexSuffix, language = language)
+                        indexSuffix = indexSuffix)
                       case "settings" => indexManagementService.updateIndexSettings(indexName = indexName,
-                        indexSuffix = indexSuffix, language = language)
+                        indexSuffix = indexSuffix)
                     }
                   ) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
