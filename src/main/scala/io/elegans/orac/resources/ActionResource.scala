@@ -14,11 +14,11 @@ import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflict
 
 import scala.util.{Failure, Success}
 
-trait ActionResource extends MyResource {
+trait ActionResource extends OracResource {
 
   private[this] val actionService: ActionService.type = ActionService
 
-  def actionUserRoutes: Route =
+  def actionUserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""" ~ Slash ~ """user""" ) { indexName =>
       path(Segment) { id =>
         get {
@@ -48,8 +48,9 @@ trait ActionResource extends MyResource {
         }
       }
     }
+  }
 
-  def actionRoutes: Route =
+  def actionRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """action""") { indexName =>
       pathEnd {
         post {
@@ -170,5 +171,6 @@ trait ActionResource extends MyResource {
             }
         }
     }
+  }
 }
 

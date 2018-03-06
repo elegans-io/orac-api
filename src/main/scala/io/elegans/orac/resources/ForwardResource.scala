@@ -15,11 +15,11 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait ForwardResource extends MyResource {
+trait ForwardResource extends OracResource {
 
   private[this] val forwardService: ForwardService.type = ForwardService
 
-  def forwardAllRoutes: Route = {
+  def forwardAllRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward_all""") { indexName =>
       pathEnd {
         post {
@@ -70,7 +70,7 @@ trait ForwardResource extends MyResource {
     }
   }
 
-  def forwardRoutes: Route =
+  def forwardRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """forward""") { indexName =>
       pathEnd {
         post {
@@ -160,4 +160,5 @@ trait ForwardResource extends MyResource {
           }
         }
     }
+  }
 }

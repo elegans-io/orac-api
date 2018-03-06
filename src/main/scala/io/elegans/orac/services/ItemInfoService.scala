@@ -38,13 +38,18 @@ object ItemInfoService {
     indexName + "." + suffix.getOrElse(elasticClient.itemInfoIndexSuffix)
   }
 
+  /** Update the ItemInfoService in memory data structure
+    */
   def updateItemInfoService(indexName: String): Unit = {
-    if(indexManagementService.checkIndexStatus(indexName)) {
-      itemInfoService = allDocuments(indexName).map(x => {
-        (indexName + "." + x.id, x)
-      }).toMap
-    } else {
-      log.warning("cannot update the item_info_service index not ready: " + indexName)
+    indexManagementService.checkIndexStatus(indexName).filter(_._2 == indexName).foreach {
+      case (fullIndexName, idxName, _, result) =>
+        if(result) {
+          itemInfoService = allDocuments(idxName).map { itemInfo =>
+            (fullIndexName + "." + itemInfo.id, itemInfo)
+          }.toMap
+        } else {
+          log.warning("cannot update the item_info_service index not ready: " + fullIndexName)
+        }
     }
   }
 

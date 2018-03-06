@@ -17,61 +17,29 @@ import io.elegans.orac.services.{AbstractUserService, UserService}
 import org.elasticsearch.index.engine.{DocumentMissingException, VersionConflictEngineException}
 
 
-trait UserResource extends MyResource {
+trait UserResource extends OracResource {
 
   private[this] val userService: AbstractUserService = UserService.service
 
-  def postUserRoutes: Route = pathPrefix("user") {
-    post {
-      authenticateBasicAsync(realm = authRealm,
-        authenticator = authenticator.authenticator) { user =>
-        authorizeAsync(_ =>
-          authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-          extractMethod { method =>
-            entity(as[User]) { user_entity =>
-              val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(userService.create(user_entity)) {
-                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                  t
-                })
-                case Failure(e) => e match {
-                  case vcee: VersionConflictEngineException =>
-                    log.error(this.getClass.getCanonicalName + " " +
-                      "method=" + method.toString + " : " + vcee.getMessage)
-                    completeResponse(StatusCodes.Conflict, Option.empty[String])
-                  case e: Exception =>
-                    log.error(this.getClass.getCanonicalName + " " +
-                      "method=" + method.toString + " : " + e.getMessage)
-                    completeResponse(StatusCodes.BadRequest, Option.empty[String])
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  def putUserRoutes: Route = pathPrefix("user") {
-    path(Segment) { id =>
-      put {
+  def postUserRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("user") {
+      post {
         authenticateBasicAsync(realm = authRealm,
           authenticator = authenticator.authenticator) { user =>
           authorizeAsync(_ =>
             authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-
             extractMethod { method =>
-              entity(as[UserUpdate]) { user_entity =>
+              entity(as[User]) { user_entity =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                onCompleteWithBreaker(breaker)(userService.update(id, user_entity)) {
+                onCompleteWithBreaker(breaker)(userService.create(user_entity)) {
                   case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                     t
                   })
                   case Failure(e) => e match {
-                    case dme: DocumentMissingException =>
+                    case vcee: VersionConflictEngineException =>
                       log.error(this.getClass.getCanonicalName + " " +
-                        "method=" + method.toString + " : " + dme.getMessage)
-                      completeResponse(StatusCodes.NotFound, Option.empty[String])
+                        "method=" + method.toString + " : " + vcee.getMessage)
+                      completeResponse(StatusCodes.Conflict, Option.empty[String])
                     case e: Exception =>
                       log.error(this.getClass.getCanonicalName + " " +
                         "method=" + method.toString + " : " + e.getMessage)
@@ -86,22 +54,35 @@ trait UserResource extends MyResource {
     }
   }
 
-  def deleteUserRoutes: Route = pathPrefix("user") {
-    path(Segment) { id =>
-      delete {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(userService.delete(id)) {
-              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                t
-              })
-              case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                Option {
-                  ReturnMessageData(code = 102, message = e.getMessage)
-                })
+  def putUserRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("user") {
+      path(Segment) { id =>
+        put {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+
+              extractMethod { method =>
+                entity(as[UserUpdate]) { user_entity =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(userService.update(id, user_entity)) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                    case Failure(e) => e match {
+                      case dme: DocumentMissingException =>
+                        log.error(this.getClass.getCanonicalName + " " +
+                          "method=" + method.toString + " : " + dme.getMessage)
+                        completeResponse(StatusCodes.NotFound, Option.empty[String])
+                      case e: Exception =>
+                        log.error(this.getClass.getCanonicalName + " " +
+                          "method=" + method.toString + " : " + e.getMessage)
+                        completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -109,48 +90,77 @@ trait UserResource extends MyResource {
     }
   }
 
-  def getUserRoutes: Route = pathPrefix("user") {
-    path(Segment) { id =>
-      get {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-            onCompleteWithBreaker(breaker)(userService.read(id)) {
-              case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                t
-              })
-              case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                Option {
-                  ReturnMessageData(code = 103, message = e.getMessage)
-                })
-            }
-          }
-        }
-      }
-    }
-  }
-
-  def genUserRoutes: Route = pathPrefix("user_gen") {
-    path(Segment) { id =>
-      post {
-        authenticateBasicAsync(realm = authRealm,
-          authenticator = authenticator.authenticator) { user =>
-          authorizeAsync(_ =>
-            authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-            entity(as[UserUpdate]) { user_entity =>
+  def deleteUserRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("user") {
+      path(Segment) { id =>
+        delete {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
               val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-              onCompleteWithBreaker(breaker)(Future {
-                userService.genUser(id, user_entity, authenticator)
-              }) {
+              onCompleteWithBreaker(breaker)(userService.delete(id)) {
                 case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                   t
                 })
                 case Failure(e) => completeResponse(StatusCodes.BadRequest,
                   Option {
-                    ReturnMessageData(code = 104, message = e.getMessage)
+                    ReturnMessageData(code = 102, message = e.getMessage)
                   })
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def getUserRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("user") {
+      path(Segment) { id =>
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+              onCompleteWithBreaker(breaker)(userService.read(id)) {
+                case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                  t
+                })
+                case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                  Option {
+                    ReturnMessageData(code = 103, message = e.getMessage)
+                  })
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def genUserRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("user_gen") {
+      path(Segment) { id =>
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              entity(as[UserUpdate]) { user_entity =>
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(Future {
+                  userService.genUser(id, user_entity, authenticator)
+                }) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      ReturnMessageData(code = 104, message = e.getMessage)
+                    })
+                }
               }
             }
           }

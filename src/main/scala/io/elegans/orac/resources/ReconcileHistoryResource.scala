@@ -14,11 +14,11 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 
 import scala.util.{Failure, Success}
 
-trait ReconcileHistoryResource extends MyResource {
+trait ReconcileHistoryResource extends OracResource {
 
   private[this] val reconcileHistoryService: ReconcileHistoryService.type = ReconcileHistoryService
 
-  def reconcileHistoryRoutes: Route =
+  def reconcileHistoryRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("reconcile_history") {
       pathEnd {
         post {
@@ -108,4 +108,5 @@ trait ReconcileHistoryResource extends MyResource {
           }
         }
     }
+  }
 }

@@ -14,18 +14,24 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-trait RootAPIResource extends MyResource {
-  def rootAPIsRoutes: Route = pathPrefix("") {
-    pathEnd {
-      get {
-        val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(maxFailure = 2, callTimeout = 1.second)
-        onCompleteWithBreaker(breaker)(Future{None}) {
-          case Success(v) =>
-            completeResponse(StatusCodes.OK)
-          case Failure(e) =>
-            log.error("route=RootRoutes method=GET: " + e.getMessage)
-            completeResponse(StatusCodes.BadRequest,
-              Option{ReturnMessageData(code = 100, message = e.getMessage)})
+trait RootAPIResource extends OracResource {
+  def rootAPIsRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("") {
+      pathEnd {
+        get {
+          val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker(maxFailure = 2, callTimeout = 1.second)
+          onCompleteWithBreaker(breaker)(Future {
+            None
+          }) {
+            case Success(v) =>
+              completeResponse(StatusCodes.OK)
+            case Failure(e) =>
+              log.error("route=RootRoutes method=GET: " + e.getMessage)
+              completeResponse(StatusCodes.BadRequest,
+                Option {
+                  ReturnMessageData(code = 100, message = e.getMessage)
+                })
+          }
         }
       }
     }

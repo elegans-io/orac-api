@@ -18,6 +18,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
+import scala.util.control.NonFatal
 
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
@@ -26,17 +27,17 @@ object SystemIndexManagementService {
   val elasticClient: SystemIndexManagementElasticClient.type = SystemIndexManagementElasticClient
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
 
-  val schemaFiles: List[JsonIndexFiles] = List[JsonIndexFiles](
-    JsonIndexFiles(path = "/index_management/json_index_spec/system/user.json",
+  val schemaFiles: List[JsonMappingAnalyzersIndexFiles] = List[JsonMappingAnalyzersIndexFiles](
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/user.json",
       updatePath = "/index_management/json_index_spec/system/update/user.json",
       indexSuffix = elasticClient.userIndexSuffix),
-    JsonIndexFiles(path = "/index_management/json_index_spec/system/forward.json",
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/forward.json",
       updatePath = "/index_management/json_index_spec/system/update/forward.json",
       indexSuffix = elasticClient.forwardIndexSuffix),
-    JsonIndexFiles(path = "/index_management/json_index_spec/system/reconcile.json",
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/reconcile.json",
       updatePath = "/index_management/json_index_spec/system/update/reconcile.json",
       indexSuffix = elasticClient.reconcileIndexSuffix),
-    JsonIndexFiles(path = "/index_management/json_index_spec/system/reconcile_history.json",
+    JsonMappingAnalyzersIndexFiles(path = "/index_management/json_index_spec/system/reconcile_history.json",
       updatePath = "/index_management/json_index_spec/system/update/reconcile_history.json",
       indexSuffix = elasticClient.reconcileHistoryIndexSuffix)
   )
@@ -91,38 +92,28 @@ object SystemIndexManagementService {
     Option { IndexManagementResponse(message) }
   }
 
-  def checkIndex : Future[Option[IndexManagementResponse]] = Future {
+  def checkIndexStatus(indexSuffix: Option[String] = None) : List[(String, String, String, Boolean)] = {
     val client: TransportClient = elasticClient.getClient
 
-    val operations_message: List[String] = schemaFiles.map(item => {
+    schemaFiles.filter(item => {
+      indexSuffix match {
+        case Some(t) => t == item.indexSuffix
+        case _ => true
+      }
+    }).map(item => {
       val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
       val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
       val check = getMappingsReq.mappings.containsKey(fullIndexName)
-      item.indexSuffix + "(" + fullIndexName + ", " + check + ")"
+      (fullIndexName, elasticClient.indexName, item.indexSuffix, check)
     })
-
-    val message = "IndexCheck: " + operations_message.mkString(" ")
-
-    Option { IndexManagementResponse(message) }
   }
 
-  def checkIndexStatus : Boolean = {
-    val client: TransportClient = elasticClient.getClient
-
-    val operationsMessage: List[Boolean] = schemaFiles.map(item => {
-      val fullIndexName = elasticClient.indexName + "." + item.indexSuffix
-      val check = try {
-        val getMappingsReq = client.admin.indices.prepareGetMappings(fullIndexName).get()
-        getMappingsReq.mappings.containsKey(fullIndexName)
-      } catch {
-        case e: Exception =>
-          false
-      }
-      check
-    })
-
-    val status = operationsMessage.reduce((x, y) => x && y)
-    status
+  def checkIndex(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
+    val message = "IndexCheck: " + checkIndexStatus(indexSuffix).map {
+      case (fullIndexName, _, suffix, result) =>
+        suffix + " (" + fullIndexName + ", " + result +  ")"
+    }.mkString(" ")
+    Option { IndexManagementResponse(message) }
   }
 
   def updateIndex() : Future[Option[IndexManagementResponse]] = Future {

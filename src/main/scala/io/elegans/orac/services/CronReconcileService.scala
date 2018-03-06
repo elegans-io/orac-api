@@ -36,7 +36,7 @@ object CronReconcileService  {
   }
 
   def reconcileProcess(): Unit = {
-    val indexCheck = systemIndexManagementService.checkIndexStatus
+    val indexCheck = systemIndexManagementService.checkIndexStatus().map(_._4).reduce(_ && _)
     if (indexCheck) {
       val iterator = reconcileService.allDocuments()
       iterator.foreach(item  => {

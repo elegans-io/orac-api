@@ -24,6 +24,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
 
+case class UserEsServiceException(message: String = "", cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 /**
   * Implements functions, eventually used by IndexManagementResource, for ES index management
   */

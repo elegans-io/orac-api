@@ -15,11 +15,11 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.util.{Failure, Success}
 
 
-trait RecommendationHistoryResource extends MyResource {
+trait RecommendationHistoryResource extends OracResource {
 
   private[this] val recommendationHistoryService: RecommendationHistoryService.type = RecommendationHistoryService
 
-  def recommendationHistoryRoutes: Route =
+  def recommendationHistoryRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """recommendation_history""") { indexName =>
       pathEnd {
         post {
@@ -140,5 +140,6 @@ trait RecommendationHistoryResource extends MyResource {
             }
         }
     }
+  }
 }
 

@@ -15,13 +15,13 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.util.{Failure, Success}
 
 
-trait RecommendationResource extends MyResource {
+trait RecommendationResource extends OracResource {
 
   private[this] val recommendationService: RecommendationService.type = RecommendationService
 
-  def recommendationRoutes: Route =
+  def recommendationRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "recommendation") { indexName =>
-    pathEnd {
+      pathEnd {
         post {
           authenticateBasicAsync(realm = authRealm,
             authenticator = authenticator.authenticator) { user =>
@@ -139,8 +139,9 @@ trait RecommendationResource extends MyResource {
             }
         }
     }
+  }
 
-  def userRecommendationRoutes: Route =
+  def userRecommendationRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """user_recommendation""") { indexName =>
       path(Segment) { id =>
         get {
@@ -172,5 +173,6 @@ trait RecommendationResource extends MyResource {
         }
       }
     }
+  }
 }
 

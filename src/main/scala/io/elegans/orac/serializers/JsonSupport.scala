@@ -81,4 +81,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val reconcileFormat = jsonFormat7(Reconcile)
   implicit val reconcileHistoryFormat = jsonFormat8(ReconcileHistory)
   implicit val updateReconcileFormat = jsonFormat6(UpdateReconcile)
+  implicit val openCloseIndexFormat = jsonFormat5(OpenCloseIndex)
 }
