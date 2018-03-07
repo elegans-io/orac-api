@@ -27,7 +27,10 @@ object LoggingEntities {
       Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" +
         req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
         Logging.InfoLevel))
-    case _ => None
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
   }
 
   def requestMethodAndResponseStatus(remoteAddress: RemoteAddress)
@@ -37,7 +40,10 @@ object LoggingEntities {
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
-    case _ => None
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
   }
 
   def requestMethodAndResponseStatusB64(remoteAddress: RemoteAddress)
@@ -49,7 +55,10 @@ object LoggingEntities {
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
         " ResEntity(" + res.entity + ")" +
         " ResB64Entity(" + Base64.getEncoder.encodeToString(res.entity.toString.getBytes) + ")", Logging.InfoLevel))
-    case _ => None
+    case RouteResult.Rejected(rejections) => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") Rejected: " + rejections.mkString(", "), Logging.DebugLevel))
+    case _ => Some(LogEntry("remoteAddress(" + address(remoteAddress) +
+      ") : Unknown RouteResult", Logging.ErrorLevel))
   }
 
   val logRequestAndResult: Directive0 =
