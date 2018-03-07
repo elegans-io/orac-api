@@ -27,7 +27,7 @@ object LoggingEntities {
       Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" +
         req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
         Logging.InfoLevel))
-    case _ ⇒ None
+    case _ => None
   }
 
   def requestMethodAndResponseStatus(remoteAddress: RemoteAddress)
@@ -37,7 +37,7 @@ object LoggingEntities {
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
-    case _ ⇒ None
+    case _ => None
   }
 
   def requestMethodAndResponseStatusB64(remoteAddress: RemoteAddress)
@@ -49,7 +49,7 @@ object LoggingEntities {
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
         " ResEntity(" + res.entity + ")" +
         " ResB64Entity(" + Base64.getEncoder.encodeToString(res.entity.toString.getBytes) + ")", Logging.InfoLevel))
-    case _ ⇒ None
+    case _ => None
   }
 
   val logRequestAndResult: Directive0 =
