@@ -56,7 +56,7 @@ trait SystemIndexManagementResource extends OracResource {
                 operation match {
                   case "refresh" =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(systemIndexManagementService.refreshIndexes) {
+                    onCompleteWithBreaker(breaker)(systemIndexManagementService.refreshIndexes()) {
                       case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t
                       })
@@ -75,7 +75,7 @@ trait SystemIndexManagementResource extends OracResource {
                     }
                   case "create" =>
                     val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                    onCompleteWithBreaker(breaker)(systemIndexManagementService.createIndex) {
+                    onCompleteWithBreaker(breaker)(systemIndexManagementService.createIndex()) {
                       case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t
                       })
@@ -137,7 +137,7 @@ trait SystemIndexManagementResource extends OracResource {
                 authorizeAsync(_ =>
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.updateIndex) {
+                  onCompleteWithBreaker(breaker)(systemIndexManagementService.updateIndex()) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })

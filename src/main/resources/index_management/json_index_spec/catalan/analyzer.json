@@ -1,5 +1,6 @@
 {
   "index.queries.cache.enabled": true,
+  "index.requests.cache.enable": true,
   "analysis":
   {
     "tokenizer": {
