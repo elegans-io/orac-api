@@ -28,7 +28,7 @@ class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestR
       Post(s"/system_index_management/create") ~> addCredentials(testAdminCredentials) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
         val response = responseAs[IndexManagementResponse]
-        response.message should fullyMatch regex "IndexCreation: " +
+        response.message should fullyMatch regex "SystemIndexCreation: " +
           "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +
           "(?:[A-Za-z0-9_]+)\\(" + systemIndexNameRegex + "\\.(?:[A-Za-z0-9_]+), true\\) " +

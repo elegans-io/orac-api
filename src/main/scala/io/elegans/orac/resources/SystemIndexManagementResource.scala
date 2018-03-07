@@ -44,6 +44,67 @@ trait SystemIndexManagementResource extends OracResource {
     }
   }
 
+  def postSystemIndexManagementOpenCloseRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("system_index_management" ~ Slash ~ """(open|close)""".r) {
+      (operation) =>
+        post {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+              parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                onCompleteWithBreaker(breaker)(
+                  systemIndexManagementService.openCloseIndex(indexSuffix = indexSuffix, operation = operation)
+                ) {
+                  case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                    t
+                  })
+                  case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                    Option {
+                      IndexManagementResponse(message = e.getMessage)
+                    })
+                }
+              }
+            }
+          }
+        }
+    }
+  }
+
+  def putSystemIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""system_index_management""" ~ Slash ~ """(mappings|settings)""".r) {
+      (mappingOrSettings) =>
+        pathEnd {
+          put {
+            authenticateBasicAsync(realm = authRealm,
+              authenticator = authenticator.authenticator) { user =>
+              authorizeAsync(_ =>
+                authenticator.hasPermissions(user, "admin", Permissions.admin)) {
+                parameters("indexSuffix".as[Option[String]] ? Option.empty[String]) { indexSuffix =>
+                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                  onCompleteWithBreaker(breaker)(
+                    mappingOrSettings match {
+                      case "mappings" => systemIndexManagementService.updateIndexMappings(indexSuffix = indexSuffix)
+                      case "settings" => systemIndexManagementService.updateIndexSettings(indexSuffix = indexSuffix)
+                    }
+                  ) {
+                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
+                      t
+                    })
+                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
+                      Option {
+                        IndexManagementResponse(message = e.getMessage)
+                      })
+                  }
+                }
+              }
+            }
+          }
+        }
+    }
+  }
+
   def systemIndexManagementRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("system_index_management") {
       path(Segment) { operation: String =>
@@ -120,24 +181,6 @@ trait SystemIndexManagementResource extends OracResource {
                   authenticator.hasPermissions(user, "admin", Permissions.admin)) {
                   val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
                   onCompleteWithBreaker(breaker)(systemIndexManagementService.removeIndex()) {
-                    case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
-                      t
-                    })
-                    case Failure(e) => completeResponse(StatusCodes.BadRequest,
-                      Option {
-                        IndexManagementResponse(message = e.getMessage)
-                      })
-                  }
-                }
-              }
-            } ~
-            put {
-              authenticateBasicAsync(realm = authRealm,
-                authenticator = authenticator.authenticator) { user =>
-                authorizeAsync(_ =>
-                  authenticator.hasPermissions(user, "admin", Permissions.admin)) {
-                  val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                  onCompleteWithBreaker(breaker)(systemIndexManagementService.updateIndex()) {
                     case Success(t) => completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                       t
                     })

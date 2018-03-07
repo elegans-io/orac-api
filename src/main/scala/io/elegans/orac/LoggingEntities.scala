@@ -8,6 +8,7 @@ import java.util.Base64
 
 import akka.event.Logging
 import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.RouteResult
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -42,10 +43,14 @@ object LoggingEntities {
     case _ ⇒ None
   }
 
-  val logRequestAndResult = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus _)
-  val logRequestAndResultB64 = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64 _)
-  val logRequestAndResultReduced = DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced _)
+  val logRequestAndResult: Directive0 =
+    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus _)
 
+  val logRequestAndResultB64: Directive0 =
+    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64 _)
+
+  val logRequestAndResultReduced: Directive0 =
+    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced _)
 }
 
 

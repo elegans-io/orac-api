@@ -38,6 +38,7 @@ trait RestInterface extends Resources {
 
   val routes: Route = LoggingEntities.logRequestAndResult(systemGetIndexesRoutes) ~
     LoggingEntities.logRequestAndResultB64(systemIndexManagementRoutes) ~
+    LoggingEntities.logRequestAndResultB64(postSystemIndexManagementOpenCloseRoutes) ~
     LoggingEntities.logRequestAndResultB64(postIndexManagementCreateRoutes) ~
     LoggingEntities.logRequestAndResultB64(postIndexManagementRefreshRoutes) ~
     LoggingEntities.logRequestAndResultB64(putIndexManagementRoutes) ~

@@ -227,14 +227,6 @@ object IndexManagementService {
   Future[Option[IndexManagementResponse]] = Future {
     val client: TransportClient = elasticClient.getClient
 
-    // extract language from index name
-    val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
-    val (_, language, _) = indexName match {
-      case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
-        (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
-    }
-
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t == item.indexSuffix
