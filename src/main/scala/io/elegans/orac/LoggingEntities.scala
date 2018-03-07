@@ -1,4 +1,4 @@
-package io.elegans.orac.resources
+package io.elegans.orac
 
 /**
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
@@ -7,34 +7,43 @@ package io.elegans.orac.resources
 import java.util.Base64
 
 import akka.event.Logging
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.server.Directive0
-import akka.http.scaladsl.server.RouteResult
+import akka.http.scaladsl.model.{HttpRequest, _}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.{Directive0, RouteResult}
 import akka.http.scaladsl.server.directives.{DebuggingDirectives, LogEntry}
 import com.typesafe.config.{Config, ConfigFactory}
 
 object LoggingEntities {
   val config: Config = ConfigFactory.load()
 
-  def requestMethodAndResponseStatusReduced(req: HttpRequest): RouteResult => Option[LogEntry] = {
+  def address(remoteAddress: RemoteAddress): String = remoteAddress.toIP match {
+    case Some(addr) => addr.ip.getHostAddress
+    case _ => "unknown ip"
+  }
+
+  def requestMethodAndResponseStatusReduced(remoteAddress: RemoteAddress)
+                                            (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("ReqUri(" + req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" +
+        req.uri + ") ReqMethodRes(" + req.method.name + ":" + res.status + ")",
         Logging.InfoLevel))
     case _ ⇒ None
   }
 
-  def requestMethodAndResponseStatus(req: HttpRequest): RouteResult => Option[LogEntry] = {
+  def requestMethodAndResponseStatus(remoteAddress: RemoteAddress)
+                                    (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("ReqUri(" + req.uri + ")" +
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity.httpEntity + ") ResEntity(" + res.entity + ") "
         , Logging.InfoLevel))
     case _ ⇒ None
   }
 
-  def requestMethodAndResponseStatusB64(req: HttpRequest): RouteResult => Option[LogEntry] = {
+  def requestMethodAndResponseStatusB64(remoteAddress: RemoteAddress)
+                                       (req: HttpRequest): RouteResult => Option[LogEntry] = {
     case RouteResult.Complete(res) =>
-      Some(LogEntry("ReqUri(" + req.uri + ")" +
+      Some(LogEntry("remoteAddress(" + address(remoteAddress) + ") ReqUri(" + req.uri + ")" +
         " ReqMethodRes(" + req.method.name + ":" + res.status + ")" +
         " ReqEntity(" + req.entity + ")" +
         " ReqB64Entity(" + Base64.getEncoder.encodeToString(req.entity.toString.getBytes) + ")" +
@@ -44,13 +53,19 @@ object LoggingEntities {
   }
 
   val logRequestAndResult: Directive0 =
-    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus _)
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatus(ip) _)
+    }
 
   val logRequestAndResultB64: Directive0 =
-    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64 _)
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusB64(ip) _)
+    }
 
   val logRequestAndResultReduced: Directive0 =
-    DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced _)
+    extractClientIP.flatMap { ip =>
+      DebuggingDirectives.logRequestResult(requestMethodAndResponseStatusReduced(ip) _)
+    }
 }
 
 
