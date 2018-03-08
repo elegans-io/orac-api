@@ -35,8 +35,8 @@ object IndexMovielensAction extends JsonSupport {
                            )
 
   private[this] def loadData(params: Params): Iterator[Action] = {
-    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
-    lazy val actionsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
+    val dataInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
+    lazy val actionsEntries = CSVReader.read(input = dataInputStream, separator = params.separator,
       quote = '"', skipLines = 0).toIterator
 
     val header: Seq[String] = Seq("user_id", "item_id", "rating", "timestamp")

@@ -34,8 +34,8 @@ object IndexMovielensItem extends JsonSupport {
                            )
 
   private[this] def loadData(params: Params): Iterator[Item] = {
-    val questionsInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
-    lazy val itemsEntries = CSVReader.read(input = questionsInputStream, separator = params.separator,
+    val dataInputStream: Reader = new InputStreamReader(new FileInputStream(params.inputfile), "UTF-8")
+    lazy val itemsEntries = CSVReader.read(input = dataInputStream, separator = params.separator,
       quote = '"', skipLines = 0).toIterator
 
     val releaseDateFormat = new java.text.SimpleDateFormat("dd-MMM-yyyy")
