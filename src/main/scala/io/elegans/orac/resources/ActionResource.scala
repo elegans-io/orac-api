@@ -31,12 +31,10 @@ trait ActionResource extends OracResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read_stream_action)) {
-              extractMethod { method =>
-                val entryIterator = actionService.allDocuments(indexName)
-                val entries: Source[Action, NotUsed] =
-                  Source.fromIterator(() => entryIterator)
-                complete(entries)
-              }
+              val entryIterator = actionService.allDocuments(indexName)
+              val entries: Source[Action, NotUsed] =
+                Source.fromIterator(() => entryIterator)
+              complete(entries)
             }
           }
         }
