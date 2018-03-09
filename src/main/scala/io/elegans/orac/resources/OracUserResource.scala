@@ -4,9 +4,11 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.pattern.CircuitBreaker
+import akka.stream.scaladsl.Source
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.OracUserService
@@ -18,6 +20,30 @@ import scala.util.{Failure, Success}
 trait OracUserResource extends OracResource {
 
   private[this] val oracUserService: OracUserService.type = OracUserService
+
+  def oracUserStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix(
+      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+        """stream""" ~ Slash ~
+        """orac_user""") { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read_stream_orac_user)) {
+              extractMethod { method =>
+                val entryIterator = oracUserService.allDocuments(indexName)
+                val entries: Source[OracUser, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   def oracUserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "orac_user") { indexName =>

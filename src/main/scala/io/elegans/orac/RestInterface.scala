@@ -49,11 +49,14 @@ trait RestInterface extends Resources {
     LoggingEntities.logRequestAndResult(deleteUserRoutes) ~
     LoggingEntities.logRequestAndResult(getUserRoutes) ~
     LoggingEntities.logRequestAndResult(genUserRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(actionStreamRoutes) ~
     LoggingEntities.logRequestAndResultReduced(actionRoutes) ~
     LoggingEntities.logRequestAndResultReduced(actionUserRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(itemStreamRoutes) ~
     LoggingEntities.logRequestAndResult(itemRoutes) ~
     LoggingEntities.logRequestAndResult(itemInfoRoutes) ~
     LoggingEntities.logRequestAndResult(oracUserRoutes) ~
+    LoggingEntities.logRequestAndResultReduced(oracUserStreamRoutes) ~
     LoggingEntities.logRequestAndResult(recommendationRoutes) ~
     LoggingEntities.logRequestAndResult(recommendationHistoryRoutes) ~
     LoggingEntities.logRequestAndResult(userRecommendationRoutes) ~

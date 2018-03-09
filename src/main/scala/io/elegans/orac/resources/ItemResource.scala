@@ -4,9 +4,11 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 10/11/17.
   */
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.pattern.CircuitBreaker
+import akka.stream.scaladsl.Source
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ItemService
@@ -16,8 +18,31 @@ import scala.util.{Failure, Success}
 
 
 trait ItemResource extends OracResource {
-
   private[this] val itemService = ItemService
+
+  def itemStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix(
+      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+        """stream""" ~ Slash ~
+        """item""") { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read_stream_item)) {
+              extractMethod { method =>
+                val entryIterator = itemService.allDocuments(indexName)
+                val entries: Source[Item, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   def itemRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ """item""") { indexName =>

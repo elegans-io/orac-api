@@ -9,6 +9,7 @@ import scalaz.Scalaz._
 object Permissions extends Enumeration {
   type Permission = Value
   val admin,
+  read_stream_item, read_stream_action, read_stream_orac_user, read_stream_recomm, read_stream_recomm_history,
   create_action, update_action, read_action, delete_action,
   create_item, update_item, read_item, delete_item,
   create_orac_user, update_orac_user, read_orac_user, delete_orac_user,

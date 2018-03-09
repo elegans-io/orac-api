@@ -4,11 +4,23 @@ package io.elegans.orac.serializers
   * Created by Angelo Leto <angelo.leto@elegans.io> on 27/06/16.
   */
 
+import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.stream.scaladsl.Flow
+import akka.util.ByteString
 import io.elegans.orac.entities._
 import spray.json._
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  private[this] val start: ByteString = ByteString.empty
+  private[this] val sep: ByteString = ByteString("\n")
+  private[this] val end: ByteString = ByteString.empty
+
+  implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
+    EntityStreamingSupport.json(1024 * 1024) // max object size 1MB
+      .withFramingRendererFlow(Flow[ByteString].intersperse(start, sep, end).asJava)
+      .withParallelMarshalling(parallelism = 8, unordered = true)
+
   implicit val updateActionFormat = jsonFormat8(UpdateAction)
   implicit val actionFormat = jsonFormat9(Action)
   implicit val actionsFormat = jsonFormat1(Actions)

@@ -4,9 +4,11 @@ package io.elegans.orac.resources
   * Created by Angelo Leto <angelo.leto@elegans.io> on 22/11/17.
   */
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.pattern.CircuitBreaker
+import akka.stream.scaladsl.Source
 import io.elegans.orac.entities._
 import io.elegans.orac.routing._
 import io.elegans.orac.services.ActionService
@@ -17,6 +19,30 @@ import scala.util.{Failure, Success}
 trait ActionResource extends OracResource {
 
   private[this] val actionService: ActionService.type = ActionService
+
+  def actionStreamRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix(
+      """^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~
+        """stream""" ~ Slash ~
+        """action""") { indexName =>
+      pathEnd {
+        get {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.read_stream_action)) {
+              extractMethod { method =>
+                val entryIterator = actionService.allDocuments(indexName)
+                val entries: Source[Action, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   def actionUserRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~

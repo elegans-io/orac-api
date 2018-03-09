@@ -5,15 +5,15 @@ name := "Orac API"
 
 organization := "io.elegans"
 
-scalaVersion := "2.12.4"
+crossScalaVersions := Seq("2.12.4")
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
 
 libraryDependencies ++= {
   val AkkaVersion       = "2.5.8"
-  val AkkaHttpVersion   = "10.1.0-RC2"
-  val ESClientVersion   = "6.2.1"
+  val AkkaHttpVersion   = "10.1.0"
+  val ESClientVersion   = "6.2.2"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
@@ -25,7 +25,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
-    "ch.qos.logback"    %  "logback-classic" % "1.2.3",
+    "ch.qos.logback" %  "logback-classic" % "1.2.3",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
