@@ -9,22 +9,22 @@ import java.io.{FileInputStream, InputStreamReader, Reader}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, HttpHeader, MessageEntity, HttpResponse, HttpMethods, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
-import io.elegans.orac.entities.{OracUser, NumericalProperties, OracProperties}
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.entities.{NumericalProperties, OracProperties, OracUser}
+import io.elegans.orac.serializers.OracApiJsonSupport
 import scopt.OptionParser
 
 import scala.collection.immutable
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
-object IndexUsers extends JsonSupport {
+object IndexUsers extends OracApiJsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_0",
+                             indexName: String = "index_english_0",
                              path: String = "/orac_user",
                              inputfile: String = "./users.csv",
                              separator: Char = '\t',

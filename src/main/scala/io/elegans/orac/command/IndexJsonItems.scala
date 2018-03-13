@@ -6,22 +6,22 @@ package io.elegans.orac.command
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import scala.util.{Failure, Success, Try}
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import io.elegans.orac.entities._
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.serializers.OracApiJsonSupport
 import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
-object IndexJsonItems extends JsonSupport {
+object IndexJsonItems extends OracApiJsonSupport {
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher

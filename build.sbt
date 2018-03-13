@@ -41,7 +41,8 @@ libraryDependencies ++= {
     "com.github.scopt" %% "scopt" % "3.6.0",
     "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4",
-    "org.scalaz" %% "scalaz-core" % "7.2.18"
+    "org.scalaz" %% "scalaz-core" % "7.2.18",
+    "io.elegans" %% "orac-entities" % "4e8ad5be36a6e6dffaf754c743f57722c6ac8e4d"
   )
 }
 

@@ -15,7 +15,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.serializers.OracApiJsonSupport
 import io.elegans.orac.tools._
 import spray.json.{SerializationException, _}
 
@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ForwardingService_CSREC_0_4_1(forwardingDestination: ForwardingDestination)
-  extends AbstractForwardingImplService with JsonSupport {
+  extends AbstractForwardingImplService with OracApiJsonSupport {
   val log: LoggingAdapter = Logging(OracActorSystem.system, this.getClass.getCanonicalName)
   val httpHeader: immutable.Seq[HttpHeader] = immutable.Seq(RawHeader("application", "json"))
   val itemService: ItemService.type = ItemService

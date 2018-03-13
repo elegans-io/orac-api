@@ -9,14 +9,14 @@ import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, Route}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.elegans.orac.OracActorSystem
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.serializers.OracApiJsonSupport
 import io.elegans.orac.services.UserEsServiceException
 import io.elegans.orac.services.auth.{AbstractOracAuthenticator, OracAuthenticator}
 import org.elasticsearch.index.IndexNotFoundException
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
-trait OracResource extends Directives with JsonSupport {
+trait OracResource extends Directives with OracApiJsonSupport {
 
   implicit def executionContext: ExecutionContext
 

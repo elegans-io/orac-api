@@ -8,12 +8,12 @@ import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.testkit._
 import io.elegans.orac.OracService
 import io.elegans.orac.entities._
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.serializers.OracApiJsonSupport
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration._
 
-class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
+class IndexManagementResourceTest extends WordSpec with Matchers with ScalatestRouteTest with OracApiJsonSupport {
   implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(10.seconds.dilated(system))
   val service = new OracService()
   val routes: server.Route = service.routes

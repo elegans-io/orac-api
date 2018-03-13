@@ -15,17 +15,17 @@ import akka.http.scaladsl.model.{HttpRequest, _}
 import akka.stream.ActorMaterializer
 import breeze.io.CSVReader
 import io.elegans.orac.entities._
-import io.elegans.orac.serializers.JsonSupport
+import io.elegans.orac.serializers.OracApiJsonSupport
 import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-object IndexMovielensItem extends JsonSupport {
+object IndexMovielensItem extends OracApiJsonSupport {
   private[this] case class Params(
                              host: String = "http://localhost:8888",
-                             indexName: String = "index_0",
+                             indexName: String = "index_english_0",
                              path: String = "/item",
                              inputfile: String = "./u.item",
                              separator: Char = '|',
