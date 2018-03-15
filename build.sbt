@@ -10,10 +10,17 @@ crossScalaVersions := Seq("2.12.4")
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
 
+resolvers +=
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+resolvers +=
+  "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+
 libraryDependencies ++= {
   val AkkaVersion       = "2.5.8"
   val AkkaHttpVersion   = "10.1.0"
   val ESClientVersion   = "6.2.2"
+  val OracEntitieVersion = "1.0.0"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
@@ -42,7 +49,7 @@ libraryDependencies ++= {
     "com.roundeights" %% "hasher" % "1.2.0",
     "org.parboiled" %% "parboiled" % "2.1.4",
     "org.scalaz" %% "scalaz-core" % "7.2.18",
-    "io.elegans" %% "orac-entities" % "4e8ad5be36a6e6dffaf754c743f57722c6ac8e4d"
+    "io.elegans" %% "orac-entities" % OracEntitieVersion
   )
 }
 
