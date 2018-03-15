@@ -17,14 +17,14 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
 object IndexJsonItems extends OracApiJsonSupport {
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
+  implicit val system: ActorSystem = ActorSystem()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   private[this] case class Params(
                                    host: String = "http://localhost:8888",

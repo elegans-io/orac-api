@@ -19,7 +19,7 @@ import scopt.OptionParser
 
 import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 object IndexUsers extends OracApiJsonSupport {
   private[this] case class Params(
@@ -58,9 +58,9 @@ object IndexUsers extends OracApiJsonSupport {
   }
 
   private[this] def doIndexData(params: Params) : Unit = {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
+    implicit val system: ActorSystem = ActorSystem()
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
     val base_url = params.host + "/" + params.indexName + params.path
 
