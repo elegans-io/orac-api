@@ -5,6 +5,7 @@ name := "Orac API"
 
 organization := "io.elegans"
 
+scalaVersion := "2.12.4"
 crossScalaVersions := Seq("2.12.4")
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
@@ -17,39 +18,48 @@ resolvers +=
   "Sonatype OSS Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 
 libraryDependencies ++= {
-  val AkkaVersion       = "2.5.8"
-  val AkkaHttpVersion   = "10.1.0"
-  val ESClientVersion   = "6.2.2"
-  val OracEntitieVersion = "1.0.0"
+  val AkkaHttpVersion	= "10.1.0"
+  val AkkaVersion	= "2.5.8"
+  val BreezeVersion	= "0.13.2"
+  val ESClientVersion	= "6.2.3"
+  val Log4JVersion	= "2.9.1"
+  val LogbackVersion	= "1.2.3"
+  val OracEntitiesVersion	= "1.0.0"
+  val ParboiledVersion	= "2.1.4"
+  val RoundeightsHasherVersion	= "1.2.0"
+  val ScalatestVersion	= "3.0.1"
+  val ScalazVersion	= "7.2.18"
+  val ScoptVersion	= "3.7.0"
+  val TikaVersion	= "1.17"
   Seq(
+    "ch.qos.logback" %  "logback-classic" % "1.2.3",
+    "com.github.scopt" %% "scopt" % ScoptVersion,
+    "com.roundeights" %% "hasher" % RoundeightsHasherVersion,
     "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-contrib" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
     "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
     "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % AkkaVersion,
     "com.typesafe.akka" %% "akka-typed" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-contrib" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-http-core" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion,
-    "ch.qos.logback" %  "logback-classic" % "1.2.3",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.elasticsearch" % "elasticsearch" % ESClientVersion,
-    "org.elasticsearch.client" % "transport" % ESClientVersion,
+    "io.elegans" %% "orac-entities" % OracEntitiesVersion,
+    "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
+    "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
+    "org.apache.tika" % "tika-app" % TikaVersion,
+    "org.apache.tika" % "tika-core" % TikaVersion,
+    "org.apache.tika" % "tika-parsers" % TikaVersion,
     //"org.elasticsearch.client" % "elasticsearch-rest-client" % ESClientVersion,
     //"org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % ESClientVersion,
-    "org.scalanlp" %% "breeze" % "0.13",
-    "org.scalanlp" %% "breeze-natives" % "0.13",
-    "org.apache.logging.log4j" % "log4j-api" % "2.9.1",
-    "org.apache.logging.log4j" % "log4j-core" % "2.9.1",
-    "org.apache.tika" % "tika-core" % "1.16",
-    "org.apache.tika" % "tika-parsers" % "1.16",
-    "org.apache.tika" % "tika-app" % "1.16",
-    "com.github.scopt" %% "scopt" % "3.6.0",
-    "com.roundeights" %% "hasher" % "1.2.0",
-    "org.parboiled" %% "parboiled" % "2.1.4",
-    "org.scalaz" %% "scalaz-core" % "7.2.18",
-    "io.elegans" %% "orac-entities" % OracEntitieVersion
+    "org.elasticsearch.client" % "transport" % ESClientVersion,
+    "org.elasticsearch" % "elasticsearch" % ESClientVersion,
+    "org.parboiled" %% "parboiled" % ParboiledVersion,
+    "org.scalanlp" %% "breeze" % BreezeVersion,
+    "org.scalanlp" %% "breeze-natives" % BreezeVersion,
+    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    "org.scalaz" %% "scalaz-core" % ScalazVersion
   )
 }
 
