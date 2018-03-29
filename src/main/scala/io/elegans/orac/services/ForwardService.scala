@@ -7,7 +7,7 @@ package io.elegans.orac.services
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
-import io.elegans.orac.tools.{Checksum, Time}
+import io.elegans.orac.tools.{Checksum, Time, RandomNumbers}
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.SearchResponse

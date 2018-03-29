@@ -270,24 +270,66 @@ object ActionService {
     Option{ Actions(items = documents) }
   }
 
-  def allDocuments(indexName: String, search: Option[UpdateAction] = Option.empty, keepAlive: Long = 60000):
-    Iterator[Action] = {
-    val qb: QueryBuilder = if(search.isEmpty) {
-      QueryBuilders.matchAllQuery()
-    } else {
-      val document = search.get
-      val boolQueryBuilder = QueryBuilders.boolQuery()
-      if (document.item_id.isDefined)
-        boolQueryBuilder.filter(QueryBuilders.termQuery("item_id", document.item_id.get))
-      if (document.user_id.isDefined)
-        boolQueryBuilder.filter(QueryBuilders.termQuery("user_id", document.user_id.get))
-      if (document.name.isDefined)
-        boolQueryBuilder.filter(QueryBuilders.termQuery("name", document.name.get))
-      if (document.score.isDefined)
-        boolQueryBuilder.filter(QueryBuilders.termQuery("score", document.score.get))
-      if (document.ref_recommendation.isDefined)
-        boolQueryBuilder.filter(QueryBuilders.termQuery("ref_recommendation", document.ref_recommendation.get))
-      boolQueryBuilder
+  def allDocuments(indexName: String, search: Option[ActionSearch] = Option.empty,
+                   keepAlive: Long = 60000): Iterator[Action] = {
+    val qb: QueryBuilder = search match {
+      case Some(document) =>
+        val boolQueryBuilder = QueryBuilders.boolQuery()
+
+        document.item_id match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("item_id", value))
+          case _ => ;
+        }
+
+        document.user_id match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("user_id", value))
+          case _ => ;
+        }
+
+        document.timestamp_from match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").gt(value))
+          case _ => ;
+        }
+
+        document.timestamp_to match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").lte(value))
+          case _ => ;
+        }
+
+        document.name match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("name", value))
+          case _ => ;
+        }
+
+        document.score_from match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.rangeQuery("score").gt(value))
+          case _ => ;
+        }
+
+        document.score_to match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.rangeQuery("score").lte(value))
+          case _ => ;
+        }
+
+        document.ref_url match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("ref_url", value))
+          case _ => ;
+        }
+
+        document.ref_recommendation match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("ref_recommendation", value))
+          case _ => ;
+        }
+        boolQueryBuilder
+      case _ =>
+        QueryBuilders.matchAllQuery()
     }
 
     var scrollResp: SearchResponse = elasticClient.getClient
@@ -359,7 +401,7 @@ object ActionService {
     iterator
   }
 
-  def readAll(indexName: String, search: Option[UpdateAction] = Option.empty): Future[Option[Actions]] = Future {
+  def readAll(indexName: String, search: Option[ActionSearch] = Option.empty): Future[Option[Actions]] = Future {
     Option{
       Actions(items = allDocuments(indexName, search).toList)
     }

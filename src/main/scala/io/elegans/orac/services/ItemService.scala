@@ -8,6 +8,7 @@ import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
 import io.elegans.orac.services.RecommendationService.forwardService
+import io.elegans.orac.tools._
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.SearchResponse
@@ -17,6 +18,7 @@ import org.elasticsearch.common.geo.GeoPoint
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
+import org.elasticsearch.index.query.functionscore.RandomScoreFunctionBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
@@ -51,6 +53,9 @@ object ItemService {
     }
 
     builder.field("name", document.name)
+
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
+    builder.field("timestamp", timestamp)
 
     if (document.props.isDefined) {
       if (document.props.get.numerical.isDefined) {
@@ -144,6 +149,10 @@ object ItemService {
       case Some(t) => builder.field("name", t)
       case None => ;
     }
+
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
+    builder.field("timestamp", timestamp)
+
     document.description match {
       case Some(t) => builder.field("description", t)
       case None => ;
@@ -294,6 +303,11 @@ object ItemService {
         case None => ""
       }
 
+      val timestamp : Option[Long] = source.get("timestamp") match {
+        case Some(t) => Option{ t.asInstanceOf[Long] }
+        case None => Option{0}
+      }
+
       val description : Option[String] = source.get("description") match {
         case Some(t) => Option { t.asInstanceOf[String] }
         case None => Option.empty[String]
@@ -379,8 +393,60 @@ object ItemService {
     Option{ Items(items = documents) }
   }
 
-  def allDocuments(index_name: String, keepAlive: Long = 60000): Iterator[Item] = {
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+  def allDocuments(index_name: String, search: Option[ItemSearch] = Option.empty,
+                   keepAlive: Long = 60000): Iterator[Item] = {
+
+    val qb: QueryBuilder = search match {
+      case Some(document) =>
+        val boolQueryBuilder = QueryBuilders.boolQuery()
+
+        document.name match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("name", value))
+          case _ => ;
+        }
+
+        document.category match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("category", value))
+          case _ => ;
+        }
+
+        document.description match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("description", value))
+          case _ => ;
+        }
+
+        document.random.filter(identity) match {
+          case Some(true) =>
+            val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.intPos)
+            val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
+            boolQueryBuilder.must(functionScoreQuery)
+          case _ => ;
+        }
+
+        document.random match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("description", value))
+          case _ => ;
+        }
+
+        document.timestamp_from match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").gt(value))
+          case _ => ;
+        }
+
+        document.timestamp_to match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").lte(value))
+          case _ => ;
+        }
+
+        boolQueryBuilder
+      case _ =>
+        QueryBuilders.matchAllQuery()
+    }
+
     var scrollResp: SearchResponse = elasticClient.getClient
       .prepareSearch(fullIndexName(index_name))
       .setScroll(new TimeValue(keepAlive))
@@ -408,6 +474,11 @@ object ItemService {
         val description : Option[String] = source.get("description") match {
           case Some(t) => Option { t.asInstanceOf[String] }
           case None => Option.empty[String]
+        }
+
+        val timestamp : Option[Long] = source.get("timestamp") match {
+          case Some(t) => Option{ t.asInstanceOf[Long] }
+          case None => Option{0}
         }
 
         val numericalProperties : Option[Array[NumericalProperties]] =

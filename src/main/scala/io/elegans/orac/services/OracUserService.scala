@@ -8,16 +8,17 @@ import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
 import io.elegans.orac.services.RecommendationService.forwardService
+import io.elegans.orac.tools.Time
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
-import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.geo.GeoPoint
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.common.xcontent.XContentFactory._
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilder, QueryBuilders}
 import org.elasticsearch.rest.RestStatus
 import org.elasticsearch.search.SearchHit
 
@@ -59,6 +60,9 @@ object OracUserService {
       case Some(t) => builder.field("email", t)
       case None => ;
     }
+
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
+    builder.field("timestamp", timestamp)
 
     if (document.props.isDefined) {
       if (document.props.get.numerical.isDefined) {
@@ -157,6 +161,9 @@ object OracUserService {
       case Some(t) => builder.field("phone", t)
       case None => ;
     }
+
+    val timestamp: Long = document.timestamp.getOrElse(Time.timestampMillis)
+    builder.field("timestamp", timestamp)
 
     if (document.props.isDefined) {
       if (document.props.get.numerical.isDefined) {
@@ -302,6 +309,11 @@ object OracUserService {
         case None => Option.empty[String]
       }
 
+      val timestamp : Option[Long] = source.get("timestamp") match {
+        case Some(t) => Option{ t.asInstanceOf[Long] }
+        case None => Option{0}
+      }
+
       val numericalProperties : Option[Array[NumericalProperties]] =
         source.get("numerical_properties") match {
           case Some(t) =>
@@ -381,8 +393,46 @@ object OracUserService {
     Future { Option{OracUsers(items = documents)} }
   }
 
-  def allDocuments(indexName: String, keepAlive: Long = 60000): Iterator[OracUser] = {
-    val qb: QueryBuilder = QueryBuilders.matchAllQuery()
+  def allDocuments(indexName: String, search: Option[OracUserSearch] = Option.empty,
+                   keepAlive: Long = 60000): Iterator[OracUser] = {
+
+    val qb: QueryBuilder = search match {
+      case Some(document) =>
+        val boolQueryBuilder = QueryBuilders.boolQuery()
+
+        document.name match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("name", value))
+          case _ => ;
+        }
+
+        document.email match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("email", value))
+          case _ => ;
+        }
+
+        document.phone match {
+          case Some(value) =>
+            boolQueryBuilder.filter(QueryBuilders.termQuery("phone", value))
+          case _ => ;
+        }
+
+        document.timestamp_from match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").gt(value))
+          case _ => ;
+        }
+
+        document.timestamp_to match {
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").lte(value))
+          case _ => ;
+        }
+
+        boolQueryBuilder
+      case _ =>
+        QueryBuilders.matchAllQuery()
+    }
+
     var scrollResp: SearchResponse = elasticClient.getClient
       .prepareSearch(fullIndexName(indexName))
       .setScroll(new TimeValue(keepAlive))
@@ -410,6 +460,11 @@ object OracUserService {
         val phone : Option[String] = source.get("phone") match {
           case Some(t) => Option { t.asInstanceOf[String] }
           case None => Option.empty[String]
+        }
+
+        val timestamp : Option[Long] = source.get("timestamp") match {
+          case Some(t) => Option{ t.asInstanceOf[Long] }
+          case None => Option{0}
         }
 
         val numericalProperties : Option[Array[NumericalProperties]] =

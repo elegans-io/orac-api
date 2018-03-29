@@ -7,7 +7,7 @@ package io.elegans.orac.services
 import akka.event.{Logging, LoggingAdapter}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities.{ReconcileType, _}
-import io.elegans.orac.tools.{Checksum, Time}
+import io.elegans.orac.tools.{Checksum, Time, RandomNumbers}
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetResponse, MultiGetItemResponse, MultiGetRequestBuilder, MultiGetResponse}
 import org.elasticsearch.action.search.SearchResponse
@@ -205,7 +205,7 @@ object  ReconcileService {
       throw new Exception(message)
     }
 
-    val searchAction = Some(UpdateAction(user_id = Some(reconcile.old_id)))
+    val searchAction = Some(ActionSearch(user_id = Some(reconcile.old_id)))
     val actionIterator = actionService.allDocuments(indexName = indexName, search = searchAction)
     actionIterator.foreach(doc => {
       log.debug("Reconciliation of action: " + doc.id)

@@ -68,7 +68,7 @@
         "char_filter":  [ "&_to_and" ],
         "filter":       [ "lowercase"]
       },
-      "jenny_space_punctuation_analyzer":
+      "elegans_space_punctuation_analyzer":
       {
         "tokenizer":    "space_punctuation",
         "filter":       [ "lowercase"]

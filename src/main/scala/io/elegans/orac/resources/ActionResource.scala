@@ -53,7 +53,7 @@ trait ActionResource extends OracResource {
               authenticator.hasPermissions(user, indexName, Permissions.read_action)) {
               extractMethod { method =>
                 val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
-                val search = Some(UpdateAction(user_id = Some(id)))
+                val search = Some(ActionSearch(user_id = Some(id)))
                 onCompleteWithBreaker(breaker)(actionService.readAll(indexName, search)) {
                   case Success(t) =>
                     completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {

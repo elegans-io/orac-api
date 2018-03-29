@@ -10,6 +10,7 @@ import akka.event.{Logging, LoggingAdapter}
 import com.typesafe.config.{Config, ConfigFactory}
 import io.elegans.orac.OracActorSystem
 import io.elegans.orac.entities._
+import io.elegans.orac.tools._
 import io.elegans.orac.services.auth.AbstractOracAuthenticator
 import org.elasticsearch.action.delete.DeleteResponse
 import org.elasticsearch.action.get.{GetRequestBuilder, GetResponse}
