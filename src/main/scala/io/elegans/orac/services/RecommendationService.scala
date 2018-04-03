@@ -258,12 +258,12 @@ object RecommendationService {
     } else {
       val boolQueryBuilder = QueryBuilders.boolQuery()
       from match {
-        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").gt(value))
+        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").gte(value))
         case _ => ;
       }
 
       to match {
-        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").lte(value))
+        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").lt(value))
         case _ => ;
       }
       boolQueryBuilder

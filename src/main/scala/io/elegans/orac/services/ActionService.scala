@@ -289,12 +289,12 @@ object ActionService {
         }
 
         document.timestamp_from match {
-          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").gt(value))
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").gte(value))
           case _ => ;
         }
 
         document.timestamp_to match {
-          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").lte(value))
+          case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("timestamp").lt(value))
           case _ => ;
         }
 
