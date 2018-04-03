@@ -251,7 +251,7 @@ object RecommendationService {
     recommendations
   }
 
-  def deleteDocuments(indexName: String, from: Option[Long],
+  def deleteDocumentsByQuery(indexName: String, from: Option[Long],
                       to: Option[Long]): Future[Option[DeleteDocumentsResult]] = Future {
     val qb: QueryBuilder = if(from.isEmpty && to.isEmpty) {
       QueryBuilders.matchAllQuery()
@@ -263,7 +263,7 @@ object RecommendationService {
       }
 
       to match {
-        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").lt(value))
+        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").lte(value))
         case _ => ;
       }
       boolQueryBuilder
