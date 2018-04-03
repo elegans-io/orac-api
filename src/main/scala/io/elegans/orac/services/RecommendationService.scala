@@ -26,6 +26,8 @@ import scala.collection.immutable.{List, Map}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scalaz.Scalaz._
+import org.elasticsearch.index.reindex.BulkByScrollResponse
+import org.elasticsearch.index.reindex.DeleteByQueryAction
 
 /**
   * Implements functions, eventually used by RecommendationResource
@@ -248,6 +250,37 @@ object RecommendationService {
     val recommendations = Option{ Recommendations(items = documents.map(_._1).sortBy(- _.score)) }
     recommendations
   }
+
+  def deleteDocuments(indexName: String, from: Option[Long],
+                      to: Option[Long]): Future[Option[DeleteDocumentsResult]] = Future {
+    val qb: QueryBuilder = if(from.isEmpty && to.isEmpty) {
+      QueryBuilders.matchAllQuery()
+    } else {
+      val boolQueryBuilder = QueryBuilders.boolQuery()
+      from match {
+        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").gt(value))
+        case _ => ;
+      }
+
+      to match {
+        case Some(value) => boolQueryBuilder.filter(QueryBuilders.rangeQuery("generation_timestamp").lt(value))
+        case _ => ;
+      }
+      boolQueryBuilder
+    }
+
+    val response: BulkByScrollResponse =
+      DeleteByQueryAction.INSTANCE.newRequestBuilder(elasticClient.getClient).setMaxRetries(10)
+        .source(fullIndexName(indexName))
+        .filter(qb)
+        .get()
+
+    val deleted: Long = response.getDeleted
+
+    val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
+    Option {result}
+  }
+
 
   def allDocuments(indexName: String,
                    search: Option[UpdateRecommendation] = Option.empty): Iterator[Recommendation] = {

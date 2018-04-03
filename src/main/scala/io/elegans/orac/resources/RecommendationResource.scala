@@ -19,6 +19,47 @@ trait RecommendationResource extends OracResource {
 
   private[this] val recommendationService: RecommendationService.type = RecommendationService
 
+  def queryRecommendationRoutes: Route = handleExceptions(routesExceptionHandler) {
+    pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
+        Slash ~ "recommendation" ~ Slash ~ "query") { indexName =>
+      pathEnd {
+        delete {
+          authenticateBasicAsync(realm = authRealm,
+            authenticator = authenticator.authenticator) { user =>
+            authorizeAsync(_ =>
+              authenticator.hasPermissions(user, indexName, Permissions.create_recomm)) {
+              extractMethod { method =>
+                parameters("refresh".as[Int] ? 0, "from".as[Option[Long]], "to".as[Option[Long]]) {
+                    (refresh, from, to) =>
+                  entity(as[Recommendation]) { document =>
+                    val breaker: CircuitBreaker = OracCircuitBreaker.getCircuitBreaker()
+                    onCompleteWithBreaker(breaker)(recommendationService.deleteDocuments(indexName,
+                        from = from, to = to)) {
+                      case Success(t) =>
+                        completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                          t
+                        })
+                      case Failure(e) => e match {
+                        case vcee: VersionConflictEngineException =>
+                          log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
+                            "method=" + method.toString + " : " + vcee.getMessage)
+                          completeResponse(StatusCodes.Conflict, Option.empty[String])
+                        case e: Exception =>
+                          log.error(this.getClass.getCanonicalName + " index(" + indexName + ") " +
+                            "method=" + method.toString + " : " + e.getMessage)
+                          completeResponse(StatusCodes.BadRequest, Option.empty[String])
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   def recommendationRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~ Slash ~ "recommendation") { indexName =>
       pathEnd {
