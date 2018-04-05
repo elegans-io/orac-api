@@ -55,14 +55,13 @@ object SystemIndexManagementService {
   )
 
   def createIndex(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
 
     val analyzerJsonPath: String = analyzerFiles.path
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
     val analyzerJson: String = analyzerJsonIs match {
       case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
       case _ =>
-        client.close()
         val message = "Check the file: (" + analyzerJsonPath + ")"
         throw new FileNotFoundException(message)
     }
@@ -78,7 +77,6 @@ object SystemIndexManagementService {
       val schemaJson = jsonInStream match {
         case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
         case _ =>
-          client.close()
           val message = "Check the file: (" + item.path + ")"
           throw new FileNotFoundException(message)
       }
@@ -95,15 +93,13 @@ object SystemIndexManagementService {
 
     val message = "SystemIndexCreation: " + operationsMessage.mkString(" ")
 
-    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def removeIndex(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
 
     if (! elasticClient.enableDeleteIndex) {
-      client.close()
       val message: String = "operation is not allowed, contact system administrator"
       throw SystemIndexManagementServiceException(message)
     }
@@ -125,14 +121,13 @@ object SystemIndexManagementService {
 
     val message = "SystemIndexDeletion: " + operationsMessage.mkString(" ")
 
-    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def openCloseIndex(indexSuffix: Option[String] = None,
                      operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: TransportClient = elasticClient.openClient
-    val openCloseIndexResult = schemaFiles.filter(item => {
+    val client: TransportClient = elasticClient.getClient
+    schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t == item.indexSuffix
         case _ => true
@@ -148,19 +143,15 @@ object SystemIndexManagementService {
           val openIndexResponse: OpenIndexResponse = client.admin().indices().prepareOpen(fullIndexName).get()
           OpenCloseIndex(indexName = elasticClient.indexName, indexSuffix = item.indexSuffix, fullIndexName = fullIndexName,
             operation = operation, acknowledgement = openIndexResponse.isAcknowledged)
-        case _ =>
-          client.close()
-          throw IndexManagementServiceException("operation not supported on index: " + operation)
+        case _ => throw IndexManagementServiceException("operation not supported on index: " + operation)
       }
     })
-    client.close()
-    openCloseIndexResult
   }
 
   def checkIndexStatus(indexSuffix: Option[String] = None) : List[(String, String, String, Boolean)] = {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
 
-    val checkIndexRes = schemaFiles.filter(item => {
+    schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t === item.indexSuffix
         case _ => true
@@ -176,8 +167,6 @@ object SystemIndexManagementService {
           (fullIndexName, elasticClient.indexName, item.indexSuffix, false)
       }
     })
-    client.close()
-    checkIndexRes
   }
 
   def checkIndex(indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
@@ -190,7 +179,7 @@ object SystemIndexManagementService {
 
   def updateIndexSettings(indexSuffix: Option[String] = None) :
   Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
 
     val analyzerJsonPath: String = analyzerFiles.path
     val analyzerJsonIs: Option[InputStream] = Option{getClass.getResourceAsStream(analyzerJsonPath)}
@@ -216,13 +205,12 @@ object SystemIndexManagementService {
 
     val message = "SystemIndexSettingsUpdate: " + operationsMessage.mkString(" ")
 
-    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def updateIndexMappings(indexSuffix: Option[String] = None) :
   Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t == item.indexSuffix
@@ -234,7 +222,6 @@ object SystemIndexManagementService {
       val schemaJson: String = jsonInStream match {
         case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
         case _ =>
-          client.close()
           val message = "Check the file: (" + item.updatePath + ")"
           throw new FileNotFoundException(message)
       }
@@ -251,7 +238,6 @@ object SystemIndexManagementService {
 
     val message = "SystemIndexUpdate: " + operationsMessage.mkString(" ")
 
-    client.close()
     Option { IndexManagementResponse(message) }
   }
 
@@ -277,10 +263,8 @@ object SystemIndexManagementService {
   }
 
   def indices: Future[List[String]] = Future {
-    val client = elasticClient.openClient
-    val indicesRes = client
+    val indicesRes = elasticClient.getClient
       .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
-    client.close()
     indicesRes.map(x => x.key).toList
   }
 

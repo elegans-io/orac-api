@@ -62,7 +62,7 @@ object ReconcileHistoryService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val response = client.prepareIndex().setIndex(fullIndexName)
       .setType(elasticClient.reconcileHistoryIndexSuffix)
       .setId(id)
@@ -72,7 +72,6 @@ object ReconcileHistoryService {
     if (refresh =/= 0) {
       val refresh_index = elasticClient.refreshIndex(fullIndexName)
       if(refresh_index.failed_shards_n > 0) {
-        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
       }
     }
@@ -82,12 +81,11 @@ object ReconcileHistoryService {
       created = response.status === RestStatus.CREATED
     )
 
-    client.close()
     Option {doc_result}
   }
 
   def deleteAll(index_name: String): Future[Option[DeleteDocumentsResult]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val qb = QueryBuilders.termQuery("index", index_name)
     val response: BulkByScrollResponse =
       DeleteByQueryAction.INSTANCE.newRequestBuilder(client).setMaxRetries(10)
@@ -99,12 +97,11 @@ object ReconcileHistoryService {
     val deleted: Long = response.getDeleted
 
     val result: DeleteDocumentsResult = DeleteDocumentsResult(message = "delete", deleted = deleted)
-    client.close()
     Option {result}
   }
 
   def delete(id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName)
       .setType(elasticClient.reconcileHistoryIndexSuffix).setId(id).get()
 
@@ -112,7 +109,6 @@ object ReconcileHistoryService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName)
       if(refreshIndex.failed_shards_n > 0) {
-        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + fullIndexName + ")")
       }
     }
@@ -122,18 +118,16 @@ object ReconcileHistoryService {
       found = response.status =/= RestStatus.NOT_FOUND
     )
 
-    client.close()
     Option {docResult}
   }
 
   def read(ids: List[String]): Future[Option[List[ReconcileHistory]]] = {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multigetBuilder.add(fullIndexName, elasticClient.reconcileHistoryIndexSuffix, ids:_*)
     } else {
-      client.close()
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + fullIndexName + ")")
     }
 
@@ -189,14 +183,12 @@ object ReconcileHistoryService {
       document
     })
 
-    client.close()
     Future { Option { documents } }
   }
 
   def allDocuments: Iterator[ReconcileHistory] = {
-    val client = elasticClient.openClient
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    var scrollResp: SearchResponse = client
+    var scrollResp: SearchResponse = elasticClient.getClient
       .prepareSearch(fullIndexName)
       .addSort("timestamp", SortOrder.ASC)
       .setScroll(new TimeValue(60000))
@@ -253,13 +245,12 @@ object ReconcileHistoryService {
         document
       })
 
-      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
+      scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(60000)).execute().actionGet()
 
       (documents, documents.nonEmpty)
     }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
 
-    client.close()
     iterator
   }
 }

@@ -114,7 +114,7 @@ object OracUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix)
       .setId(document.id)
@@ -124,7 +124,6 @@ object OracUserService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
-        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -141,7 +140,6 @@ object OracUserService {
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
 
-    client.close()
     Option {docResult}
   }
 
@@ -217,7 +215,7 @@ object OracUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix).setId(id)
       .setDoc(builder)
@@ -226,7 +224,6 @@ object OracUserService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
-        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -245,12 +242,11 @@ object OracUserService {
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
 
-    client.close()
     Option {docResult}
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.oracUserIndexSuffix).setId(id).get()
 
@@ -274,18 +270,16 @@ object OracUserService {
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
 
-    client.close()
     Option {docResult}
   }
 
   def read(indexName: String, ids: List[String]): Future[Option[OracUsers]] = {
-    val client: TransportClient = elasticClient.openClient
+    val client: TransportClient = elasticClient.getClient
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multigetBuilder.add(fullIndexName(indexName), elasticClient.oracUserIndexSuffix, ids:_*)
     } else {
-      client.close()
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
 
@@ -396,7 +390,6 @@ object OracUserService {
       document
     })
 
-    client.close()
     Future { Option{OracUsers(items = documents)} }
   }
 
@@ -440,8 +433,7 @@ object OracUserService {
         QueryBuilders.matchAllQuery()
     }
 
-    val client = elasticClient.openClient
-    var scrollResp: SearchResponse = client
+    var scrollResp: SearchResponse = elasticClient.getClient
       .prepareSearch(fullIndexName(indexName))
       .setScroll(new TimeValue(keepAlive))
       .setQuery(qb)
@@ -551,13 +543,12 @@ object OracUserService {
         document
       })
 
-      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
+      scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
     }.takeWhile{case(_, docNonEmpty) => docNonEmpty}
       .flatMap{case (docs, _) => docs}
 
-    client.close()
     iterator
   }
 
