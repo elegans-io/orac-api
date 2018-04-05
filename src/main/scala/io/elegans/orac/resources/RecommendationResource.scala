@@ -21,7 +21,7 @@ trait RecommendationResource extends OracResource {
 
   def queryRecommendationRoutes: Route = handleExceptions(routesExceptionHandler) {
     pathPrefix("""^(index_(?:[a-z]{1,256})_(?:[A-Za-z0-9_]{1,256}))$""".r ~
-      Slash ~ "recommendation" ~ Slash ~ "query") { indexName =>
+      Slash ~ "recommendation_query") { indexName =>
       pathEnd {
         delete {
           authenticateBasicAsync(realm = authRealm,
