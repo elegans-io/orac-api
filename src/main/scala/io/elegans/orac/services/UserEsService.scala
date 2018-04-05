@@ -65,7 +65,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response = client.prepareIndex().setIndex(indexName)
       .setCreate(true)
       .setType(elasticClient.userIndexSuffix)
@@ -74,6 +74,7 @@ class UserEsService extends AbstractUserService {
 
     val refreshIndex = elasticClient.refreshIndex(indexName)
     if(refreshIndex.failed_shards_n > 0) {
+      client.close()
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
@@ -82,6 +83,7 @@ class UserEsService extends AbstractUserService {
       created = response.status === RestStatus.CREATED
     )
 
+    client.close()
     docResult
   }
 
@@ -118,7 +120,7 @@ class UserEsService extends AbstractUserService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: UpdateResponse = client.prepareUpdate().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id)
       .setDoc(builder)
@@ -126,6 +128,7 @@ class UserEsService extends AbstractUserService {
 
     val refreshIndex = elasticClient.refreshIndex(indexName)
     if(refreshIndex.failed_shards_n > 0) {
+      client.close()
       throw new Exception("User : index refresh failed: (" + indexName + ")")
     }
 
@@ -136,6 +139,7 @@ class UserEsService extends AbstractUserService {
       created = response.status === RestStatus.CREATED
     )
 
+    client.close()
     docResult
   }
 
@@ -145,12 +149,13 @@ class UserEsService extends AbstractUserService {
       throw new AuthenticationException("admin user cannot be changed")
     }
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: DeleteResponse = client.prepareDelete().setIndex(indexName)
       .setType(elasticClient.userIndexSuffix).setId(id).get()
 
     val refreshIndex = elasticClient.refreshIndex(indexName)
     if(refreshIndex.failed_shards_n > 0) {
+      client.close()
       throw new Exception("User: index refresh failed: (" + indexName + ")")
     }
 
@@ -159,6 +164,7 @@ class UserEsService extends AbstractUserService {
       found = response.status =/= RestStatus.NOT_FOUND
     )
 
+    client.close()
     docResult
   }
 
@@ -166,8 +172,7 @@ class UserEsService extends AbstractUserService {
     if(id == "admin") {
       adminUser
     } else {
-
-      val client: TransportClient = elasticClient.getClient
+      val client: TransportClient = elasticClient.openClient
       val getBuilder: GetRequestBuilder = client.prepareGet(indexName, elasticClient.userIndexSuffix, id)
 
       val response: GetResponse = getBuilder.get()
@@ -194,7 +199,7 @@ class UserEsService extends AbstractUserService {
         }).toMap
         case None => Map.empty[String, Set[Permissions.Value]]
       }
-
+      client.close()
       User(id = userId, password = password, salt = salt, permissions = permissions)
     }
   }

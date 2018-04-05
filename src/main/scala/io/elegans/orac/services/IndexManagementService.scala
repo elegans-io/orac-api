@@ -59,7 +59,7 @@ object IndexManagementService {
 
   def createIndex(indexName: String,
                   indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
@@ -75,6 +75,7 @@ object IndexManagementService {
     val analyzerJson: String = analyzerJsonIs match {
       case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
       case _ =>
+        client.close()
         val message = "Check the file: (" + analyzerJsonPath + ")"
         throw new FileNotFoundException(message)
     }
@@ -85,6 +86,7 @@ object IndexManagementService {
       val schemaJson: String = jsonInStream match {
         case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
         case _ =>
+          client.close()
           val message = "Check the file: (" + item.path + ")"
           throw new FileNotFoundException(message)
       }
@@ -101,12 +103,13 @@ object IndexManagementService {
 
     val message = "IndexCreation: " + operationsMessage.mkString(" ")
 
+    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def removeIndex(indexName: String,
                   indexSuffix: Option[String] = None) : Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
 
     if (! elasticClient.enableDeleteIndex) {
       val message: String = "operation is not allowed, contact system administrator"
@@ -130,14 +133,15 @@ object IndexManagementService {
 
     val message = "IndexDeletion: " + operationsMessage.mkString(" ")
 
+    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def checkIndexStatus(indexName: String,
                        indexSuffix: Option[String] = None) : List[(String, String, String, Boolean)] = {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
 
-    schemaFiles.filter(item => {
+    val indexStatus = schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t == item.indexSuffix
         case _ => true
@@ -148,6 +152,9 @@ object IndexManagementService {
       val check = getMappingsReq.mappings.containsKey(fullIndexName)
       (fullIndexName, indexName, item.indexSuffix, check)
     })
+
+    client.close()
+    indexStatus
   }
 
   def checkIndex(indexName: String,
@@ -161,8 +168,8 @@ object IndexManagementService {
 
   def openCloseIndex(indexName: String, indexSuffix: Option[String] = None,
                      operation: String): Future[List[OpenCloseIndex]] = Future {
-    val client: TransportClient = elasticClient.getClient
-    schemaFiles.filter(item => {
+    val client: TransportClient = elasticClient.openClient
+    val openCloseStatus = schemaFiles.filter(item => {
       indexSuffix match {
         case Some(t) => t == item.indexSuffix
         case _ => true
@@ -178,14 +185,19 @@ object IndexManagementService {
           val openIndexResponse: OpenIndexResponse = client.admin().indices().prepareOpen(fullIndexName).get()
           OpenCloseIndex(indexName = indexName, indexSuffix = item.indexSuffix, fullIndexName = fullIndexName,
             operation = operation, acknowledgement = openIndexResponse.isAcknowledged)
-        case _ => throw IndexManagementServiceException("operation not supported on index: " + operation)
+        case _ =>
+          client.close()
+          throw IndexManagementServiceException("operation not supported on index: " + operation)
       }
     })
+
+    client.close()
+    openCloseStatus
   }
 
   def updateIndexSettings(indexName: String, indexSuffix: Option[String] = None) :
   Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
 
     // extract language from index name
     val indexLanguageRegex = "^(?:(index)_([a-z]{1,256})_([A-Za-z0-9_]{1,256}))$".r
@@ -193,7 +205,9 @@ object IndexManagementService {
     val (_, language, _) = indexName match {
       case indexLanguageRegex(indexPattern, languagePattern, arbitraryPattern) =>
         (indexPattern, languagePattern, arbitraryPattern)
-      case _ => throw new Exception("index name is not well formed")
+      case _ =>
+        client.close()
+        throw new Exception("index name is not well formed")
     }
 
     val analyzerJsonPath: String = analyzerFiles(language).updatePath
@@ -201,6 +215,7 @@ object IndexManagementService {
     val analyzerJson: String = analyzerJsonIs match {
       case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
       case _ =>
+        client.close()
         val message = "file not found: (" + analyzerJsonPath + ")"
         throw new FileNotFoundException(message)
     }
@@ -220,12 +235,13 @@ object IndexManagementService {
 
     val message = "IndexSettingsUpdate: " + operationsMessage.mkString(" ")
 
+    client.close()
     Option { IndexManagementResponse(message) }
   }
 
   def updateIndexMappings(indexName: String, indexSuffix: Option[String] = None) :
   Future[Option[IndexManagementResponse]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
 
     val operationsMessage: List[String] = schemaFiles.filter(item => {
       indexSuffix match {
@@ -238,6 +254,7 @@ object IndexManagementService {
       val schemaJson: String = jsonInStream match {
         case Some(stream) => Source.fromInputStream(stream, "utf-8").mkString
         case _ =>
+          client.close()
           val message = "Check the file: (" + item.updatePath + ")"
           throw new FileNotFoundException(message)
       }
@@ -254,6 +271,7 @@ object IndexManagementService {
 
     val message = "IndexUpdate: " + operationsMessage.mkString(" ")
 
+    client.close()
     Option { IndexManagementResponse(message) }
   }
 

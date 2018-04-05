@@ -61,7 +61,7 @@ object RecommendationHistoryService {
     builder.field("score", document.score)
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix)
       .setCreate(true)
@@ -71,6 +71,7 @@ object RecommendationHistoryService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -80,6 +81,7 @@ object RecommendationHistoryService {
       created = response.status === RestStatus.CREATED
     )
 
+    client.close()
     Option {docResult}
   }
 
@@ -139,7 +141,7 @@ object RecommendationHistoryService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix).setId(id)
       .setDoc(builder)
@@ -148,6 +150,7 @@ object RecommendationHistoryService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -159,17 +162,19 @@ object RecommendationHistoryService {
       created = response.status === RestStatus.CREATED
     )
 
+    client.close()
     Option {docResult}
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.recommendationHistoryIndexSuffix).setId(id).get()
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -179,16 +184,18 @@ object RecommendationHistoryService {
       found = response.status =/= RestStatus.NOT_FOUND
     )
 
+    client.close()
     Option {doc_result}
   }
 
   def read(indexName: String, ids: List[String]): Future[Option[RecommendationsHistory]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multigetBuilder.add(fullIndexName(indexName), elasticClient.recommendationHistoryIndexSuffix, ids:_*)
     } else {
+      client.close()
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
 
@@ -263,6 +270,7 @@ object RecommendationHistoryService {
       document
     })
 
+    client.close()
     Option{ RecommendationsHistory(items = documents) }
   }
 

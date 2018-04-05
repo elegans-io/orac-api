@@ -68,7 +68,7 @@ object ActionService {
     }
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix)
       .setCreate(true)
@@ -78,6 +78,7 @@ object ActionService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -93,7 +94,7 @@ object ActionService {
         operation = ForwardOperationType.create, retry = Option{10})
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
-
+    client.close()
     Option {docResult}
   }
 
@@ -143,7 +144,7 @@ object ActionService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix).setId(id)
       .setDoc(builder)
@@ -152,6 +153,7 @@ object ActionService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -170,17 +172,19 @@ object ActionService {
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
 
+    client.close()
     Option {docResult}
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.actionIndexSuffix).setId(id).get()
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -197,16 +201,18 @@ object ActionService {
       forwardService.create(indexName = indexName, document = forward, refresh = refresh)
     }
 
+    client.close()
     Option {docResult}
   }
 
   def read(indexName: String, ids: List[String]): Future[Option[Actions]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multigetBuilder.add(fullIndexName(indexName), elasticClient.actionIndexSuffix, ids:_*)
     } else {
+      client.close()
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
 
@@ -267,6 +273,7 @@ object ActionService {
       document
     })
 
+    client.close()
     Option{ Actions(items = documents) }
   }
 
@@ -332,7 +339,8 @@ object ActionService {
         QueryBuilders.matchAllQuery()
     }
 
-    var scrollResp: SearchResponse = elasticClient.getClient
+    val client = elasticClient.openClient
+    var scrollResp: SearchResponse = client
       .prepareSearch(fullIndexName(indexName))
       .addSort("timestamp", SortOrder.DESC)
       .setScroll(new TimeValue(keepAlive))
@@ -394,10 +402,11 @@ object ActionService {
         document
       })
 
-      scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(keepAlive)).execute().actionGet()
       (documents, documents.nonEmpty)
     }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
+    client.close()
     iterator
   }
 

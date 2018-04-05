@@ -73,7 +73,7 @@ object ItemInfoService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response = client.prepareIndex().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix)
       .setCreate(true)
@@ -83,6 +83,7 @@ object ItemInfoService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -93,6 +94,7 @@ object ItemInfoService {
     )
 
     updateItemInfoService(indexName)
+    client.close()
     Option {docResult}
   }
 
@@ -131,7 +133,7 @@ object ItemInfoService {
 
     builder.endObject()
 
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: UpdateResponse = client.prepareUpdate().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix).setId(id)
       .setDoc(builder)
@@ -140,6 +142,7 @@ object ItemInfoService {
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception(this.getClass.getCanonicalName + " : index refresh failed: (" + indexName + ")")
       }
     }
@@ -152,17 +155,19 @@ object ItemInfoService {
     )
 
     updateItemInfoService(indexName)
+    client.close()
     Option {docResult}
   }
 
   def delete(indexName: String, id: String, refresh: Int): Future[Option[DeleteDocumentResult]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val response: DeleteResponse = client.prepareDelete().setIndex(fullIndexName(indexName))
       .setType(elasticClient.itemInfoIndexSuffix).setId(id).get()
 
     if (refresh =/= 0) {
       val refreshIndex = elasticClient.refreshIndex(fullIndexName(indexName))
       if(refreshIndex.failed_shards_n > 0) {
+        client.close()
         throw new Exception("Item : index refresh failed: (" + indexName + ")")
       }
     }
@@ -173,16 +178,18 @@ object ItemInfoService {
     )
 
     updateItemInfoService(indexName)
+    client.close()
     Option {docResult}
   }
 
   def read(indexName: String, ids: List[String]): Future[Option[ItemInfoRecords]] = Future {
-    val client: TransportClient = elasticClient.getClient
+    val client: TransportClient = elasticClient.openClient
     val multigetBuilder: MultiGetRequestBuilder = client.prepareMultiGet()
 
     if (ids.nonEmpty) {
       multigetBuilder.add(fullIndexName(indexName), elasticClient.itemInfoIndexSuffix, ids:_*)
     } else {
+      client.close()
       throw new Exception(this.getClass.getCanonicalName + " : ids list is empty: (" + indexName + ")")
     }
 
@@ -237,12 +244,14 @@ object ItemInfoService {
       document
     })
 
+    client.close()
     Option{ ItemInfoRecords(items = documents) }
   }
 
   def allDocuments(indexName: String): Iterator[ItemInfo] = {
+    val client = elasticClient.openClient
     val qb: QueryBuilder = QueryBuilders.matchAllQuery()
-    var scrollResp: SearchResponse = elasticClient.getClient
+    var scrollResp: SearchResponse = client
       .prepareSearch(fullIndexName(indexName))
       .setScroll(new TimeValue(60000))
       .setQuery(qb)
@@ -296,11 +305,12 @@ object ItemInfoService {
         document
       })
 
-      scrollResp = elasticClient.getClient.prepareSearchScroll(scrollResp.getScrollId)
+      scrollResp = client.prepareSearchScroll(scrollResp.getScrollId)
         .setScroll(new TimeValue(60000)).execute().actionGet()
       (documents, documents.nonEmpty)
     }.takeWhile{case(_, docNonEmpty) => docNonEmpty}.flatMap{case(docs, _) => docs}
 
+    client.close()
     iterator
   }
 }
