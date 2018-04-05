@@ -34,14 +34,15 @@ trait ElasticClient {
   val inetAddresses: List[TransportAddress] =
     hostMap.map{ case(k,v) => new TransportAddress(InetAddress.getByName(k), v) }.toList
 
-  def openClient: TransportClient = {
+  var client : TransportClient = openClient()
+
+  def openClient(): TransportClient = {
     val client: TransportClient = new PreBuiltTransportClient(settings)
       .addTransportAddresses(inetAddresses:_*)
     client
   }
 
   def refreshIndex(indexName: String): RefreshIndexResult = {
-    val client = openClient
     val refreshRes: RefreshResponse =
       client.admin().indices().prepareRefresh(indexName).get()
 
@@ -61,9 +62,11 @@ trait ElasticClient {
         total_shards_n = refreshRes.getTotalShards,
         failed_shards = failedShards
       )
-
-    client.close()
     refreshIndexResult
+  }
+
+  def getClient: TransportClient = {
+    this.client
   }
 
   def closeClient(client: TransportClient): Unit = {
