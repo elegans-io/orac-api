@@ -34,7 +34,7 @@ trait RecommendationResource extends OracResource {
                   onCompleteWithBreaker(breaker)(recommendationService.deleteDocumentsByQuery(indexName,
                     from = from, to = to)) {
                     case Success(t) =>
-                      completeResponse(StatusCodes.Created, StatusCodes.BadRequest, Option {
+                      completeResponse(StatusCodes.OK, StatusCodes.BadRequest, Option {
                         t
                       })
                     case Failure(e) => e match {

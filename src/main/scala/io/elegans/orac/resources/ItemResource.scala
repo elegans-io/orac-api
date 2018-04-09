@@ -31,10 +31,12 @@ trait ItemResource extends OracResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read_stream_item)) {
-              val entryIterator = itemService.allDocuments(indexName)
-              val entries: Source[Item, NotUsed] =
-                Source.fromIterator(() => entryIterator)
-              complete(entries)
+              entity(as[Option[ItemSearch]]) { document =>
+                val entryIterator = itemService.allDocuments(indexName, document)
+                val entries: Source[Item, NotUsed] =
+                  Source.fromIterator(() => entryIterator)
+                complete(entries)
+              }
             }
           }
         }

@@ -41,6 +41,18 @@ object ItemService {
     indexName + "." + suffix.getOrElse(elasticClient.itemIndexSuffix)
   }
 
+/*
+  documentSearch.random.filter(identity) match {
+    case Some(true) =>
+      val randomBuilder = new RandomScoreFunctionBuilder().seed(RandomNumbers.getInt())
+      val functionScoreQuery: QueryBuilder = QueryBuilders.functionScoreQuery(randomBuilder)
+      boolQueryBuilder.must(functionScoreQuery)
+    case _ => ;
+  }
+
+  random: Option[Boolean] = Some(false)
+*/
+
   def create(indexName: String, document: Item, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
     val builder : XContentBuilder = jsonBuilder().startObject()
 
