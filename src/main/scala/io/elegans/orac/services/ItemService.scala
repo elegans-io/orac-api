@@ -49,8 +49,6 @@ object ItemService {
       boolQueryBuilder.must(functionScoreQuery)
     case _ => ;
   }
-
-  random: Option[Boolean] = Some(false)
 */
 
   def create(indexName: String, document: Item, refresh: Int): Future[Option[IndexDocumentResult]] = Future {
