@@ -384,6 +384,8 @@ object RecommendationService {
 
     searchBuilder.setQuery(boolQueryBuilder)
 
+    searchBuilder.addSort("score", SortOrder.DESC)
+
     val searchResponse : SearchResponse = searchBuilder
       .setFrom(from).setSize(size)
       .execute()

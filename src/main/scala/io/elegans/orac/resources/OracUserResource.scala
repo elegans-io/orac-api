@@ -32,10 +32,21 @@ trait OracUserResource extends OracResource {
             authenticator = authenticator.authenticator) { user =>
             authorizeAsync(_ =>
               authenticator.hasPermissions(user, indexName, Permissions.read_stream_orac_user)) {
-              val entryIterator = oracUserService.allDocuments(indexName)
-              val entries: Source[OracUser, NotUsed] =
-                Source.fromIterator(() => entryIterator)
-              complete(entries)
+              extractRequest { req =>
+                if (req.entity.contentLengthOption.contains(0L)) {
+                  val entryIterator = oracUserService.allDocuments(indexName)
+                  val entries: Source[OracUser, NotUsed] =
+                    Source.fromIterator(() => entryIterator)
+                  complete(entries)
+                } else {
+                  entity(as[Option[OracUserSearch]]) { document =>
+                    val entryIterator = oracUserService.allDocuments(indexName, document)
+                    val entries: Source[OracUser, NotUsed] =
+                      Source.fromIterator(() => entryIterator)
+                    complete(entries)
+                  }
+                }
+              }
             }
           }
         }
