@@ -267,7 +267,7 @@ object ActionService {
       document
     })
 
-    Option{ Actions(items = documents) }
+    Option { Actions(items = documents) }
   }
 
   def allDocuments(indexName: String, search: Option[ActionSearch] = Option.empty,

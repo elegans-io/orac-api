@@ -2,7 +2,7 @@ version: "3.2"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
     restart: unless-stopped
     command: elasticsearch
     ports:
@@ -15,13 +15,17 @@ services:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
       - ./elasticsearch/config:/usr/share/elasticsearch/config
       - ./elasticsearch/logs:/usr/share/elasticsearch/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: 5g
     environment:
       - MAX_LOCKED_MEMORY=unlimited
 
 #  kibana:
-#    image: docker.elastic.co/kibana/kibana:6.2.3
+#    image: docker.elastic.co/kibana/kibana:6.4.0
 #    restart: unless-stopped
-#    command: kibana 
+#    command: kibana
 #    ports:
 #      - "0.0.0.0:5601:5601"
 #    volumes:
@@ -40,6 +44,10 @@ services:
         max-size: "100m"
         max-file: "10"
     command: ["/bin/bash", "-c", "source activate csrec && exec csrec_webapp.py --port=8000"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 1g
     ports:
       - "0.0.0.0:8000:8000"
 
@@ -54,6 +62,10 @@ services:
     command: ["/orac/scripts/utils/wait-for-it.sh", "orac-elasticsearch", "9200", "10", "/orac/bin/orac-api"]
     volumes:
       - ./orac:/orac
+    logging:
+      driver: json-file
+      options:
+        max-size: 5g
     ports:
       - "0.0.0.0:8888:8888"
       - "0.0.0.0:8443:8443"
